@@ -218,25 +218,25 @@ Generalizes `WorldGenerator` + `TownGenerator` + `BiomeData`, adding the place-a
 
 Ordered bottom-up: the attention/overlay loop first (proven against a placeholder), then stamina and the day cycle, then the first two attendable types, then the dependency resolver that everything else (buildings, NPCs, POIs, wandering things) builds on, then world generation ties it all into randomized sessions, then remaining UI and polish. Each row is sized to be independently testable, similar in granularity to Prototype 1's iteration list.
 
-| # | Focus | Deliverable | P1 Reference |
-|---|-------|-------------|---------------|
-| 1 | Project Bootstrap + Movement | New Unity 6.4 project scaffolded (folders, namespaces, grey-box scene); player moves with camera follow | `PlayerMovement`, `CameraFollow`, `TriangleSpriteGenerator` |
-| 2 | Attention Framework Core | Holding E on a placeholder attendable fires complete/cancel after a hold duration; releasing early cancels | `InteractionZone`, `InteractionDetector`, `StruckNodeInteractable` (hold-tracking) |
-| 3 | Attendable Overlay UI | Approaching the placeholder shows a two-line overlay (name + "Hold E to attend" / live progress bar) | `InteractionPromptUI`, `StruckNodeInteractable` (progress-bar text) |
-| 4 | Generic Wilderness Spots + Inventory | Attending a field/clay pit yields items (with rare-drop chance) into a capped, stack-limited inventory shown in HUD | `ItemDatabase`, `ItemDefinition`, `InventoryManager`, `InventoryUI`, yield-roll from `StruckNodeInteractable` |
-| 5 | Stamina / Day Clock | Attention drains a visible stamina bar; phase-crossing ambient text fires; at zero stamina, attending shows "too late" and consumes nothing | `DayCycleManager` (phase thresholds, ambient text), `DayCycleAmbientTextData` |
-| 6 | Bedroll + Day Transition | Holding E on the Bedroll fades to black, restores stamina, reseeds wilderness spots, fades back in | `RestInteractable`, `DayTransitionFadeUI`, `DayCycleManager.Rest()` |
-| 7 | Tended-Style Spots | Attending an unmarked spot marks it; after rest(s), attending again harvests | `TendedSpotInteractable` (mark/wait/harvest state machine) |
-| 8 | Generic Dependency / Response Resolver | A hand-placed test entity with authored dependency conditions reports satisfied/unsatisfied correctly via debug output | `Entity`, `UpgradeDependency`, `UpgradePool`, `TownEntity` (generalized) |
-| 9 | Buildings: Revival via Attention | A dilapidated building is revived by repeatedly attending with required materials in hand; shows "needs" overlay when blocked, consumes no stamina | Resolver from #8; `UpgradeDefinition.RewardItems` / dependency model |
-| 10 | NPCs: Development + Specialization Draw | An unspecialized NPC develops via repeated attention ("needs more time"); specializes at first threshold from the universal track | Resolver from #8 |
-| 11 | Building → NPC Demand Loop | Reviving a building changes which specialization an unspecialized NPC draws | New `DeclaredSpecializationNeeds` registry on resolver from #8 |
-| 12 | World Gen: Place Archetypes | A session selects 2-3 archetypes; wilderness zones, building specialization bias, and NPC specialization pools all derive from that selection | `WorldGenerator`/`TownGenerator` (ground planes, containers, inactive-GO pattern, seeded random); `BiomeData` → `RegionData` |
-| 13 | POIs | A POI tied to a selected archetype is inaccessible until its gating dependency is satisfied, then attendable with its distinctive yield | `EncounterLocationConfig`/`EncounterLocation` (gated-prompt pattern) |
-| 14 | Wandering Things | A wandering thing spawns, is attendable for a randomized good/bad outcome, and despawns after its lifespan; odds shift with town development | New |
-| 15 | Settlement Chest (Rebuilt) | Player can deposit/withdraw at the chest; withdrawals respect the player's stack cap, one stack per withdrawal | `InteractionMenuControllerUITK` (rendering only) |
-| 16 | Settlement Horizon UI | Horizon panel lists each entity's realized specialization and current "needs," matching the overlay's language | `SettlementHorizonUI` (reframed) |
-| 17 | Playtest + Tuning Pass | Full day loop playable end-to-end; stamina costs, yield tables, and dependency thresholds tuned for a legible web | — |
+| # | Status | Focus | Deliverable | P1 Reference |
+|---|--------|-------|-------------|---------------|
+| 1 | [x] | Project Bootstrap + Movement | New Unity 6.4 project scaffolded (folders, namespaces, grey-box scene); player moves with camera follow | `PlayerMovement`, `CameraFollow`, `TriangleSpriteGenerator` |
+| 2 | [x] | Attention Framework Core | Holding E on a placeholder attendable fires complete/cancel after a hold duration; releasing early cancels | `InteractionZone`, `InteractionDetector`, `StruckNodeInteractable` (hold-tracking) |
+| 3 | [x] | Attendable Overlay UI | Approaching the placeholder shows a two-line overlay (name + "Hold E to attend" / live progress bar) | `InteractionPromptUI`, `StruckNodeInteractable` (progress-bar text) |
+| 4 | [ ] | Generic Wilderness Spots + Inventory | Attending a field/clay pit yields items (with rare-drop chance) into a capped, stack-limited inventory shown in HUD | `ItemDatabase`, `ItemDefinition`, `InventoryManager`, `InventoryUI`, yield-roll from `StruckNodeInteractable` |
+| 5 | [ ] | Stamina / Day Clock | Attention drains a visible stamina bar; phase-crossing ambient text fires; at zero stamina, attending shows "too late" and consumes nothing | `DayCycleManager` (phase thresholds, ambient text), `DayCycleAmbientTextData` |
+| 6 | [ ] | Bedroll + Day Transition | Holding E on the Bedroll fades to black, restores stamina, reseeds wilderness spots, fades back in | `RestInteractable`, `DayTransitionFadeUI`, `DayCycleManager.Rest()` |
+| 7 | [ ] | Tended-Style Spots | Attending an unmarked spot marks it; after rest(s), attending again harvests | `TendedSpotInteractable` (mark/wait/harvest state machine) |
+| 8 | [ ] | Generic Dependency / Response Resolver | A hand-placed test entity with authored dependency conditions reports satisfied/unsatisfied correctly via debug output | `Entity`, `UpgradeDependency`, `UpgradePool`, `TownEntity` (generalized) |
+| 9 | [ ] | Buildings: Revival via Attention | A dilapidated building is revived by repeatedly attending with required materials in hand; shows "needs" overlay when blocked, consumes no stamina | Resolver from #8; `UpgradeDefinition.RewardItems` / dependency model |
+| 10 | [ ] | NPCs: Development + Specialization Draw | An unspecialized NPC develops via repeated attention ("needs more time"); specializes at first threshold from the universal track | Resolver from #8 |
+| 11 | [ ] | Building → NPC Demand Loop | Reviving a building changes which specialization an unspecialized NPC draws | New `DeclaredSpecializationNeeds` registry on resolver from #8 |
+| 12 | [ ] | World Gen: Place Archetypes | A session selects 2-3 archetypes; wilderness zones, building specialization bias, and NPC specialization pools all derive from that selection | `WorldGenerator`/`TownGenerator` (ground planes, containers, inactive-GO pattern, seeded random); `BiomeData` → `RegionData` |
+| 13 | [ ] | POIs | A POI tied to a selected archetype is inaccessible until its gating dependency is satisfied, then attendable with its distinctive yield | `EncounterLocationConfig`/`EncounterLocation` (gated-prompt pattern) |
+| 14 | [ ] | Wandering Things | A wandering thing spawns, is attendable for a randomized good/bad outcome, and despawns after its lifespan; odds shift with town development | New |
+| 15 | [ ] | Settlement Chest (Rebuilt) | Player can deposit/withdraw at the chest; withdrawals respect the player's stack cap, one stack per withdrawal | `InteractionMenuControllerUITK` (rendering only) |
+| 16 | [ ] | Settlement Horizon UI | Horizon panel lists each entity's realized specialization and current "needs," matching the overlay's language | `SettlementHorizonUI` (reframed) |
+| 17 | [ ] | Playtest + Tuning Pass | Full day loop playable end-to-end; stamina costs, yield tables, and dependency thresholds tuned for a legible web | — |
 
 ---
 

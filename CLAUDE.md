@@ -33,7 +33,7 @@ var move = gameplay.FindAction("Move");
 
 - **`Gameplay` map**
   - `Move` — `Vector2`, WASD / arrow keys / gamepad left stick. Drives `PlayerController`.
-  - `Attend` — `Button` with a `Hold` interaction (keyboard `E`, gamepad North button). Reserved for the Attention framework (PROTOTYPE2.md, iteration 2+) — not yet wired to behavior.
+  - `Attend` — `Button` with a `Hold` interaction (keyboard `E`, gamepad North button). Drives `AttentionInput` (see Key Design Decisions for how its `started`/`canceled` callbacks are used).
 - **`UI` map** — retained from the default template for future menu surfaces (e.g. the settlement chest, the one menu-based interaction PROTOTYPE2.md keeps).
 
 ---
@@ -87,6 +87,8 @@ Default to no comments. Only add a comment when the *why* is non-obvious (a hidd
 |---|---|---|
 | Input + Movement | Complete | `PlayerController`, `CameraFollow` |
 | Grey-box Visuals | Complete | `TriangleSpriteGenerator` |
+| Attention Framework Core | Complete | `IAttendable`, `AttendableZone`, `AttendableDetector`, `AttentionInput`, `AttentionManager`, `PlaceholderAttendable` |
+| Attendable Overlay UI | Complete | `AttendableOverlayUI` |
 
 Full iteration plan is in [PROTOTYPE2.md](PROTOTYPE2.md). Update this table as each iteration lands.
 
@@ -98,3 +100,11 @@ This section records decisions made during implementation that aren't already ca
 
 - **Render pipeline & input, locked in at bootstrap**: kept the Unity 6 2D template's URP 2D Renderer (2D lights available for the later day/night cycle) and the new Input System with project-wide actions (see "Input Actions" above), rather than reverting to built-in 2D / legacy `Input.GetAxis` as the old CLAUDE.md (written for P1) specified.
 - **`PlayerController`/`CameraFollow`/`TriangleSpriteGenerator`** ported from P1's `PlayerMovement.cs`, `CameraFollow.cs`, `TriangleSpriteGenerator.cs`, dropping the `CombatManager`/`DayCycleManager`/`RestInteractable` hooks that don't exist in P2 yet (per PROTOTYPE2.md, Section 1: "Drop the `CombatManager`/exhaustion-collapse hooks").
+- **`AttentionInput` uses the `Attend` action's `started`/`canceled` callbacks, not `performed`.** The Hold interaction's `started` fires on press and `canceled` fires on release regardless of the interaction's own (default 0.4s) duration, so these give clean raw press/release signals. `AttentionManager` owns the actual hold-duration timing per-target via `IAttendable.AttentionDuration`, so the Hold interaction's configured duration is present but unused — left as-is rather than switching to a plain Button interaction, since `started`/`canceled` already give the needed signals.
+- **`AttendableZone` resolves `IAttendable` via `GetComponent<IAttendable>()`** on its own GameObject rather than a serialized interface reference — every attendable type is expected to carry its `IAttendable` component and an `AttendableZone` on the same GameObject, which fits the inactive-GO procedural spawn pattern for later iterations.
+- **Player's attention-range trigger doubles as its required `Collider2D`**: a `CircleCollider2D` (trigger, radius 1.5) was added directly to the Player in the editor for `AttendableDetector`'s range queries; `PlayerController.Awake()`'s fallback `AddComponent<CircleCollider2D>()` now finds this one and skips adding a second.
+- **`AttentionManager` finds `AttendableDetector`/`AttentionInput` via `FindAnyObjectByType` in `Start()`** rather than serialized cross-scene references — keeps the Player's components decoupled from the manager's placement in the hierarchy. (Originally `FindFirstObjectByType`; switched to `FindAnyObjectByType` in Iteration 3 since the former is obsolete and ordering guarantees aren't needed for a one-of-each singleton lookup.)
+- **`PlaceholderAttendable`** is a temporary `IAttendable` test fixture (Iteration 2 only) standing in for the wilderness-spot/building/NPC attendable types that arrive in later iterations; it and the "Placeholder Attendable" GameObject should be removed once a real attendable type exists.
+- **`AttentionManager.AttendingTarget`** exposes the in-progress attend target separately from `CurrentTarget` (the detector's nearest target, which can change mid-hold). `AttendableOverlayUI` reads `AttendingTarget` while `State == Attending` and `CurrentTarget` otherwise, so the overlay always reflects the attendable actually being held.
+- **`AttendableOverlayUI` builds its `VisualElement` tree entirely in code** (`OnEnable`, via `UIDocument.rootVisualElement`) and creates a runtime `PanelSettings` via `ScriptableObject.CreateInstance` rather than referencing UXML/USS/PanelSettings assets — keeps the overlay code-first/grey-box and avoids asset-reference wiring through MCP-Unity's `update_component` (which has no reliable way to assign `UnityEngine.Object` asset references). The hold-progress bar reuses P1's `[####....]` text-bar pattern (10 segments, built from `HoldProgress01`).
+- **"Overlay UI" GameObject** (root, `UIDocument` + `AttendableOverlayUI`) is a new sibling to `AttentionManager` in the scene — UI reads `AttentionManager.Instance` state each frame in `Update()`, consistent with "UI holds no game logic."
