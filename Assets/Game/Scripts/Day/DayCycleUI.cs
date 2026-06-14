@@ -6,10 +6,8 @@ namespace Mossmark.Day
     [RequireComponent(typeof(UIDocument))]
     public class DayCycleUI : MonoBehaviour
     {
-        private const int BarSegments = 20;
-
         private Label phaseLabel;
-        private Label staminaLabel;
+        private Label ambientTextLabel;
 
         private void OnEnable()
         {
@@ -34,10 +32,9 @@ namespace Mossmark.Day
             var manager = DayCycleManager.Instance;
             if (manager != null)
             {
-                manager.StaminaChanged += HandleStaminaChanged;
                 manager.PhaseChanged += HandlePhaseChanged;
+                manager.AmbientTextChanged += HandleAmbientTextChanged;
 
-                Refresh(manager.StaminaRemaining, manager.MaxStamina);
                 UpdatePhaseLabel(manager.CurrentPhase);
             }
         }
@@ -47,8 +44,8 @@ namespace Mossmark.Day
             var manager = DayCycleManager.Instance;
             if (manager == null) return;
 
-            manager.StaminaChanged -= HandleStaminaChanged;
             manager.PhaseChanged -= HandlePhaseChanged;
+            manager.AmbientTextChanged -= HandleAmbientTextChanged;
         }
 
         private void BuildLayout(VisualElement root)
@@ -68,6 +65,7 @@ namespace Mossmark.Day
                     position = Position.Absolute,
                     top = 16,
                     right = 16,
+                    maxWidth = 260,
                     alignItems = Align.FlexEnd
                 }
             };
@@ -85,32 +83,26 @@ namespace Mossmark.Day
                 }
             };
 
-            staminaLabel = new Label
+            ambientTextLabel = new Label
             {
                 style =
                 {
                     color = Color.white,
-                    fontSize = 14,
-                    unityTextAlign = TextAnchor.MiddleRight,
-                    unityFontDefinition = fallbackFont
+                    fontSize = 12,
+                    unityTextAlign = TextAnchor.UpperRight,
+                    unityFontDefinition = fallbackFont,
+                    whiteSpace = WhiteSpace.Normal
                 }
             };
 
             container.Add(phaseLabel);
-            container.Add(staminaLabel);
+            container.Add(ambientTextLabel);
             root.Add(container);
         }
 
-        private void HandleStaminaChanged(int remaining, int max) => Refresh(remaining, max);
-
         private void HandlePhaseChanged(DayPhase phase) => UpdatePhaseLabel(phase);
 
-        private void Refresh(int remaining, int max)
-        {
-            int filled = Mathf.RoundToInt((float)remaining / max * BarSegments);
-            staminaLabel.text = $"[{new string('#', filled)}{new string('.', BarSegments - filled)}]";
-            staminaLabel.style.color = remaining > 0 ? Color.white : new Color(1f, 1f, 1f, 0.35f);
-        }
+        private void HandleAmbientTextChanged(string text) => ambientTextLabel.text = text;
 
         private void UpdatePhaseLabel(DayPhase phase) => phaseLabel.text = phase.ToString();
     }

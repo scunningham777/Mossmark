@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d03d569b4bc842118ef89afe3949a436, type: 3}
+  m_Name: archetype_bog
+  m_EditorClassIdentifier: Assembly-CSharp::Mossmark.World.PlaceArchetype
+  archetypeId: bog
+  displayName: Fen Bog
+  spotDisplayName: Fen Bog
+  spotVerb: dig
+  spotColor: {r: 0.28, g: 0.34, b: 0.24, a: 1}
+  commonYields:
+  - Item: {fileID: 11400000, guid: 8f0377fa9b2340f8820829af08466e49, type: 2}
+    MinQuantity: 1
+    MaxQuantity: 2
+    Weight: 1
+  rareYield:
+    Item: {fileID: 11400000, guid: 5c848dfe76124c76b3010becc8cf85fc, type: 2}
+    MinQuantity: 1
+    MaxQuantity: 1
+    Weight: 1
+  rareDropChance: 0.08
+  specializationId: bog_tender
+  stageDisplayName: Take Up Bog-Tending
+  npcTitle: Bog Keeper
+  npcTint: {r: 0.3, g: 0.4, b: 0.25, a: 1}

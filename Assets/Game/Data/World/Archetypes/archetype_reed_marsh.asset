@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d03d569b4bc842118ef89afe3949a436, type: 3}
+  m_Name: archetype_reed_marsh
+  m_EditorClassIdentifier: Assembly-CSharp::Mossmark.World.PlaceArchetype
+  archetypeId: reed_marsh
+  displayName: Reed Marsh
+  spotDisplayName: Reed Marsh
+  spotVerb: cut
+  spotColor: {r: 0.55, g: 0.6, b: 0.32, a: 1}
+  commonYields:
+  - Item: {fileID: 11400000, guid: ed43e92716be4f129cbedee37842f471, type: 2}
+    MinQuantity: 1
+    MaxQuantity: 2
+    Weight: 1
+  rareYield:
+    Item: {fileID: 11400000, guid: 3f4b7ff5850b4cdf863531d3defbf480, type: 2}
+    MinQuantity: 1
+    MaxQuantity: 1
+    Weight: 1
+  rareDropChance: 0.08
+  specializationId: weaver
+  stageDisplayName: Take Up Weaving
+  npcTitle: Weaver
+  npcTint: {r: 0.65, g: 0.7, b: 0.45, a: 1}

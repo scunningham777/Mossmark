@@ -34,6 +34,16 @@ namespace Mossmark.Inventory
             Instance = this;
         }
 
+        public int GetQuantity(ItemDefinition item)
+        {
+            int total = 0;
+            foreach (var stack in stacks)
+            {
+                if (stack.Item == item) total += stack.Quantity;
+            }
+            return total;
+        }
+
         // Returns how many units were actually added; any remainder is refused
         // (stack cap and carry limit both reached) rather than dropped on the ground.
         public int AddItem(ItemDefinition item, int quantity)
@@ -62,6 +72,30 @@ namespace Mossmark.Inventory
             if (totalAdded > 0) InventoryChanged?.Invoke();
 
             return totalAdded;
+        }
+
+        // Returns how many units were actually removed (capped at what's carried);
+        // emptied stacks are removed entirely.
+        public int RemoveItem(ItemDefinition item, int quantity)
+        {
+            int remaining = quantity;
+
+            for (int i = stacks.Count - 1; i >= 0 && remaining > 0; i--)
+            {
+                var stack = stacks[i];
+                if (stack.Item != item) continue;
+
+                int removed = Mathf.Min(stack.Quantity, remaining);
+                stack.Quantity -= removed;
+                remaining -= removed;
+
+                if (stack.Quantity <= 0) stacks.RemoveAt(i);
+            }
+
+            int totalRemoved = quantity - remaining;
+            if (totalRemoved > 0) InventoryChanged?.Invoke();
+
+            return totalRemoved;
         }
     }
 }

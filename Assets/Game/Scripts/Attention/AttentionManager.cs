@@ -18,6 +18,7 @@ namespace Mossmark.Attention
         private AttentionInput input;
         private IAttendable attendingTarget;
         private float holdElapsed;
+        private bool isHeld;
 
         public AttentionState State { get; private set; } = AttentionState.Idle;
         public IAttendable CurrentTarget => detector != null ? detector.CurrentTarget : null;
@@ -69,6 +70,8 @@ namespace Mossmark.Attention
 
         private void HandleHoldStarted()
         {
+            isHeld = true;
+
             if (State != AttentionState.InRange) return;
 
             // Bedroll's Rest() locks attention (and movement, via PlayerController) for
@@ -78,9 +81,9 @@ namespace Mossmark.Attention
             var target = CurrentTarget;
             if (target == null || !target.CanAttend()) return;
 
-            // At zero stamina, a stamina-costing attention can't even start - the overlay
+            // At zero daylight, a daylight-costing attention can't even start - the overlay
             // already shows the "too late to start that now" line for this case.
-            if (target.RequiresStamina && DayCycleManager.Instance != null && !DayCycleManager.Instance.HasStamina)
+            if (target.RequiresDaylight && DayCycleManager.Instance != null && !DayCycleManager.Instance.HasDaylight)
             {
                 return;
             }
@@ -117,21 +120,51 @@ namespace Mossmark.Attention
 
         private void HandleHoldReleased()
         {
+            isHeld = false;
+
             if (State != AttentionState.Attending) return;
 
             CancelAttention();
         }
 
+        // Each tick runs the hold-timer/progress-bar over AttentionDuration (above),
+        // then resolves the attendable's response here. If the attend key is still
+        // held, the target is still in range, ContinueAttending is true, and (when
+        // this tick spent daylight) daylight remains, the loop resets HoldProgress01
+        // and starts another tick; otherwise the hold ends as before.
         private void CompleteAttention()
         {
-            attendingTarget.OnAttentionComplete();
+            var target = attendingTarget;
+            target.OnAttentionComplete();
 
-            if (attendingTarget.RequiresStamina)
+            bool spentDaylight = target.RequiresDaylight;
+            if (spentDaylight)
             {
-                DayCycleManager.Instance?.SpendStamina();
+                DayCycleManager.Instance?.SpendDaylight();
+            }
+
+            if (ShouldContinue(target, spentDaylight))
+            {
+                holdElapsed = 0f;
+                HoldProgress01 = 0f;
+                return;
             }
 
             FinishAttending();
+        }
+
+        private bool ShouldContinue(IAttendable target, bool spentDaylightThisTick)
+        {
+            if (!isHeld) return false;
+            if (!target.ContinueAttending) return false;
+            if (detector == null || !detector.IsInRange(target)) return false;
+
+            if (spentDaylightThisTick && DayCycleManager.Instance != null && !DayCycleManager.Instance.HasDaylight)
+            {
+                return false;
+            }
+
+            return true;
         }
 
         private void CancelAttention()

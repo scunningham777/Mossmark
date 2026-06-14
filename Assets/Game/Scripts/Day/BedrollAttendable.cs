@@ -9,8 +9,11 @@ namespace Mossmark.Day
 
         public float AttentionDuration => restDuration;
 
-        // Resting restores stamina rather than spending it.
-        public bool RequiresStamina => false;
+        // Resting restores daylight rather than spending it.
+        public bool RequiresDaylight => false;
+
+        // Resting is a single check-in, not a hold.
+        public bool ContinueAttending => false;
 
         // AttentionManager.HandleHoldStarted already locks all attention during
         // DayCycleManager.IsTransitioning, so this attendable has no additional gate.

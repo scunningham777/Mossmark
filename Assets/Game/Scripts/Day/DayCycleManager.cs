@@ -18,14 +18,14 @@ namespace Mossmark.Day
     {
         public static DayCycleManager Instance { get; private set; }
 
-        [SerializeField] private int maxStamina = 24;
+        [SerializeField] private int maxDaylight = 24;
         [SerializeField] private DayCycleAmbientTextData ambientTextData;
         [SerializeField] private float transitionFadeDuration = 0.6f;
 
-        public int MaxStamina => maxStamina;
-        public int StaminaRemaining { get; private set; }
+        public int MaxDaylight => maxDaylight;
+        public int DaylightRemaining { get; private set; }
         public DayPhase CurrentPhase { get; private set; }
-        public bool HasStamina => StaminaRemaining > 0;
+        public bool HasDaylight => DaylightRemaining > 0;
 
         // True for the full fade-out/reset/fade-in span of Rest(). PlayerController and
         // AttentionManager both check this to lock movement/attention for its duration.
@@ -35,10 +35,11 @@ namespace Mossmark.Day
         // frame, same "manager owns progress, UI just displays it" pattern as HoldProgress01.
         public float FadeAmount01 { get; private set; }
 
-        public event Action<int, int> StaminaChanged;
+        public event Action<int, int> DaylightChanged;
         public event Action<DayPhase> PhaseChanged;
+        public event Action<string> AmbientTextChanged;
 
-        // Fired once per Rest(), after stamina/phase reset but before the fade back in -
+        // Fired once per Rest(), after daylight/phase reset but before the fade back in -
         // the "reseed wilderness spots" hook deferred from Iteration 6. Tended-style spots
         // subscribe to advance their mark -> wait -> harvest countdown.
         public event Action DayAdvanced;
@@ -52,18 +53,18 @@ namespace Mossmark.Day
             }
 
             Instance = this;
-            StaminaRemaining = maxStamina;
-            CurrentPhase = GetPhase(StaminaRemaining);
+            DaylightRemaining = maxDaylight;
+            CurrentPhase = GetPhase(DaylightRemaining);
         }
 
-        public void SpendStamina(int amount = 1)
+        public void SpendDaylight(int amount = 1)
         {
-            if (StaminaRemaining <= 0) return;
+            if (DaylightRemaining <= 0) return;
 
-            StaminaRemaining = Mathf.Max(0, StaminaRemaining - amount);
-            StaminaChanged?.Invoke(StaminaRemaining, maxStamina);
+            DaylightRemaining = Mathf.Max(0, DaylightRemaining - amount);
+            DaylightChanged?.Invoke(DaylightRemaining, maxDaylight);
 
-            var newPhase = GetPhase(StaminaRemaining);
+            var newPhase = GetPhase(DaylightRemaining);
             if (newPhase != CurrentPhase)
             {
                 SetPhase(newPhase);
@@ -71,7 +72,7 @@ namespace Mossmark.Day
         }
 
         // Bedroll's OnAttentionComplete entry point. Direct successor to P1's
-        // DayCycleManager.Rest(): fade to black, restore stamina and reset to Dawn,
+        // DayCycleManager.Rest(): fade to black, restore daylight and reset to Dawn,
         // fade back in. IsTransitioning/FadeAmount01 drive the lock and the fade visual.
         public void Rest()
         {
@@ -86,8 +87,8 @@ namespace Mossmark.Day
 
             yield return Fade(0f, 1f);
 
-            StaminaRemaining = maxStamina;
-            StaminaChanged?.Invoke(StaminaRemaining, maxStamina);
+            DaylightRemaining = maxDaylight;
+            DaylightChanged?.Invoke(DaylightRemaining, maxDaylight);
             SetPhase(DayPhase.Dawn);
             DayAdvanced?.Invoke();
 
@@ -124,14 +125,15 @@ namespace Mossmark.Day
             if (!string.IsNullOrEmpty(ambientText))
             {
                 Debug.Log($"[{CurrentPhase}] {ambientText}");
+                AmbientTextChanged?.Invoke(ambientText);
             }
         }
 
-        // Six even phases across the stamina pool (Dawn = full, Dusk = empty),
-        // mirroring P1's DayPhase progression but driven by the stamina value directly.
-        private DayPhase GetPhase(int stamina)
+        // Six even phases across the daylight pool (Dawn = full, Dusk = empty),
+        // mirroring P1's DayPhase progression but driven by the daylight value directly.
+        private DayPhase GetPhase(int daylight)
         {
-            float ratio = (float)stamina / maxStamina;
+            float ratio = (float)daylight / maxDaylight;
 
             if (ratio > 5f / 6f) return DayPhase.Dawn;
             if (ratio > 4f / 6f) return DayPhase.Morning;

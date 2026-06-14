@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 303c2f015de77714facc7e3f0dc30557, type: 3}
+  m_Name: bog_iron
+  m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Inventory.ItemDefinition
+  itemId: bog_iron
+  displayName: Bog Iron
+  color: {r: 0.35, g: 0.25, b: 0.2, a: 1}
+  stackCap: 8

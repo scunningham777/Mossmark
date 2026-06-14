@@ -22,31 +22,70 @@ namespace Mossmark.World
         [SerializeField] private ItemYield rareYield;
         [SerializeField, Range(0f, 1f)] private float rareDropChance = 0.08f;
 
-        // Generic wilderness spots have no state and yield instantly -
-        // AttentionManager completes attention on the same frame the hold begins.
-        public float AttentionDuration => 0f;
+        // Ongoing hold: each tick yields and (unless interrupted) the hold resets
+        // and repeats. Each tick rerolls a fresh interval in this range so foraging
+        // doesn't fall into a fixed metronomic rhythm.
+        [SerializeField, Min(0.1f)] private float minTickInterval = 1.5f;
+        [SerializeField, Min(0.1f)] private float maxTickInterval = 2f;
 
-        public bool RequiresStamina => true;
+        private bool continueAttending;
+        private float currentTickInterval;
+
+        // Procedural-spawn entry point (Iteration 12's WorldGenerator) - sets the same
+        // serialized fields an inspector-authored instance would carry, before SetActive(true).
+        public void Initialize(string displayName, string interactionVerb, ItemYield[] commonYields,
+            ItemYield rareYield, float rareDropChance, float minTickInterval, float maxTickInterval)
+        {
+            this.displayName = displayName;
+            this.interactionVerb = interactionVerb;
+            this.commonYields = commonYields;
+            this.rareYield = rareYield;
+            this.rareDropChance = rareDropChance;
+            this.minTickInterval = minTickInterval;
+            this.maxTickInterval = maxTickInterval;
+        }
+
+        private void Awake()
+        {
+            RollTickInterval();
+        }
+
+        public float AttentionDuration => currentTickInterval;
+
+        public bool RequiresDaylight => true;
+
+        // False on the tick a rare drop is rolled - the hold ends there so the
+        // moment registers rather than disappearing into the next tick. A fresh
+        // press resumes foraging immediately.
+        public bool ContinueAttending => continueAttending;
 
         public bool CanAttend() => true;
 
         public string GetOverlayDescription() => displayName;
 
-        public string GetOverlayInteractionLine() => $"Press E to {interactionVerb}";
+        public string GetOverlayInteractionLine() => $"Hold E to {interactionVerb}";
 
         public void OnAttentionComplete()
         {
-            RollYield();
+            continueAttending = !RollYield();
+            RollTickInterval();
         }
 
         public void OnAttentionCancelled()
         {
         }
 
-        private void RollYield()
+        private void RollTickInterval()
+        {
+            currentTickInterval = UnityEngine.Random.Range(minTickInterval, maxTickInterval);
+        }
+
+        // Returns true if this tick's roll hit the rare drop - the signal for the
+        // interrupt that ends the hold.
+        private bool RollYield()
         {
             var inventory = InventoryManager.Instance;
-            if (inventory == null) return;
+            if (inventory == null) return false;
 
             var picked = PickWeighted(commonYields);
             if (picked != null && picked.Item != null)
@@ -65,8 +104,11 @@ namespace Mossmark.World
                 if (added > 0)
                 {
                     Debug.Log($"{displayName}: found a rare {added}x {rareYield.Item.DisplayName}!", this);
+                    return true;
                 }
             }
+
+            return false;
         }
 
         private static ItemYield PickWeighted(ItemYield[] yields)

@@ -127,7 +127,7 @@ namespace Mossmark.Attention
         private static string GetInteractionLine(IAttendable target)
         {
             var dayCycle = DayCycleManager.Instance;
-            if (target.RequiresStamina && dayCycle != null && !dayCycle.HasStamina)
+            if (target.RequiresDaylight && dayCycle != null && !dayCycle.HasDaylight)
             {
                 return "Too late to start that now.";
             }

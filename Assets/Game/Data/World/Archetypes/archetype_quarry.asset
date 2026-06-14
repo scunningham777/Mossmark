@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d03d569b4bc842118ef89afe3949a436, type: 3}
+  m_Name: archetype_quarry
+  m_EditorClassIdentifier: Assembly-CSharp::Mossmark.World.PlaceArchetype
+  archetypeId: quarry
+  displayName: Old Quarry
+  spotDisplayName: Old Quarry
+  spotVerb: chip
+  spotColor: {r: 0.5, g: 0.5, b: 0.55, a: 1}
+  commonYields:
+  - Item: {fileID: 11400000, guid: 1b2d1db0ac88c6f45ac553dd0929a3bc, type: 2}
+    MinQuantity: 1
+    MaxQuantity: 2
+    Weight: 1
+  rareYield:
+    Item: {fileID: 11400000, guid: db47a92646d94a099e15f27dbe2a5891, type: 2}
+    MinQuantity: 1
+    MaxQuantity: 1
+    Weight: 1
+  rareDropChance: 0.08
+  specializationId: stonemason
+  stageDisplayName: Take Up Stonework
+  npcTitle: Stonemason
+  npcTint: {r: 0.6, g: 0.62, b: 0.68, a: 1}

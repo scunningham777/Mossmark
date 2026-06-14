@@ -107,7 +107,7 @@ Prototype 1's quest/upgrade loop — walk up, open a menu, get a quest, fetch na
 
 The central idea: replace all menu-driven interaction with a single embodied verb, **Attention** — hold a button on whatever you're near, and something happens based on what that thing *is*, not on a choice you make. A field yields forage. A clay pit yields raw material with a rare-item chance. A dilapidated building consumes materials and produces development progress. An NPC produces progress or reveals what it needs. A wandering creature produces a good or bad outcome. The response is a property of the target, never a player-selected option.
 
-This also collapses the day-cycle bookkeeping from Prototype 1 (a 7-action pool tracked alongside play) into the play itself: attention **is** stamina **is** the day's clock. Spending attention spends the day; there's no separate layer to manage. This was identified as a meaningful simplification, not just a re-skin — the old day cycle was a second system sitting on top of the moment-to-moment loop, and P2 makes them the same thing.
+This also collapses the day-cycle bookkeeping from Prototype 1 (a 7-action pool tracked alongside play) into the play itself: attention **is** daylight **is** the day's clock. Spending attention spends the day; there's no separate layer to manage. This was identified as a meaningful simplification, not just a re-skin — the old day cycle was a second system sitting on top of the moment-to-moment loop, and P2 makes them the same thing.
 
 ### Collection quests were never the core idea
 
