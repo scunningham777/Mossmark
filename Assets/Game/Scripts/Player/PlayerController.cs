@@ -1,0 +1,82 @@
+using UnityEngine;
+using UnityEngine.InputSystem;
+
+namespace Mossmark.Player
+{
+    [RequireComponent(typeof(Rigidbody2D))]
+    public class PlayerController : MonoBehaviour
+    {
+        [Header("Movement")]
+        [SerializeField] private float moveSpeed = 4f;
+        [SerializeField] private float smoothing = .1f;
+
+        private Rigidbody2D rb;
+        private InputAction moveAction;
+        private Vector2 movement;
+        private Vector2 currentVelocity;
+
+        private Vector2 lastMoveDirection = Vector2.down;
+
+        private void Awake()
+        {
+            rb = GetComponent<Rigidbody2D>();
+
+            rb.gravityScale = 0f;
+            rb.freezeRotation = true;
+
+            if (GetComponent<Collider2D>() == null)
+            {
+                gameObject.AddComponent<CircleCollider2D>().isTrigger = true;
+            }
+
+            gameObject.tag = "Player";
+
+            var gameplay = InputSystem.actions.FindActionMap("Gameplay");
+            gameplay.Enable();
+            moveAction = gameplay.FindAction("Move");
+        }
+
+        private void Update()
+        {
+            HandleInput();
+        }
+
+        private void FixedUpdate()
+        {
+            HandleMovement();
+        }
+
+        private void HandleInput()
+        {
+            movement = moveAction.ReadValue<Vector2>().normalized;
+
+            if (movement != Vector2.zero)
+            {
+                lastMoveDirection = movement;
+            }
+        }
+
+        private void HandleMovement()
+        {
+            Vector2 targetVelocity = movement * moveSpeed;
+            rb.linearVelocity = Vector2.SmoothDamp(rb.linearVelocity, targetVelocity, ref currentVelocity, smoothing);
+        }
+
+        private void OnDisable()
+        {
+            movement = Vector2.zero;
+            if (rb != null) rb.linearVelocity = Vector2.zero;
+        }
+
+        // Animation helpers
+        public Vector2 GetMoveDirection() => movement;
+        public Vector2 GetLastMoveDirection() => lastMoveDirection;
+        public bool IsMoving() => movement.magnitude > 0.1f;
+
+        private void OnDrawGizmosSelected()
+        {
+            Gizmos.color = Color.green;
+            Gizmos.DrawLine(transform.position, (Vector2)transform.position + lastMoveDirection);
+        }
+    }
+}
