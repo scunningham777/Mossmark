@@ -1,3 +1,4 @@
+using Mossmark.Day;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -120,7 +121,18 @@ namespace Mossmark.Attention
             descriptionLabel.text = target.GetOverlayDescription();
             interactionLabel.text = manager.State == AttentionState.Attending
                 ? BuildProgressBar(manager.HoldProgress01)
-                : target.GetOverlayInteractionLine();
+                : GetInteractionLine(target);
+        }
+
+        private static string GetInteractionLine(IAttendable target)
+        {
+            var dayCycle = DayCycleManager.Instance;
+            if (target.RequiresStamina && dayCycle != null && !dayCycle.HasStamina)
+            {
+                return "Too late to start that now.";
+            }
+
+            return target.GetOverlayInteractionLine();
         }
 
         private static string BuildProgressBar(float progress01)

@@ -1,3 +1,4 @@
+using Mossmark.Day;
 using UnityEngine;
 
 namespace Mossmark.Attention
@@ -73,6 +74,13 @@ namespace Mossmark.Attention
             var target = CurrentTarget;
             if (target == null || !target.CanAttend()) return;
 
+            // At zero stamina, a stamina-costing attention can't even start - the overlay
+            // already shows the "too late to start that now" line for this case.
+            if (target.RequiresStamina && DayCycleManager.Instance != null && !DayCycleManager.Instance.HasStamina)
+            {
+                return;
+            }
+
             attendingTarget = target;
             holdElapsed = 0f;
             HoldProgress01 = 0f;
@@ -113,6 +121,12 @@ namespace Mossmark.Attention
         private void CompleteAttention()
         {
             attendingTarget.OnAttentionComplete();
+
+            if (attendingTarget.RequiresStamina)
+            {
+                DayCycleManager.Instance?.SpendStamina();
+            }
+
             FinishAttending();
         }
 

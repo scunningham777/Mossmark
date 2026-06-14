@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 89d58b3a38a3d814d8669478ab9987ab, type: 3}
+  m_Name: DefaultAmbientText
+  m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Day.DayCycleAmbientTextData
+  entries:
+  - Phase: 0
+    Lines:
+    - The mist is just beginning to lift.
+  - Phase: 1
+    Lines:
+    - The morning is still young.
+  - Phase: 2
+    Lines:
+    - Midday now - the sun sits high and pale.
+  - Phase: 3
+    Lines:
+    - The afternoon stretches on, unhurried.
+  - Phase: 4
+    Lines:
+    - The light is turning gold. Evening's coming on.
+    - Shadows are lengthening across the fields.
+  - Phase: 5
+    Lines:
+    - The light is going. You should think about heading back.
+    - It's nearly too late to start anything new.
