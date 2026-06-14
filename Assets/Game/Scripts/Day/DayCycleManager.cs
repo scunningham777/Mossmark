@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using UnityEngine;
 
 namespace Mossmark.Day
@@ -19,14 +20,28 @@ namespace Mossmark.Day
 
         [SerializeField] private int maxStamina = 24;
         [SerializeField] private DayCycleAmbientTextData ambientTextData;
+        [SerializeField] private float transitionFadeDuration = 0.6f;
 
         public int MaxStamina => maxStamina;
         public int StaminaRemaining { get; private set; }
         public DayPhase CurrentPhase { get; private set; }
         public bool HasStamina => StaminaRemaining > 0;
 
+        // True for the full fade-out/reset/fade-in span of Rest(). PlayerController and
+        // AttentionManager both check this to lock movement/attention for its duration.
+        public bool IsTransitioning { get; private set; }
+
+        // 0 = scene fully visible, 1 = fully black. DayTransitionFadeUI reads this each
+        // frame, same "manager owns progress, UI just displays it" pattern as HoldProgress01.
+        public float FadeAmount01 { get; private set; }
+
         public event Action<int, int> StaminaChanged;
         public event Action<DayPhase> PhaseChanged;
+
+        // Fired once per Rest(), after stamina/phase reset but before the fade back in -
+        // the "reseed wilderness spots" hook deferred from Iteration 6. Tended-style spots
+        // subscribe to advance their mark -> wait -> harvest countdown.
+        public event Action DayAdvanced;
 
         private void Awake()
         {
@@ -49,8 +64,59 @@ namespace Mossmark.Day
             StaminaChanged?.Invoke(StaminaRemaining, maxStamina);
 
             var newPhase = GetPhase(StaminaRemaining);
-            if (newPhase == CurrentPhase) return;
+            if (newPhase != CurrentPhase)
+            {
+                SetPhase(newPhase);
+            }
+        }
 
+        // Bedroll's OnAttentionComplete entry point. Direct successor to P1's
+        // DayCycleManager.Rest(): fade to black, restore stamina and reset to Dawn,
+        // fade back in. IsTransitioning/FadeAmount01 drive the lock and the fade visual.
+        public void Rest()
+        {
+            if (IsTransitioning) return;
+
+            StartCoroutine(RestRoutine());
+        }
+
+        private IEnumerator RestRoutine()
+        {
+            IsTransitioning = true;
+
+            yield return Fade(0f, 1f);
+
+            StaminaRemaining = maxStamina;
+            StaminaChanged?.Invoke(StaminaRemaining, maxStamina);
+            SetPhase(DayPhase.Dawn);
+            DayAdvanced?.Invoke();
+
+            yield return Fade(1f, 0f);
+
+            IsTransitioning = false;
+        }
+
+        private IEnumerator Fade(float from, float to)
+        {
+            if (transitionFadeDuration <= 0f)
+            {
+                FadeAmount01 = to;
+                yield break;
+            }
+
+            float elapsed = 0f;
+            while (elapsed < transitionFadeDuration)
+            {
+                elapsed += Time.deltaTime;
+                FadeAmount01 = Mathf.Lerp(from, to, Mathf.Clamp01(elapsed / transitionFadeDuration));
+                yield return null;
+            }
+
+            FadeAmount01 = to;
+        }
+
+        private void SetPhase(DayPhase newPhase)
+        {
             CurrentPhase = newPhase;
             PhaseChanged?.Invoke(CurrentPhase);
 

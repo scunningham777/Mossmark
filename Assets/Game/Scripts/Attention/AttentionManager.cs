@@ -71,6 +71,10 @@ namespace Mossmark.Attention
         {
             if (State != AttentionState.InRange) return;
 
+            // Bedroll's Rest() locks attention (and movement, via PlayerController) for
+            // the duration of the day-transition fade.
+            if (DayCycleManager.Instance != null && DayCycleManager.Instance.IsTransitioning) return;
+
             var target = CurrentTarget;
             if (target == null || !target.CanAttend()) return;
 

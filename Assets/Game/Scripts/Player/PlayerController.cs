@@ -1,3 +1,4 @@
+using Mossmark.Day;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -48,6 +49,14 @@ namespace Mossmark.Player
 
         private void HandleInput()
         {
+            // Bedroll's Rest() locks movement (and attention, via AttentionManager) for
+            // the duration of the day-transition fade.
+            if (DayCycleManager.Instance != null && DayCycleManager.Instance.IsTransitioning)
+            {
+                movement = Vector2.zero;
+                return;
+            }
+
             movement = moveAction.ReadValue<Vector2>().normalized;
 
             if (movement != Vector2.zero)
