@@ -1,4 +1,6 @@
 using Mossmark.Day;
+using Mossmark.Development;
+using Mossmark.Inventory;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -105,6 +107,21 @@ namespace Mossmark.Attention
 
         private void Update()
         {
+            // The chest menu (ChestUI) covers the screen while open; don't show the
+            // attendable overlay underneath it.
+            if (ChestUI.Instance != null && ChestUI.Instance.IsOpen)
+            {
+                overlayRoot.style.display = DisplayStyle.None;
+                return;
+            }
+
+            // The Horizon panel (HorizonUI) covers the screen while open; same reasoning.
+            if (HorizonUI.Instance != null && HorizonUI.Instance.IsOpen)
+            {
+                overlayRoot.style.display = DisplayStyle.None;
+                return;
+            }
+
             var manager = AttentionManager.Instance;
 
             var target = manager == null ? null

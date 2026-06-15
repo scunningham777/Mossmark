@@ -1,4 +1,6 @@
 using Mossmark.Day;
+using Mossmark.Development;
+using Mossmark.Inventory;
 using UnityEngine;
 
 namespace Mossmark.Attention
@@ -77,6 +79,13 @@ namespace Mossmark.Attention
             // Bedroll's Rest() locks attention (and movement, via PlayerController) for
             // the duration of the day-transition fade.
             if (DayCycleManager.Instance != null && DayCycleManager.Instance.IsTransitioning) return;
+
+            // The chest menu (ChestUI) owns input while open; don't start a new hold
+            // underneath it.
+            if (ChestUI.Instance != null && ChestUI.Instance.IsOpen) return;
+
+            // The Horizon panel (HorizonUI) covers the screen while open; same reasoning.
+            if (HorizonUI.Instance != null && HorizonUI.Instance.IsOpen) return;
 
             var target = CurrentTarget;
             if (target == null || !target.CanAttend()) return;

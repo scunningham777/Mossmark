@@ -1,4 +1,6 @@
 using Mossmark.Day;
+using Mossmark.Development;
+using Mossmark.Inventory;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -52,6 +54,20 @@ namespace Mossmark.Player
             // Bedroll's Rest() locks movement (and attention, via AttentionManager) for
             // the duration of the day-transition fade.
             if (DayCycleManager.Instance != null && DayCycleManager.Instance.IsTransitioning)
+            {
+                movement = Vector2.zero;
+                return;
+            }
+
+            // The chest menu (ChestUI) owns input while open.
+            if (ChestUI.Instance != null && ChestUI.Instance.IsOpen)
+            {
+                movement = Vector2.zero;
+                return;
+            }
+
+            // The Horizon panel (HorizonUI) owns input while open.
+            if (HorizonUI.Instance != null && HorizonUI.Instance.IsOpen)
             {
                 movement = Vector2.zero;
                 return;

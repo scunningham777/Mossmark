@@ -22,6 +22,15 @@
                     "processors": "",
                     "interactions": "Hold",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "Horizon",
+                    "type": "Button",
+                    "id": "f4a1c9e2-3b5d-4e87-9a12-6d4f8b3c7a91",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -176,6 +185,17 @@
                     "processors": "",
                     "groups": "Gamepad",
                     "action": "Attend",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "7e2d4f81-9c3a-4b6e-8f15-2a7d9c6e4b30",
+                    "path": "<Keyboard>/tab",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Keyboard&Mouse",
+                    "action": "Horizon",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

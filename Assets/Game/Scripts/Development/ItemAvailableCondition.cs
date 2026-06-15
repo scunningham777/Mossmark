@@ -2,7 +2,7 @@ using Mossmark.Inventory;
 
 namespace Mossmark.Development
 {
-    // Item present in carry (or, once the chest exists, chest) above a quantity threshold.
+    // Item present in carry plus the settlement chest, combined, above a quantity threshold.
     public class ItemAvailableCondition : IDependencyCondition
     {
         private readonly ItemDefinition item;
@@ -16,8 +16,9 @@ namespace Mossmark.Development
 
         public bool IsSatisfied(DevelopableEntity entity)
         {
-            var inventory = InventoryManager.Instance;
-            return inventory != null && inventory.GetQuantity(item) >= quantity;
+            int carried = InventoryManager.Instance != null ? InventoryManager.Instance.GetQuantity(item) : 0;
+            int chested = ChestAttendable.Instance != null ? ChestAttendable.Instance.GetQuantity(item) : 0;
+            return carried + chested >= quantity;
         }
 
         public string GetNeedsDescription(DevelopableEntity entity)

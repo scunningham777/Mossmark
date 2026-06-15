@@ -91,7 +91,7 @@ namespace Mossmark.Development
 
             if (LastAttentionMadeProgress)
             {
-                InventoryManager.Instance?.RemoveItem(material, materialCostPerTick);
+                ConsumeMaterial(materialCostPerTick);
             }
             else
             {
@@ -103,6 +103,23 @@ namespace Mossmark.Development
 
         public void OnAttentionCancelled()
         {
+        }
+
+        // Draws from the player's pack first, then the settlement chest for any remainder -
+        // both count toward ItemAvailableCondition, so consumption must check both sources too.
+        private void ConsumeMaterial(int amount)
+        {
+            int remaining = amount;
+
+            if (InventoryManager.Instance != null)
+            {
+                remaining -= InventoryManager.Instance.RemoveItem(material, remaining);
+            }
+
+            if (remaining > 0 && ChestAttendable.Instance != null)
+            {
+                ChestAttendable.Instance.Withdraw(material, remaining);
+            }
         }
 
         private void RollTickInterval()
