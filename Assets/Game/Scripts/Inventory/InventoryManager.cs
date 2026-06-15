@@ -74,6 +74,20 @@ namespace Mossmark.Inventory
             return totalAdded;
         }
 
+        // Returns how many units were carried away. Used by Wandering Things' negative
+        // outcome ("lose all carried items") - a full wipe rather than a per-item removal.
+        public int ClearInventory()
+        {
+            int total = 0;
+            foreach (var stack in stacks) total += stack.Quantity;
+
+            if (total <= 0) return 0;
+
+            stacks.Clear();
+            InventoryChanged?.Invoke();
+            return total;
+        }
+
         // Returns how many units were actually removed (capped at what's carried);
         // emptied stacks are removed entirely.
         public int RemoveItem(ItemDefinition item, int quantity)

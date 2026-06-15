@@ -67,7 +67,7 @@ namespace Mossmark.World
 
         public void OnAttentionComplete()
         {
-            continueAttending = !RollYield();
+            continueAttending = !ItemYieldRoller.Roll(displayName, "foraged", commonYields, rareYield, rareDropChance);
             RollTickInterval();
         }
 
@@ -78,58 +78,6 @@ namespace Mossmark.World
         private void RollTickInterval()
         {
             currentTickInterval = UnityEngine.Random.Range(minTickInterval, maxTickInterval);
-        }
-
-        // Returns true if this tick's roll hit the rare drop - the signal for the
-        // interrupt that ends the hold.
-        private bool RollYield()
-        {
-            var inventory = InventoryManager.Instance;
-            if (inventory == null) return false;
-
-            var picked = PickWeighted(commonYields);
-            if (picked != null && picked.Item != null)
-            {
-                int qty = UnityEngine.Random.Range(picked.MinQuantity, picked.MaxQuantity + 1);
-                int added = inventory.AddItem(picked.Item, qty);
-                Debug.Log(added > 0
-                    ? $"{displayName}: foraged {added}x {picked.Item.DisplayName}."
-                    : $"{displayName}: found {picked.Item.DisplayName}, but there's no room to carry it.", this);
-            }
-
-            if (rareYield != null && rareYield.Item != null && UnityEngine.Random.value < rareDropChance)
-            {
-                int qty = UnityEngine.Random.Range(rareYield.MinQuantity, rareYield.MaxQuantity + 1);
-                int added = inventory.AddItem(rareYield.Item, qty);
-                if (added > 0)
-                {
-                    Debug.Log($"{displayName}: found a rare {added}x {rareYield.Item.DisplayName}!", this);
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        private static ItemYield PickWeighted(ItemYield[] yields)
-        {
-            if (yields == null || yields.Length == 0) return null;
-
-            float total = 0f;
-            foreach (var entry in yields) total += Mathf.Max(0f, entry.Weight);
-
-            if (total <= 0f) return null;
-
-            float roll = UnityEngine.Random.value * total;
-            float cumulative = 0f;
-
-            foreach (var entry in yields)
-            {
-                cumulative += Mathf.Max(0f, entry.Weight);
-                if (roll <= cumulative) return entry;
-            }
-
-            return yields[^1];
         }
     }
 }

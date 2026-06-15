@@ -97,6 +97,7 @@ namespace Mossmark.Development
             {
                 specializedName = $"{genericName} the {info.Title}";
                 if (spriteRenderer != null) spriteRenderer.color = info.Tint;
+                RealizedSpecializations.Declare(stage.Id);
             }
             else
             {

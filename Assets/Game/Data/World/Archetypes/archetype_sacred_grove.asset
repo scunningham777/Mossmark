@@ -32,3 +32,18 @@ MonoBehaviour:
   stageDisplayName: Take Up Hedge-Craft
   npcTitle: Hedge Witch
   npcTint: {r: 0.5, g: 0.35, b: 0.6, a: 1}
+  poiDisplayName: Deep Wood Shrine - Inner Grove
+  poiLockedDescription: A ring of standing stones marks an inner grove, but the way feels closed to you.
+  poiVerb: approach the inner grove
+  poiColor: {r: 0.2, g: 0.13, b: 0.27, a: 1}
+  poiCommonYields:
+  - Item: {fileID: 11400000, guid: 71fa745212e8453ab3779c7a6a7cfc84, type: 2}
+    MinQuantity: 1
+    MaxQuantity: 2
+    Weight: 1
+  poiRareYield:
+    Item: {fileID: 11400000, guid: 71e172de7d9e42918355875ed3e81f72, type: 2}
+    MinQuantity: 1
+    MaxQuantity: 1
+    Weight: 1
+  poiRareDropChance: 0.05

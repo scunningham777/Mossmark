@@ -32,3 +32,18 @@ MonoBehaviour:
   stageDisplayName: Take Up Stonework
   npcTitle: Stonemason
   npcTint: {r: 0.6, g: 0.62, b: 0.68, a: 1}
+  poiDisplayName: Old Quarry Cut
+  poiLockedDescription: A collapsed cut leads deeper into the quarry wall, blocked by rubble.
+  poiVerb: dig through the rubble
+  poiColor: {r: 0.4, g: 0.4, b: 0.46, a: 1}
+  poiCommonYields:
+  - Item: {fileID: 11400000, guid: db47a92646d94a099e15f27dbe2a5891, type: 2}
+    MinQuantity: 1
+    MaxQuantity: 2
+    Weight: 1
+  poiRareYield:
+    Item: {fileID: 11400000, guid: 201486684836449b8f900b7942899034, type: 2}
+    MinQuantity: 1
+    MaxQuantity: 1
+    Weight: 1
+  poiRareDropChance: 0.05

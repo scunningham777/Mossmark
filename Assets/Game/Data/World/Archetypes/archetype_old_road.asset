@@ -32,3 +32,18 @@ MonoBehaviour:
   stageDisplayName: Take Up the Herald's Watch
   npcTitle: Herald
   npcTint: {r: 0.75, g: 0.7, b: 0.5, a: 1}
+  poiDisplayName: Old Road Checkpoint
+  poiLockedDescription: A sealed cairn of stones stands beside the road, untouched for generations.
+  poiVerb: search the ruins
+  poiColor: {r: 0.62, g: 0.58, b: 0.45, a: 1}
+  poiCommonYields:
+  - Item: {fileID: 11400000, guid: 1066a13ea81de794aa4f4ff5491bcebc, type: 2}
+    MinQuantity: 1
+    MaxQuantity: 2
+    Weight: 1
+  poiRareYield:
+    Item: {fileID: 11400000, guid: db27dc7b4b884947baa040377bc5d03c, type: 2}
+    MinQuantity: 1
+    MaxQuantity: 1
+    Weight: 1
+  poiRareDropChance: 0.05

@@ -24,6 +24,20 @@ namespace Mossmark.World
         [SerializeField] private string npcTitle;
         [SerializeField] private Color npcTint = Color.white;
 
+        // Iteration 13: the archetype's POI - "inaccessible until its gating dependency
+        // is satisfied, then attendable with its distinctive yield" per PROTOTYPE2.md
+        // Section 6. The gate is built by WorldGenerator from SpecializationId/NpcTitle
+        // above (a SpecializationRealizedCondition), so this POI only opens up once this
+        // archetype's own NPC specialization exists in town.
+        [Header("Point of Interest")]
+        [SerializeField] private string poiDisplayName;
+        [SerializeField] private string poiLockedDescription;
+        [SerializeField] private string poiVerb = "search";
+        [SerializeField] private Color poiColor = Color.white;
+        [SerializeField] private ItemYield[] poiCommonYields;
+        [SerializeField] private ItemYield poiRareYield;
+        [SerializeField, Range(0f, 1f)] private float poiRareDropChance = 0.05f;
+
         public string ArchetypeId => archetypeId;
         public string DisplayName => displayName;
 
@@ -41,5 +55,13 @@ namespace Mossmark.World
         public string StageDisplayName => stageDisplayName;
         public string NpcTitle => npcTitle;
         public Color NpcTint => npcTint;
+
+        public string PoiDisplayName => poiDisplayName;
+        public string PoiLockedDescription => poiLockedDescription;
+        public string PoiVerb => poiVerb;
+        public Color PoiColor => poiColor;
+        public ItemYield[] PoiCommonYields => poiCommonYields;
+        public ItemYield PoiRareYield => poiRareYield;
+        public float PoiRareDropChance => poiRareDropChance;
     }
 }

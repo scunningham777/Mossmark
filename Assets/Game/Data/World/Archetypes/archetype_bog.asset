@@ -32,3 +32,18 @@ MonoBehaviour:
   stageDisplayName: Take Up Bog-Tending
   npcTitle: Bog Keeper
   npcTint: {r: 0.3, g: 0.4, b: 0.25, a: 1}
+  poiDisplayName: Fen Bog Hollow
+  poiLockedDescription: A shape rests beneath the dark water, just out of reach.
+  poiVerb: dredge
+  poiColor: {r: 0.16, g: 0.2, b: 0.15, a: 1}
+  poiCommonYields:
+  - Item: {fileID: 11400000, guid: 5c848dfe76124c76b3010becc8cf85fc, type: 2}
+    MinQuantity: 1
+    MaxQuantity: 2
+    Weight: 1
+  poiRareYield:
+    Item: {fileID: 11400000, guid: 1cc1d330c57b43358132cf3b12f9fcfb, type: 2}
+    MinQuantity: 1
+    MaxQuantity: 1
+    Weight: 1
+  poiRareDropChance: 0.05

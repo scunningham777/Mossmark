@@ -1461,7 +1461,8 @@ MonoBehaviour:
   materialCostPerTick: 1
   progressCost: 3
   declaredSpecialization: smith
-  tickInterval: 0.5
+  minTickInterval: 2
+  maxTickInterval: 3
   revivedTint: {r: 1, g: 0.85, b: 0.5, a: 1}
 --- !u!114 &900400003
 MonoBehaviour:
@@ -1809,6 +1810,10 @@ MonoBehaviour:
   - {x: -6, y: 0}
   - {x: -6, y: -3}
   buildingPosition: {x: 0, y: 6}
+  poiPositions:
+  - {x: -9, y: 3}
+  - {x: -9, y: 0}
+  - {x: -9, y: -3}
 --- !u!4 &900600003
 Transform:
   m_ObjectHideFlags: 0
@@ -1816,6 +1821,81 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 900600001}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &900700001
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 900700003}
+  - component: {fileID: 900700002}
+  m_Layer: 0
+  m_Name: Wandering Thing Spawner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &900700002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 900700001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bcc322c7df5a7324ebd110afc9cee251, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Mossmark.World.WanderingThingSpawner
+  displayName: Wary Traveler
+  approachDescription: A traveler lingers at the path's edge, watching you with wary
+    eyes.
+  attendVerb: approach
+  color: {r: 0.5, g: 0.45, b: 0.55, a: 1}
+  colliderRadius: 0.5
+  goodYields:
+  - Item: {fileID: 11400000, guid: 1066a13ea81de794aa4f4ff5491bcebc, type: 2}
+    MinQuantity: 1
+    MaxQuantity: 2
+    Weight: 1
+  - Item: {fileID: 11400000, guid: 4f53be0c9d7940a6b8213bb827ef3635, type: 2}
+    MinQuantity: 1
+    MaxQuantity: 3
+    Weight: 1
+  goodFlavor: decides you mean no harm, and presses something into your hand before
+    moving on.
+  badFlavor: bolts, snatching everything from your pack as they go.
+  badDaylightCost: 1
+  baseGoodChance: 0.5
+  goodChanceBonus: 0.3
+  minLifespan: 20
+  maxLifespan: 35
+  minSpawnDelay: 5
+  maxSpawnDelay: 15
+  spawnPositions:
+  - {x: -6, y: -6}
+  - {x: -3, y: -6}
+  - {x: 0, y: -6}
+  - {x: 3, y: -6}
+  - {x: 6, y: -6}
+--- !u!4 &900700003
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 900700001}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -2157,7 +2237,8 @@ MonoBehaviour:
     MaxQuantity: 1
     Weight: 1
   rareDropChance: 0.08
-  tickInterval: 0.5
+  minTickInterval: 1.5
+  maxTickInterval: 2
 --- !u!114 &1600088225
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2391,7 +2472,8 @@ MonoBehaviour:
     MaxQuantity: 1
     Weight: 1
   rareDropChance: 0.08
-  tickInterval: 0.5
+  minTickInterval: 1.5
+  maxTickInterval: 2
 --- !u!114 &2054293847
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2620,3 +2702,4 @@ SceneRoots:
   - {fileID: 900400007}
   - {fileID: 900500007}
   - {fileID: 900600003}
+  - {fileID: 900700003}

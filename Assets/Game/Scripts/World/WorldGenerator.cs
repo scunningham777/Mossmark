@@ -28,6 +28,12 @@ namespace Mossmark.World
         };
         [SerializeField] private Vector2 buildingPosition = new(0, 6);
 
+        // One column further west than the wilderness spots, kept clear of everything else.
+        [SerializeField] private Vector2[] poiPositions =
+        {
+            new(-9, 3), new(-9, 0), new(-9, -3)
+        };
+
         public static IReadOnlyList<PlaceArchetype> SelectedArchetypes { get; private set; } = Array.Empty<PlaceArchetype>();
 
         private void Awake()
@@ -52,6 +58,7 @@ namespace Mossmark.World
         {
             SpawnWildernessSpots();
             SpawnBuilding();
+            SpawnPois();
         }
 
         private static List<PlaceArchetype> SelectArchetypes(RegionData data)
@@ -121,6 +128,43 @@ namespace Mossmark.World
                 materialCostPerTick: 1, progressCost: 2, minTickInterval: 2f, maxTickInterval: 3f,
                 revivedTint: new Color(0.8f, 0.7f, 0.5f, 1f),
                 declaredSpecialization: archetype.SpecializationId);
+
+            go.AddComponent<AttendableZone>();
+
+            go.SetActive(true);
+        }
+
+        private void SpawnPois()
+        {
+            for (int i = 0; i < SelectedArchetypes.Count && i < poiPositions.Length; i++)
+            {
+                SpawnPoi(SelectedArchetypes[i], poiPositions[i]);
+            }
+        }
+
+        // Iteration 13: one POI per selected archetype, "inaccessible until its gating
+        // dependency is satisfied, then attendable with its distinctive yield" per
+        // PROTOTYPE2.md Section 6. The gate is a SpecializationRealizedCondition against
+        // this archetype's own SpecializationId - the POI opens once an NPC has realized
+        // that specialization (e.g. a Bog Keeper), mirroring Iteration 11's
+        // SpecializationNeededCondition in the opposite direction.
+        private void SpawnPoi(PlaceArchetype archetype, Vector2 position)
+        {
+            var go = new GameObject(archetype.PoiDisplayName);
+            go.SetActive(false);
+            go.transform.position = position;
+
+            go.AddComponent<SpriteRenderer>();
+            go.AddComponent<TriangleSpriteGenerator>().Initialize(archetype.PoiColor);
+            go.AddComponent<CircleCollider2D>().radius = colliderRadius;
+
+            var gate = new SpecializationRealizedCondition(archetype.SpecializationId,
+                $"needs a {archetype.NpcTitle} in town");
+
+            go.AddComponent<PoiAttendable>().Initialize(
+                archetype.PoiDisplayName, archetype.PoiLockedDescription, archetype.PoiVerb,
+                archetype.PoiCommonYields, archetype.PoiRareYield, archetype.PoiRareDropChance,
+                1.5f, 2f, gate);
 
             go.AddComponent<AttendableZone>();
 
