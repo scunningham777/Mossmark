@@ -30,11 +30,11 @@ namespace Mossmark.World
         [SerializeField, Min(0f)] private float minSpawnDelay = 5f;
         [SerializeField, Min(0f)] private float maxSpawnDelay = 15f;
 
-        // Kept clear of the Iteration 1-13 layout (x in [-9, 6], y in [-3, 6]): a row
-        // along the southern edge.
+        // A row along the wilderness's southern edge, well clear of WorldLayoutGenerator's
+        // town bounds.
         [SerializeField] private Vector2[] spawnPositions =
         {
-            new(-6, -6), new(-3, -6), new(0, -6), new(3, -6), new(6, -6)
+            new(-20, -25), new(-10, -25), new(0, -25), new(10, -25), new(20, -25)
         };
 
         private string favorableSpecializationId;

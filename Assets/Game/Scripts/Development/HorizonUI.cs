@@ -1,5 +1,6 @@
 using Mossmark.Attention;
 using Mossmark.Inventory;
+using Mossmark.World;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
@@ -23,6 +24,7 @@ namespace Mossmark.Development
         private VisualElement needsList;
         private FontDefinition fallbackFont;
         private InputAction toggleAction;
+        private Transform player;
 
         private void Awake()
         {
@@ -57,6 +59,12 @@ namespace Mossmark.Development
             fallbackFont = FontDefinition.FromFont(Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf"));
 
             BuildLayout(uiDocument.rootVisualElement);
+        }
+
+        private void Start()
+        {
+            var playerObj = GameObject.FindGameObjectWithTag("Player");
+            if (playerObj != null) player = playerObj.transform;
         }
 
         private void BuildLayout(VisualElement uiRoot)
@@ -207,6 +215,18 @@ namespace Mossmark.Development
 
         private void Update()
         {
+            // The Horizon is town business - if the player wanders into the wilderness
+            // while it's open, close it rather than leaving it stuck open out there.
+            if (player != null && !WorldLayoutGenerator.IsInTown(player.position))
+            {
+                if (IsOpen)
+                {
+                    IsOpen = false;
+                    root.style.display = DisplayStyle.None;
+                }
+                return;
+            }
+
             if (!toggleAction.WasPerformedThisFrame()) return;
 
             // The chest menu (ChestUI) owns input while open; don't open the Horizon

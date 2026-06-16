@@ -20,18 +20,18 @@ namespace Mossmark.World
         [SerializeField] private float colliderRadius = 0.5f;
         [SerializeField] private ItemDefinition buildingMaterial;
 
-        // Kept clear of the Iteration 1-11 hand-placed entities, which occupy roughly
-        // x in [-3, 6], y in [-3, 3].
+        // A column out in the wilderness, well clear of WorldLayoutGenerator's town
+        // bounds (the hand-placed buildings/NPCs/bedroll/chest all live within those).
         [SerializeField] private Vector2[] wildernessSpotPositions =
         {
-            new(-6, 3), new(-6, 0), new(-6, -3)
+            new(-20, 10), new(-20, 0), new(-20, -10)
         };
         [SerializeField] private Vector2 buildingPosition = new(0, 6);
 
-        // One column further west than the wilderness spots, kept clear of everything else.
+        // One column further west than the wilderness spots, near the wilderness edge.
         [SerializeField] private Vector2[] poiPositions =
         {
-            new(-9, 3), new(-9, 0), new(-9, -3)
+            new(-28, 10), new(-28, 0), new(-28, -10)
         };
 
         public static IReadOnlyList<PlaceArchetype> SelectedArchetypes { get; private set; } = Array.Empty<PlaceArchetype>();
