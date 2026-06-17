@@ -1,5 +1,6 @@
 using System;
 using Mossmark.Attention;
+using Mossmark.Development;
 using Mossmark.Inventory;
 using UnityEngine;
 
@@ -67,7 +68,10 @@ namespace Mossmark.World
 
         public void OnAttentionComplete()
         {
-            continueAttending = !ItemYieldRoller.Roll(displayName, "foraged", commonYields, rareYield, rareDropChance);
+            var request = new OutcomeRequest();
+            new TwilightChanceModifier(1.5f).Apply(request);
+            float effectiveRareChance = rareDropChance * request.ChanceMultiplier;
+            continueAttending = !ItemYieldRoller.Roll(displayName, "foraged", commonYields, rareYield, effectiveRareChance);
             RollTickInterval();
         }
 

@@ -66,7 +66,8 @@ namespace Mossmark.Development
             return true;
         }
 
-        private DevelopmentStage GetNextStage()
+        // Protected so NpcAttendable can detect "fully developed" (null) for overlay text.
+        protected DevelopmentStage GetNextStage()
         {
             foreach (var stage in Track.Stages)
             {
@@ -75,6 +76,10 @@ namespace Mossmark.Development
 
             return null;
         }
+
+        // Lets subclasses seal pool stages that were not drawn in a random pick,
+        // so GetNextStage() advances past them to the drawn specialization's own stages.
+        public void MarkStageAsApplied(string stageId) => appliedStageIds.Add(stageId);
 
         // True if attending right now would be productive: the next not-yet-applied
         // stage exists and its dependencies are currently satisfied. Single-stage

@@ -1,9 +1,15 @@
+using Mossmark.Inventory;
 using UnityEngine;
 
 namespace Mossmark.World
 {
     // Iteration 12: a self-contained bundle of wilderness-spot data and the building/NPC
     // specializations that place implies, per IDEAS.md's "Place Archetypes" framing.
+    //
+    // Content pass: added Building section with stage 1 (revival) and stage 2 (development)
+    // data. Stage 2 material reuses PoiCommonYields[0] — the former-rare wilderness item
+    // that becomes the POI's common yield — so the building's second upgrade is naturally
+    // gated behind POI access.
     [CreateAssetMenu(fileName = "PlaceArchetype", menuName = "Mossmark/World/Place Archetype")]
     public class PlaceArchetype : ScriptableObject
     {
@@ -24,11 +30,6 @@ namespace Mossmark.World
         [SerializeField] private string npcTitle;
         [SerializeField] private Color npcTint = Color.white;
 
-        // Iteration 13: the archetype's POI - "inaccessible until its gating dependency
-        // is satisfied, then attendable with its distinctive yield" per PROTOTYPE2.md
-        // Section 6. The gate is built by WorldGenerator from SpecializationId/NpcTitle
-        // above (a SpecializationRealizedCondition), so this POI only opens up once this
-        // archetype's own NPC specialization exists in town.
         [Header("Point of Interest")]
         [SerializeField] private string poiDisplayName;
         [SerializeField] private string poiLockedDescription;
@@ -37,6 +38,26 @@ namespace Mossmark.World
         [SerializeField] private ItemYield[] poiCommonYields;
         [SerializeField] private ItemYield poiRareYield;
         [SerializeField, Range(0f, 1f)] private float poiRareDropChance = 0.05f;
+
+        // Building stage 1: revival via the archetype's wilderness-spot material.
+        // Building stage 2: development via PoiCommonYields[0] — becomes available once
+        // the NPC specializes (which also opens the POI), so the stage 2 material is
+        // naturally something the player can now gather. WorldGenerator reads PoiCommonYields
+        // directly for stage 2 material rather than duplicating the reference here.
+        [Header("Building")]
+        [SerializeField] private string buildingDilapidatedName;
+        [SerializeField] private string buildingRevivedName;
+        [SerializeField] private string buildingRepairVerb = "repair";
+        [SerializeField] private Color buildingDilapidatedColor = new(0.35f, 0.3f, 0.28f, 1f);
+        [SerializeField] private ItemDefinition buildingMaterial;
+        [SerializeField, Min(1)] private int buildingMaterialCostPerTick = 2;
+        [SerializeField, Min(1)] private int buildingProgressCost = 6;
+        [SerializeField] private Color buildingRevivedTint = new(0.5f, 0.5f, 0.45f, 1f);
+        [SerializeField] private string buildingStage2DisplayName;
+        [SerializeField] private string buildingStage2Verb = "develop";
+        [SerializeField, Min(1)] private int buildingStage2MaterialCostPerTick = 2;
+        [SerializeField, Min(1)] private int buildingStage2ProgressCost = 4;
+        [SerializeField] private Color buildingStage2Tint = Color.clear;
 
         public string ArchetypeId => archetypeId;
         public string DisplayName => displayName;
@@ -48,9 +69,6 @@ namespace Mossmark.World
         public ItemYield RareYield => rareYield;
         public float RareDropChance => rareDropChance;
 
-        // Shared between a building's declared specialization (when this archetype is the
-        // bias for a spawned building) and the corresponding NPC track stage's Id - matches
-        // DeclaredSpecializationNeeds/SpecializationNeededCondition's existing id scheme.
         public string SpecializationId => specializationId;
         public string StageDisplayName => stageDisplayName;
         public string NpcTitle => npcTitle;
@@ -63,5 +81,19 @@ namespace Mossmark.World
         public ItemYield[] PoiCommonYields => poiCommonYields;
         public ItemYield PoiRareYield => poiRareYield;
         public float PoiRareDropChance => poiRareDropChance;
+
+        public string BuildingDilapidatedName => buildingDilapidatedName;
+        public string BuildingRevivedName => buildingRevivedName;
+        public string BuildingRepairVerb => buildingRepairVerb;
+        public Color BuildingDilapidatedColor => buildingDilapidatedColor;
+        public ItemDefinition BuildingMaterial => buildingMaterial;
+        public int BuildingMaterialCostPerTick => buildingMaterialCostPerTick;
+        public int BuildingProgressCost => buildingProgressCost;
+        public Color BuildingRevivedTint => buildingRevivedTint;
+        public string BuildingStage2DisplayName => buildingStage2DisplayName;
+        public string BuildingStage2Verb => buildingStage2Verb;
+        public int BuildingStage2MaterialCostPerTick => buildingStage2MaterialCostPerTick;
+        public int BuildingStage2ProgressCost => buildingStage2ProgressCost;
+        public Color BuildingStage2Tint => buildingStage2Tint;
     }
 }

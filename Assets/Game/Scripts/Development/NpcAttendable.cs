@@ -6,30 +6,36 @@ using UnityEngine;
 namespace Mossmark.Development
 {
     // Iteration 10: an unspecialized NPC develops via repeated attention. Each productive
-    // tick is "spending time" with them - TimeCondition makes every tick productive
-    // (RequiresDaylight, ContinueAttending) until PendingProgress reaches progressCost,
-    // at which point TryApplyStage's existing random-among-available selection draws a
-    // specialization from this universal track (interrupting the hold, per Development
-    // Application's threshold-crossing rule).
+    // tick is "spending time" with them - TimeCondition makes every tick productive until
+    // PendingProgress reaches progressCost, at which point TryApplyStage's random-among-
+    // available selection draws a specialization (interrupting the hold).
+    //
+    // Iteration 17: two archetype specializations (hedge_witch, bog_keeper) have post-spec
+    // development stages gated by item availability; pool-sealing lets GetNextStage() reach
+    // those stages after the spec draws.
+    //
+    // Content pass: "smith" removed from universal pool (folded into Old Quarry archetype
+    // as "stonemason"). progressCost raised to 8 to give the player time to set up a
+    // building direction before specialization fires. Herald archetype gains post-spec stages.
     public class NpcAttendable : DevelopableEntity, IAttendable
     {
         [SerializeField] private string genericName = "Wanderer";
-        [SerializeField, Min(1)] private int progressCost = 4;
+        [SerializeField, Min(1)] private int progressCost = 8;
         [SerializeField, Min(0.1f)] private float tickInterval = 0.5f;
 
         private DevelopmentTrack track;
         private SpriteRenderer spriteRenderer;
         private string specializedName;
+        private string drawnSpecializationId;
+        private List<string> poolStageIds;
+        private Dictionary<string, List<string>> postSpecStageIdsBySpecId;
         private Dictionary<string, (string Title, Color Tint)> specializationInfo;
 
-        public override string DisplayName => CurrentStageIndex >= 0 ? specializedName : genericName;
+        public override string DisplayName => drawnSpecializationId != null ? specializedName : genericName;
         protected override DevelopmentTrack Track => track;
 
         public float AttentionDuration => tickInterval;
         public bool RequiresDaylight => LastAttentionMadeProgress;
-
-        // A productive, non-applying tick continues the hold; the specialization-drawing
-        // tick interrupts it, same shape as BuildingAttendable's revival tick.
         public bool ContinueAttending => LastAttentionMadeProgress && !LastAttentionAppliedStage;
 
         private void Awake()
@@ -38,36 +44,46 @@ namespace Mossmark.Development
 
             specializationInfo = new Dictionary<string, (string Title, Color Tint)>
             {
-                ["forager"] = ("Forager", new Color(0.5f, 0.7f, 0.3f, 1f)),
+                ["forager"]   = ("Forager",   new Color(0.5f, 0.7f, 0.3f, 1f)),
                 ["caretaker"] = ("Caretaker", new Color(0.8f, 0.6f, 0.8f, 1f)),
-                ["tinkerer"] = ("Tinkerer", new Color(0.7f, 0.6f, 0.3f, 1f)),
-                ["smith"] = ("Smith", new Color(0.75f, 0.4f, 0.25f, 1f)),
+                ["tinkerer"]  = ("Tinkerer",  new Color(0.7f, 0.6f, 0.3f, 1f)),
             };
 
+            // Universal pool — available in any session, no building dep required.
             var stages = new List<DevelopmentStage>
             {
-                new("forager", "Take up Foraging", progressCost, new TimeCondition(progressCost)),
+                new("forager",   "Take up Foraging",   progressCost, new TimeCondition(progressCost)),
                 new("caretaker", "Take up Caretaking", progressCost, new TimeCondition(progressCost)),
-                new("tinkerer", "Take up Tinkering", progressCost, new TimeCondition(progressCost)),
-                // Only a candidate once a building declares demand for it (Iteration 11);
-                // placed before the archetype-derived stages so GetNextStage() still
-                // resolves to "forager" pre-specialization, keeping ticks 1-3's
-                // productivity/overlay text unaffected by this gate.
-                new("smith", "Take up Smithing", progressCost,
-                    new SpecializationNeededCondition("smith"), new TimeCondition(progressCost)),
+                new("tinkerer",  "Take up Tinkering",  progressCost, new TimeCondition(progressCost)),
             };
 
-            // Iteration 12: one additional stage per archetype selected for this session,
-            // gated the same way as "smith" above - each is only a candidate once a
-            // building declares demand for that archetype's specialization. This is how
-            // "NPC specialization pools derive from [archetype] selection".
+            poolStageIds = new List<string> { "forager", "caretaker", "tinkerer" };
+
+            // Archetype-specific pool stages added for each selected archetype. Gated by
+            // SpecializationNeededCondition so they only become candidates once the matching
+            // building declares demand. Same progressCost as universal stages so TryApplyStage's
+            // priority-filter (needed-stage wins over universal) fires at the same threshold.
             foreach (var archetype in WorldGenerator.SelectedArchetypes)
             {
                 if (string.IsNullOrEmpty(archetype.SpecializationId)) continue;
 
                 stages.Add(new DevelopmentStage(archetype.SpecializationId, archetype.StageDisplayName, progressCost,
-                    new SpecializationNeededCondition(archetype.SpecializationId), new TimeCondition(progressCost)));
+                    new SpecializationNeededCondition(archetype.SpecializationId),
+                    new TimeCondition(progressCost)));
+                poolStageIds.Add(archetype.SpecializationId);
                 specializationInfo[archetype.SpecializationId] = (archetype.NpcTitle, archetype.NpcTint);
+            }
+
+            // Post-spec stages appended after all pool stages so GetNextStage() still
+            // resolves to "forager" pre-specialization (ticks 1–(progressCost-1) unaffected).
+            postSpecStageIdsBySpecId = new Dictionary<string, List<string>>();
+            foreach (var archetype in WorldGenerator.SelectedArchetypes)
+            {
+                var postStages = BuildPostSpecStages(archetype);
+                if (postStages.Count == 0) continue;
+
+                stages.AddRange(postStages);
+                postSpecStageIdsBySpecId[archetype.SpecializationId] = postStages.ConvertAll(s => s.Id);
             }
 
             track = new DevelopmentTrack(stages.ToArray());
@@ -75,34 +91,122 @@ namespace Mossmark.Development
             OnDeveloped += HandleDeveloped;
         }
 
-        // Nothing further to do once specialized - this prototype draws once, per the
-        // "Specialized NPC's own further advancement: Unresolved" open question.
-        public bool CanAttend() => CurrentStageIndex < 0;
+        public bool CanAttend()
+        {
+            if (drawnSpecializationId == null) return true;
+            return CanMakeProgress();
+        }
 
         public string GetOverlayDescription() => DisplayName;
 
-        public string GetOverlayInteractionLine() => CurrentStageIndex >= 0
-            ? $"{specializedName} has found their place here."
-            : GetNeedsOrDefault($"Hold E to spend time with {genericName} - they need more time to find their place");
+        public string GetOverlayInteractionLine()
+        {
+            if (drawnSpecializationId == null)
+                return GetNeedsOrDefault($"Hold E to spend time with {genericName} - they need more time to find their place");
+
+            if (GetNextStage() == null)
+                return $"{specializedName} has found their place here.";
+
+            return GetNeedsOrDefault($"Hold E to help {specializedName} develop their craft further");
+        }
 
         public void OnAttentionComplete() => ResolveAttention();
 
-        public void OnAttentionCancelled()
-        {
-        }
+        public void OnAttentionCancelled() { }
 
         private void HandleDeveloped(DevelopmentStage stage)
         {
+            // --- Specialization draw ---
             if (specializationInfo.TryGetValue(stage.Id, out var info))
             {
+                drawnSpecializationId = stage.Id;
                 specializedName = $"{genericName} the {info.Title}";
                 if (spriteRenderer != null) spriteRenderer.color = info.Tint;
                 RealizedSpecializations.Declare(stage.Id);
+
+                foreach (var id in poolStageIds)
+                    if (id != stage.Id) MarkStageAsApplied(id);
+
+                foreach (var kvp in postSpecStageIdsBySpecId)
+                    if (kvp.Key != stage.Id)
+                        foreach (var stageId in kvp.Value)
+                            MarkStageAsApplied(stageId);
+
+                return;
             }
-            else
+
+            // --- Post-specialization stage ---
+            WorldState.SetFlag(stage.Id, true);
+            LogPostSpecEffect(stage);
+        }
+
+        private void LogPostSpecEffect(DevelopmentStage stage)
+        {
+            var message = stage.Id switch
             {
-                specializedName = genericName;
+                "hedge_witch_wound_lore" =>
+                    $"{specializedName}: learns Wound Lore - healing herbs ease the hurt of bad encounters.",
+                "hedge_witch_ravens_eye" =>
+                    $"{specializedName}: learns Raven's Eye Reading - the intent of wandering things becomes clearer before you approach.",
+                "bog_keeper_drainage" =>
+                    $"{specializedName}: clears Drainage Channels - the fen's margins grow more passable.",
+                "bog_keeper_iron_sense" =>
+                    $"{specializedName}: develops Iron-Sense - bog iron deposits reveal themselves more readily.",
+                "herald_trail_markers" =>
+                    $"{specializedName}: marks key paths and crossroads - travelers find the road safer.",
+                "herald_toll_records" =>
+                    $"{specializedName}: establishes toll records - the settlement's standing on the road grows.",
+                _ => $"{specializedName}: {stage.DisplayName}.",
+            };
+            Debug.Log(message, this);
+        }
+
+        private List<DevelopmentStage> BuildPostSpecStages(PlaceArchetype archetype)
+        {
+            var specId = archetype.SpecializationId;
+            var item1 = archetype.CommonYields?.Length > 0 ? archetype.CommonYields[0].Item : null;
+            var item2 = archetype.RareYield?.Item;
+
+            var stages = new List<DevelopmentStage>();
+            if (item1 == null) return stages;
+
+            switch (specId)
+            {
+                case "hedge_witch":
+                    stages.Add(new DevelopmentStage("hedge_witch_wound_lore", "Wound Lore", 3,
+                        new SpecializationRealizedCondition(specId, $"needs a {archetype.NpcTitle} in town"),
+                        new ItemAvailableCondition(item1, 2)));
+                    if (item2 != null)
+                        stages.Add(new DevelopmentStage("hedge_witch_ravens_eye", "Raven's Eye Reading", 4,
+                            new SpecializationRealizedCondition(specId, $"needs a {archetype.NpcTitle} in town"),
+                            new ItemAvailableCondition(item2, 2)));
+                    break;
+
+                case "bog_keeper":
+                    stages.Add(new DevelopmentStage("bog_keeper_drainage", "Drainage Channels", 3,
+                        new SpecializationRealizedCondition(specId, $"needs a {archetype.NpcTitle} in town"),
+                        new ItemAvailableCondition(item1, 3)));
+                    if (item2 != null)
+                        stages.Add(new DevelopmentStage("bog_keeper_iron_sense", "Iron-Sense", 4,
+                            new SpecializationRealizedCondition(specId, $"needs a {archetype.NpcTitle} in town"),
+                            new ItemAvailableCondition(item2, 2)));
+                    break;
+
+                case "herald":
+                    // Trail Markers: needs flint (wilderness common) - something gathered early.
+                    stages.Add(new DevelopmentStage("herald_trail_markers", "Trail Markers", 3,
+                        new SpecializationRealizedCondition(specId, $"needs a {archetype.NpcTitle} in town"),
+                        new ItemAvailableCondition(item1, 3)));
+                    // Toll Records: needs old coin (wilderness rare / POI common) - acquired
+                    // via the Old Road Checkpoint once the POI opens.
+                    if (item2 != null)
+                        stages.Add(new DevelopmentStage("herald_toll_records", "Toll Records", 4,
+                            new SpecializationRealizedCondition(specId, $"needs a {archetype.NpcTitle} in town"),
+                            new ItemAvailableCondition(item2, 2)));
+                    break;
             }
+
+            return stages;
         }
     }
 }

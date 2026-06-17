@@ -33,7 +33,9 @@ namespace Mossmark.Development
 
         public string GetOverlayDescription() => DisplayName;
 
-        public string GetOverlayInteractionLine() => GetNeedsOrDefault("Hold E to work on the cairn");
+        public string GetOverlayInteractionLine() => CurrentStageIndex >= 0
+            ? "The cairn stands repaired."
+            : GetNeedsOrDefault("Hold E to work on the cairn");
 
         public void OnAttentionComplete()
         {

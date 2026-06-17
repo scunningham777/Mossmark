@@ -47,3 +47,16 @@ MonoBehaviour:
     MaxQuantity: 1
     Weight: 1
   poiRareDropChance: 0.05
+  buildingDilapidatedName: Ruined Shrine
+  buildingRevivedName: Woodland Shrine
+  buildingRepairVerb: tend
+  buildingDilapidatedColor: {r: 0.3, g: 0.22, b: 0.38, a: 1}
+  buildingMaterial: {fileID: 11400000, guid: 29a23783858c4e4dae17e837841a7ad7, type: 2}
+  buildingMaterialCostPerTick: 2
+  buildingProgressCost: 6
+  buildingRevivedTint: {r: 0.52, g: 0.38, b: 0.62, a: 1}
+  buildingStage2DisplayName: Consecrate the Hearth
+  buildingStage2Verb: consecrate
+  buildingStage2MaterialCostPerTick: 2
+  buildingStage2ProgressCost: 4
+  buildingStage2Tint: {r: 0.62, g: 0.48, b: 0.72, a: 1}

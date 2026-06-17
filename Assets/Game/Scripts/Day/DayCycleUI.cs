@@ -36,6 +36,8 @@ namespace Mossmark.Day
                 manager.AmbientTextChanged += HandleAmbientTextChanged;
 
                 UpdatePhaseLabel(manager.CurrentPhase);
+                if (!string.IsNullOrEmpty(manager.CurrentAmbientText))
+                    HandleAmbientTextChanged(manager.CurrentAmbientText);
             }
         }
 

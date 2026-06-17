@@ -25,6 +25,7 @@ namespace Mossmark.Day
         public int MaxDaylight => maxDaylight;
         public int DaylightRemaining { get; private set; }
         public DayPhase CurrentPhase { get; private set; }
+        public string CurrentAmbientText { get; private set; }
         public bool HasDaylight => DaylightRemaining > 0;
 
         // True for the full fade-out/reset/fade-in span of Rest(). PlayerController and
@@ -55,6 +56,7 @@ namespace Mossmark.Day
             Instance = this;
             DaylightRemaining = maxDaylight;
             CurrentPhase = GetPhase(DaylightRemaining);
+            CurrentAmbientText = ambientTextData != null ? ambientTextData.GetTextForPhase(CurrentPhase) : null;
         }
 
         public void SpendDaylight(int amount = 1)
@@ -121,11 +123,11 @@ namespace Mossmark.Day
             CurrentPhase = newPhase;
             PhaseChanged?.Invoke(CurrentPhase);
 
-            string ambientText = ambientTextData != null ? ambientTextData.GetTextForPhase(CurrentPhase) : null;
-            if (!string.IsNullOrEmpty(ambientText))
+            CurrentAmbientText = ambientTextData != null ? ambientTextData.GetTextForPhase(CurrentPhase) : null;
+            if (!string.IsNullOrEmpty(CurrentAmbientText))
             {
-                Debug.Log($"[{CurrentPhase}] {ambientText}");
-                AmbientTextChanged?.Invoke(ambientText);
+                Debug.Log($"[{CurrentPhase}] {CurrentAmbientText}");
+                AmbientTextChanged?.Invoke(CurrentAmbientText);
             }
         }
 

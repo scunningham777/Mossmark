@@ -32,7 +32,9 @@ namespace Mossmark.Development
 
         public string GetOverlayDescription() => DisplayName;
 
-        public string GetOverlayInteractionLine() => GetNeedsOrDefault("Hold E to keep watch");
+        public string GetOverlayInteractionLine() => CurrentStageIndex >= 0
+            ? "The watch has been taken up."
+            : GetNeedsOrDefault("Hold E to keep watch");
 
         public void OnAttentionComplete()
         {

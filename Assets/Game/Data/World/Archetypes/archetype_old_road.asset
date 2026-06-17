@@ -47,3 +47,16 @@ MonoBehaviour:
     MaxQuantity: 1
     Weight: 1
   poiRareDropChance: 0.05
+  buildingDilapidatedName: Overgrown Waypost
+  buildingRevivedName: Waypost
+  buildingRepairVerb: clear
+  buildingDilapidatedColor: {r: 0.42, g: 0.4, b: 0.32, a: 1}
+  buildingMaterial: {fileID: 11400000, guid: 961a0538cbaf46f9a43f9aea11b18552, type: 2}
+  buildingMaterialCostPerTick: 2
+  buildingProgressCost: 6
+  buildingRevivedTint: {r: 0.65, g: 0.62, b: 0.5, a: 1}
+  buildingStage2DisplayName: Mark the Route
+  buildingStage2Verb: mark
+  buildingStage2MaterialCostPerTick: 2
+  buildingStage2ProgressCost: 4
+  buildingStage2Tint: {r: 0.75, g: 0.72, b: 0.58, a: 1}

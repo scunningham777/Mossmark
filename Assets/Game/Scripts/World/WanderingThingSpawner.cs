@@ -23,7 +23,6 @@ namespace Mossmark.World
         [SerializeField] private string badFlavor = "bolts, snatching everything from your pack as they go.";
         [SerializeField, Min(0)] private int badDaylightCost = 1;
         [SerializeField, Range(0f, 1f)] private float baseGoodChance = 0.5f;
-        [SerializeField, Range(0f, 1f)] private float goodChanceBonus = 0.3f;
 
         [SerializeField, Min(1f)] private float minLifespan = 20f;
         [SerializeField, Min(1f)] private float maxLifespan = 35f;
@@ -86,7 +85,7 @@ namespace Mossmark.World
             var attendable = go.AddComponent<WanderingThingAttendable>();
             attendable.Initialize(displayName, approachDescription, attendVerb,
                 goodYields, goodFlavor, badFlavor, badDaylightCost,
-                baseGoodChance, goodChanceBonus, favorableSpecializationId,
+                baseGoodChance, favorableSpecializationId,
                 lifespan, () => current = null);
 
             go.AddComponent<AttendableZone>();
