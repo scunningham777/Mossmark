@@ -71,7 +71,8 @@ namespace Mossmark.World
             var request = new OutcomeRequest();
             new TwilightChanceModifier(1.5f).Apply(request);
             float effectiveRareChance = rareDropChance * request.ChanceMultiplier;
-            continueAttending = !ItemYieldRoller.Roll(displayName, "foraged", commonYields, rareYield, effectiveRareChance);
+            continueAttending = true;
+            ItemYieldRoller.Roll(displayName, "foraged", commonYields, rareYield, effectiveRareChance);
             RollTickInterval();
         }
 

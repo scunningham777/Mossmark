@@ -5,10 +5,9 @@ using UnityEngine;
 
 namespace Mossmark.World
 {
-    // Iteration 14: keeps exactly one WanderingThingAttendable alive at a time -
-    // "static-with-lifespan ... roaming/pathing not required" per PROTOTYPE2.md.
-    // Spawns it at a random position from spawnPositions, waits for it to be resolved
-    // or to time out (the spawned instance reports this via the onGone callback), then
+    // Iteration 14: keeps exactly one WanderingThingAttendable alive at a time.
+    // Spawns it at a random wilderness position (minDistFromTown clear of town bounds),
+    // waits for it to be resolved or to time out (via the onGone callback), then
     // waits a random cooldown before spawning the next one.
     public class WanderingThingSpawner : MonoBehaviour
     {
@@ -28,13 +27,7 @@ namespace Mossmark.World
         [SerializeField, Min(1f)] private float maxLifespan = 35f;
         [SerializeField, Min(0f)] private float minSpawnDelay = 5f;
         [SerializeField, Min(0f)] private float maxSpawnDelay = 15f;
-
-        // A row along the wilderness's southern edge, well clear of WorldLayoutGenerator's
-        // town bounds.
-        [SerializeField] private Vector2[] spawnPositions =
-        {
-            new(-20, -25), new(-10, -25), new(0, -25), new(10, -25), new(20, -25)
-        };
+        [SerializeField, Min(0f)] private float minDistFromTown = 5f;
 
         private string favorableSpecializationId;
         private WanderingThingAttendable current;
@@ -71,7 +64,7 @@ namespace Mossmark.World
 
         private void Spawn()
         {
-            var position = spawnPositions[Random.Range(0, spawnPositions.Length)];
+            var position = FindSpawnPosition();
             float lifespan = Random.Range(minLifespan, maxLifespan);
 
             var go = new GameObject(displayName);
@@ -94,6 +87,27 @@ namespace Mossmark.World
 
             current = attendable;
             Debug.Log($"{displayName}: appears, watching the path.", go);
+        }
+
+        private Vector2 FindSpawnPosition(int maxAttempts = 50)
+        {
+            var wilderness = WorldLayoutGenerator.WildernessBounds;
+            var town = WorldLayoutGenerator.TownBounds;
+            // Expand town bounds outward to enforce a clear buffer zone.
+            var exclusion = new Rect(
+                town.xMin - minDistFromTown, town.yMin - minDistFromTown,
+                town.width + minDistFromTown * 2f, town.height + minDistFromTown * 2f);
+
+            for (int i = 0; i < maxAttempts; i++)
+            {
+                var candidate = new Vector2(
+                    Random.Range(wilderness.xMin, wilderness.xMax),
+                    Random.Range(wilderness.yMin, wilderness.yMax));
+                if (!exclusion.Contains(candidate))
+                    return candidate;
+            }
+            // Fallback: wilderness corner, always outside the town exclusion zone.
+            return new Vector2(wilderness.xMin + minDistFromTown, wilderness.yMin + minDistFromTown);
         }
     }
 }

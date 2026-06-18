@@ -75,7 +75,8 @@ namespace Mossmark.World
 
         public void OnAttentionComplete()
         {
-            continueAttending = !ItemYieldRoller.Roll(displayName, "found", commonYields, rareYield, rareDropChance);
+            continueAttending = true;
+            ItemYieldRoller.Roll(displayName, "found", commonYields, rareYield, rareDropChance);
             RollTickInterval();
         }
 

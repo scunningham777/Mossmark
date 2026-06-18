@@ -22,6 +22,6 @@ namespace Mossmark.Development
         }
 
         public string GetNeedsDescription(DevelopableEntity entity)
-            => $"needs {quantity}x {item?.DisplayName ?? "???"}";
+            => $"needs {item?.DisplayName ?? "???"}";
     }
 }

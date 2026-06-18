@@ -21,7 +21,8 @@ namespace Mossmark.Development
     {
         [SerializeField] private string genericName = "Wanderer";
         [SerializeField, Min(1)] private int progressCost = 8;
-        [SerializeField, Min(0.1f)] private float tickInterval = 0.5f;
+        [SerializeField, Min(0.1f)] private float minTickInterval = 1f;
+        [SerializeField, Min(0.1f)] private float maxTickInterval = 1.5f;
 
         private DevelopmentTrack track;
         private SpriteRenderer spriteRenderer;
@@ -30,17 +31,21 @@ namespace Mossmark.Development
         private List<string> poolStageIds;
         private Dictionary<string, List<string>> postSpecStageIdsBySpecId;
         private Dictionary<string, (string Title, Color Tint)> specializationInfo;
+        private float currentTickInterval;
 
         public override string DisplayName => drawnSpecializationId != null ? specializedName : genericName;
         protected override DevelopmentTrack Track => track;
 
-        public float AttentionDuration => tickInterval;
+        public float AttentionDuration => currentTickInterval;
         public bool RequiresDaylight => LastAttentionMadeProgress;
         public bool ContinueAttending => LastAttentionMadeProgress && !LastAttentionAppliedStage;
+
+        private float RollTickInterval() => Random.Range(minTickInterval, maxTickInterval);
 
         private void Awake()
         {
             spriteRenderer = GetComponent<SpriteRenderer>();
+            currentTickInterval = RollTickInterval();
 
             specializationInfo = new Dictionary<string, (string Title, Color Tint)>
             {
@@ -118,7 +123,11 @@ namespace Mossmark.Development
             return GetNeedsOrDefault($"Hold E to help {specializedName} develop their craft further");
         }
 
-        public void OnAttentionComplete() => ResolveAttention();
+        public void OnAttentionComplete()
+        {
+            ResolveAttention();
+            currentTickInterval = RollTickInterval();
+        }
 
         public void OnAttentionCancelled() { }
 

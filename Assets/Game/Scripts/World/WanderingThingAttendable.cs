@@ -3,6 +3,7 @@ using Mossmark.Attention;
 using Mossmark.Day;
 using Mossmark.Development;
 using Mossmark.Inventory;
+using Mossmark.Visuals;
 using UnityEngine;
 
 namespace Mossmark.World
@@ -97,11 +98,13 @@ namespace Mossmark.World
 
             if (UnityEngine.Random.value < goodChance)
             {
+                NotificationManager.Post($"{displayName}: {goodFlavor}");
                 Debug.Log($"{displayName}: {goodFlavor}", this);
                 ItemYieldRoller.Roll(displayName, "received", goodYields, null, 0f);
             }
             else
             {
+                NotificationManager.Post($"{displayName}: {badFlavor}");
                 Debug.Log($"{displayName}: {badFlavor}", this);
 
                 int lost = InventoryManager.Instance != null ? InventoryManager.Instance.ClearInventory() : 0;

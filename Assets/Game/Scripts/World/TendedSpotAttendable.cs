@@ -24,6 +24,18 @@ namespace Mossmark.World
         private int restsRemaining;
         private SpriteRenderer spriteRenderer;
 
+        // Procedural-spawn entry point (Iteration 18's WorldGenerator) - mirrors
+        // GenericWildernessSpotAttendable.Initialize(), called before SetActive(true).
+        public void Initialize(string displayName, string tendVerb, ItemYield harvestYield,
+            int restsToHarvest, int maxConcurrentMarked)
+        {
+            this.displayName = displayName;
+            this.tendVerb = tendVerb;
+            this.harvestYield = harvestYield;
+            this.restsToHarvest = restsToHarvest;
+            this.maxConcurrentMarked = maxConcurrentMarked;
+        }
+
         public float AttentionDuration => 2f;
 
         // AttentionManager.CompleteAttention reads RequiresDaylight *after* OnAttentionComplete,

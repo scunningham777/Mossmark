@@ -7,14 +7,12 @@ using UnityEngine;
 
 namespace Mossmark.World
 {
-    // Iteration 12: selects this session's PlaceArchetypes and spawns the wilderness
-    // spots/building/POIs that derive from that selection. Runs before every other Awake
-    // (NpcAttendable in particular) so SelectedArchetypes is populated before tracks
-    // are built.
-    //
-    // Content pass: spawns one building per selected archetype (replacing the single
-    // generic Workshop). buildingMaterial removed — each archetype now carries its own
-    // building material. buildingPositions is an array sized to match SelectedArchetypes.
+    // Selects this session's PlaceArchetypes and spawns all wilderness entities
+    // (archetype spots, buildings, POIs, and random generic/tended spots) using
+    // rejection-sampling placement so no two objects overlap. Runs before every
+    // other Awake (NpcAttendable in particular) so SelectedArchetypes is populated
+    // before tracks are built. WorldLayoutGenerator (-2000) runs first, so
+    // TownBounds/WildernessBounds are ready when Awake fires here.
     [DefaultExecutionOrder(-1000)]
     public class WorldGenerator : MonoBehaviour
     {
@@ -22,23 +20,25 @@ namespace Mossmark.World
         [SerializeField] private int seed;
         [SerializeField] private float colliderRadius = 0.5f;
 
-        [SerializeField] private Vector2[] wildernessSpotPositions =
-        {
-            new(-20, 10), new(-20, 0), new(-20, -10)
-        };
-
-        // One building per selected archetype — sized to ArchetypeSelectionCount (default 3).
+        // One building position per selected archetype — fixed in town.
         [SerializeField] private Vector2[] buildingPositions =
         {
             new(-5, 7), new(0, 7), new(5, 7)
         };
 
-        [SerializeField] private Vector2[] poiPositions =
-        {
-            new(-28, 10), new(-28, 0), new(-28, -10)
-        };
+        // Pool of generic/tended spot types to draw from for random placement.
+        [SerializeField] private WildernessSpotDefinition[] spotPool;
+        [SerializeField, Min(1)] private int minSpotCount = 10;
+        [SerializeField, Min(1)] private int maxSpotCount = 12;
+
+        // Minimum world-space distance between any two placed wilderness objects.
+        [SerializeField, Min(0f)] private float minSeparation = 2f;
 
         public static IReadOnlyList<PlaceArchetype> SelectedArchetypes { get; private set; } = Array.Empty<PlaceArchetype>();
+
+        // Tracks every position placed so far; used by FindValidPosition to enforce
+        // the minimum separation between all wilderness objects.
+        private readonly List<Vector2> placedPositions = new();
 
         private void Awake()
         {
@@ -63,6 +63,7 @@ namespace Mossmark.World
             SpawnWildernessSpots();
             SpawnBuildings();
             SpawnPois();
+            SpawnGenericWildernessSpots();
         }
 
         private static List<PlaceArchetype> SelectArchetypes(RegionData data)
@@ -81,10 +82,12 @@ namespace Mossmark.World
             return selected;
         }
 
+        // --- Archetype-driven spawns (positions randomized) ---
+
         private void SpawnWildernessSpots()
         {
-            for (int i = 0; i < SelectedArchetypes.Count && i < wildernessSpotPositions.Length; i++)
-                SpawnWildernessSpot(SelectedArchetypes[i], wildernessSpotPositions[i]);
+            foreach (var archetype in SelectedArchetypes)
+                SpawnWildernessSpot(archetype, FindValidPosition());
         }
 
         private void SpawnWildernessSpot(PlaceArchetype archetype, Vector2 position)
@@ -106,10 +109,8 @@ namespace Mossmark.World
             go.SetActive(true);
         }
 
-        // One building per selected archetype. Each archetype carries its own building
-        // data (dilapidatedName/revivedName/material/etc.) and stage 2 data. Stage 2
-        // material is always the archetype's PoiCommonYields[0] — the item that becomes
-        // gatherable once the NPC specializes and the POI opens.
+        // One building per selected archetype — still fixed in town so the settlement
+        // layout stays legible; only wilderness objects use random placement.
         private void SpawnBuildings()
         {
             for (int i = 0; i < SelectedArchetypes.Count && i < buildingPositions.Length; i++)
@@ -135,8 +136,6 @@ namespace Mossmark.World
                 archetype.BuildingMaterialCostPerTick, archetype.BuildingProgressCost,
                 2f, 3f, archetype.BuildingRevivedTint, archetype.SpecializationId);
 
-            // Stage 2: available once the NPC specializes (gated by SpecializationRealized)
-            // and costs the POI's common yield — naturally acquired once the POI opens.
             var stage2Mat = archetype.PoiCommonYields?.Length > 0 ? archetype.PoiCommonYields[0].Item : null;
             if (!string.IsNullOrEmpty(archetype.BuildingStage2DisplayName) && stage2Mat != null)
             {
@@ -155,8 +154,8 @@ namespace Mossmark.World
 
         private void SpawnPois()
         {
-            for (int i = 0; i < SelectedArchetypes.Count && i < poiPositions.Length; i++)
-                SpawnPoi(SelectedArchetypes[i], poiPositions[i]);
+            foreach (var archetype in SelectedArchetypes)
+                SpawnPoi(archetype, FindValidPosition());
         }
 
         private void SpawnPoi(PlaceArchetype archetype, Vector2 position)
@@ -180,6 +179,110 @@ namespace Mossmark.World
             go.AddComponent<AttendableZone>();
 
             go.SetActive(true);
+        }
+
+        // Randomly places 10-12 spots drawn from spotPool, enforcing minSeparation
+        // from every previously placed object.
+        private void SpawnGenericWildernessSpots()
+        {
+            if (spotPool == null || spotPool.Length == 0)
+            {
+                Debug.LogWarning("WorldGenerator: spotPool is empty — no generic wilderness spots spawned.", this);
+                return;
+            }
+
+            int count = UnityEngine.Random.Range(minSpotCount, maxSpotCount + 1);
+            for (int i = 0; i < count; i++)
+            {
+                var def = spotPool[UnityEngine.Random.Range(0, spotPool.Length)];
+                if (def == null) continue;
+
+                var pos = FindValidPosition();
+                SpawnSpotFromDefinition(def, pos);
+            }
+        }
+
+        private void SpawnSpotFromDefinition(WildernessSpotDefinition def, Vector2 position)
+        {
+            var go = new GameObject(def.displayName);
+            go.SetActive(false);
+            go.transform.position = position;
+
+            go.AddComponent<SpriteRenderer>();
+            go.AddComponent<TriangleSpriteGenerator>().Initialize(def.color);
+            go.AddComponent<CircleCollider2D>().radius = colliderRadius;
+
+            if (def.kind == WildernessSpotDefinition.SpotKind.Generic)
+            {
+                go.AddComponent<GenericWildernessSpotAttendable>().Initialize(
+                    def.displayName, def.interactionVerb,
+                    def.commonYields, def.rareYield, def.rareDropChance, 1.5f, 2f);
+            }
+            else
+            {
+                go.AddComponent<TendedSpotAttendable>().Initialize(
+                    def.displayName, def.tendVerb,
+                    def.harvestYield, def.restsToHarvest, def.maxConcurrentMarked);
+            }
+
+            go.AddComponent<AttendableZone>();
+
+            go.SetActive(true);
+        }
+
+        // --- Position utilities ---
+
+        // Rejection-sample a random point in the wilderness (outside town bounds)
+        // that is at least minSeparation units from every already-placed position.
+        // Falls back to the best candidate found after maxAttempts if none satisfies
+        // the full constraint — avoids infinite loops on very crowded maps.
+        private Vector2 FindValidPosition(int maxAttempts = 200)
+        {
+            var wb = WorldLayoutGenerator.WildernessBounds;
+            var tb = WorldLayoutGenerator.TownBounds;
+
+            Vector2 best = Vector2.zero;
+            float bestMinDist = -1f;
+
+            for (int i = 0; i < maxAttempts; i++)
+            {
+                var candidate = new Vector2(
+                    UnityEngine.Random.Range(wb.xMin, wb.xMax),
+                    UnityEngine.Random.Range(wb.yMin, wb.yMax));
+
+                // Must be in the wilderness, not the town.
+                if (tb.Contains(candidate)) continue;
+
+                float minDist = MinDistToPlaced(candidate);
+
+                if (minDist >= minSeparation)
+                {
+                    placedPositions.Add(candidate);
+                    return candidate;
+                }
+
+                if (minDist > bestMinDist)
+                {
+                    bestMinDist = minDist;
+                    best = candidate;
+                }
+            }
+
+            Debug.LogWarning($"WorldGenerator: couldn't find a fully separated position after {maxAttempts} attempts — using closest valid candidate.", this);
+            placedPositions.Add(best);
+            return best;
+        }
+
+        private float MinDistToPlaced(Vector2 pos)
+        {
+            if (placedPositions.Count == 0) return float.MaxValue;
+            float min = float.MaxValue;
+            foreach (var p in placedPositions)
+            {
+                float d = Vector2.Distance(pos, p);
+                if (d < min) min = d;
+            }
+            return min;
         }
     }
 }
