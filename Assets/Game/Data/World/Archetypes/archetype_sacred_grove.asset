@@ -47,16 +47,35 @@ MonoBehaviour:
     MaxQuantity: 1
     Weight: 1
   poiRareDropChance: 0.05
+  npcPostSpecStages:
+  - stageId: hedge_witch_wound_lore
+    displayName: Wound Lore
+    progressCost: 3
+    useRareItem: 0
+    itemCount: 2
+    flavorText: learns Wound Lore - healing herbs ease the hurt of bad encounters.
+    worldStateFlag: hedge_witch_wound_lore
+  - stageId: hedge_witch_ravens_eye
+    displayName: Raven's Eye Reading
+    progressCost: 4
+    useRareItem: 1
+    itemCount: 2
+    flavorText: learns Raven's Eye Reading - the intent of wandering things becomes clearer before you approach.
+    worldStateFlag: hedge_witch_ravens_eye
   buildingDilapidatedName: Ruined Shrine
-  buildingRevivedName: Woodland Shrine
-  buildingRepairVerb: tend
   buildingDilapidatedColor: {r: 0.3, g: 0.22, b: 0.38, a: 1}
-  buildingMaterial: {fileID: 11400000, guid: 29a23783858c4e4dae17e837841a7ad7, type: 2}
-  buildingMaterialCostPerTick: 2
-  buildingProgressCost: 6
-  buildingRevivedTint: {r: 0.52, g: 0.38, b: 0.62, a: 1}
-  buildingStage2DisplayName: Consecrate the Hearth
-  buildingStage2Verb: consecrate
-  buildingStage2MaterialCostPerTick: 2
-  buildingStage2ProgressCost: 4
-  buildingStage2Tint: {r: 0.62, g: 0.48, b: 0.72, a: 1}
+  buildingStages:
+  - displayName: Woodland Shrine
+    verb: tend
+    material: {fileID: 11400000, guid: 29a23783858c4e4dae17e837841a7ad7, type: 2}
+    costPerTick: 2
+    progressCost: 6
+    requiredSpecialization:
+    tint: {r: 0.52, g: 0.38, b: 0.62, a: 1}
+  - displayName: Consecrate the Hearth
+    verb: consecrate
+    material: {fileID: 11400000, guid: 71fa745212e8453ab3779c7a6a7cfc84, type: 2}
+    costPerTick: 2
+    progressCost: 4
+    requiredSpecialization: hedge_witch
+    tint: {r: 0.62, g: 0.48, b: 0.72, a: 1}

@@ -1,3 +1,6 @@
+using System;
+using UnityEngine;
+
 namespace Mossmark.Development
 {
     // "N attentions of accumulated progress with no other requirement" - the default
@@ -6,12 +9,16 @@ namespace Mossmark.Development
     // ongoing hold spends daylight and continues every tick (Section 6's "dependencies
     // satisfied by construction"). The paired stage's ProgressCost - checked separately
     // by DevelopableEntity.TryApplyStage - is what actually gates when the stage applies.
-    // requiredProgress is unused but kept as a constructor parameter purely so call sites
-    // self-document the threshold they're pairing with.
+    // requiredProgress is unused but kept for documentation (call sites self-document the
+    // threshold they pair with) and for [SerializeReference] serialization in LandmarkAttendable.
+    [Serializable]
     public class TimeCondition : IDependencyCondition
     {
+        [SerializeField] private int requiredProgress;
+
         public TimeCondition(int requiredProgress)
         {
+            this.requiredProgress = requiredProgress;
         }
 
         public bool IsSatisfied(DevelopableEntity entity) => true;

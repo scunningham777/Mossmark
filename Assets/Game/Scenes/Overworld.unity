@@ -1,4 +1,4 @@
-﻿%YAML 1.1
+%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!29 &1
 OcclusionCullingSettings:
@@ -763,10 +763,32 @@ MonoBehaviour:
   m_GameObject: {fileID: 900100001}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 10faa7fb66466bf4891e48a91b395874, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Development.OldCairnAttendable
-  sticks: {fileID: 11400000, guid: a0462710e28989c4aac77411a0b0158d, type: 2}
+  m_Script: {fileID: 11500000, guid: 853030447147c2e41aef7cafaf5503ce, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Development.LandmarkAttendable
+  displayName: Old Cairn
+  entityColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  attendVerb: work on the cairn
+  completedDescription: The cairn stands repaired.
+  progressCost: 1
+  attendDuration: 2
+  conditions:
+  - rid: 5100001
+  - rid: 5100002
+  references:
+    version: 2
+    RefIds:
+    - rid: 5100001
+      type: {class: ItemAvailableCondition, ns: Mossmark.Development, asm: Assembly-CSharp}
+      data:
+        item: {fileID: 11400000, guid: a0462710e28989c4aac77411a0b0158d, type: 2}
+        quantity: 2
+    - rid: 5100002
+      type: {class: WorldStateCondition, ns: Mossmark.Development, asm: Assembly-CSharp}
+      data:
+        flagId: signal_lit
+        requiredValue: 1
+        needsDescription: needs the signal fire lit nearby
 --- !u!114 &900100003
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1103,10 +1125,30 @@ MonoBehaviour:
   m_GameObject: {fileID: 900300001}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe1a117fc76219049979421f7538fec7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Development.WatchersPostAttendable
-  oldCairn: {fileID: 900100002}
+  m_Script: {fileID: 11500000, guid: 853030447147c2e41aef7cafaf5503ce, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Development.LandmarkAttendable
+  displayName: Watcher's Post
+  entityColor: {r: 0.35, g: 0.45, b: 0.6, a: 1}
+  attendVerb: keep watch
+  completedDescription: The watch has been taken up.
+  progressCost: 2
+  attendDuration: 2
+  conditions:
+  - rid: 5300001
+  - rid: 5300002
+  references:
+    version: 2
+    RefIds:
+    - rid: 5300001
+      type: {class: EntityStateCondition, ns: Mossmark.Development, asm: Assembly-CSharp}
+      data:
+        targetEntity: {fileID: 900100002}
+        minimumStageIndex: 0
+    - rid: 5300002
+      type: {class: TimeCondition, ns: Mossmark.Development, asm: Assembly-CSharp}
+      data:
+        requiredProgress: 2
 --- !u!114 &900300003
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1278,7 +1320,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Development.NpcAttendable
   genericName: Wanderer
   progressCost: 8
-  tickInterval: 0.5
+  minTickInterval: 1
+  maxTickInterval: 1.5
 --- !u!114 &900500003
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1458,7 +1501,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7, type: 2}
   - {fileID: 11400000, guid: e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7, type: 2}
   - {fileID: 11400000, guid: f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7, type: 2}
-  - {fileID: 11400000, guid: a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8, type: 2}
+  - {fileID: 11400000, guid: 853030447147c2e41aef7cafaf5503ce, type: 2}
   minSpotCount: 10
   maxSpotCount: 12
   minSeparation: 2
@@ -1506,36 +1549,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bcc322c7df5a7324ebd110afc9cee251, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.World.WanderingThingSpawner
-  displayName: Wary Traveler
-  approachDescription: A traveler lingers at the path's edge, watching you with wary
-    eyes.
-  attendVerb: approach
-  color: {r: 0.5, g: 0.45, b: 0.55, a: 1}
-  colliderRadius: 0.5
-  goodYields:
-  - Item: {fileID: 11400000, guid: 1066a13ea81de794aa4f4ff5491bcebc, type: 2}
-    MinQuantity: 1
-    MaxQuantity: 2
-    Weight: 1
-  - Item: {fileID: 11400000, guid: 4f53be0c9d7940a6b8213bb827ef3635, type: 2}
-    MinQuantity: 1
-    MaxQuantity: 3
-    Weight: 1
-  goodFlavor: decides you mean no harm, and presses something into your hand before
-    moving on.
-  badFlavor: bolts, snatching everything from your pack as they go.
-  badDaylightCost: 1
-  baseGoodChance: 0.5
+  pool:
+  - {fileID: 11400000, guid: 140d91ba06944db41b4b054cd852d69a, type: 2}
   minLifespan: 20
   maxLifespan: 35
   minSpawnDelay: 5
   maxSpawnDelay: 15
-  spawnPositions:
-  - {x: -20, y: -25}
-  - {x: -10, y: -25}
-  - {x: 0, y: -25}
-  - {x: 10, y: -25}
-  - {x: 20, y: -25}
+  minDistFromTown: 5
 --- !u!4 &900700003
 Transform:
   m_ObjectHideFlags: 0
@@ -1940,7 +1960,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Development.NpcAttendable
   genericName: Roughhand
   progressCost: 8
-  tickInterval: 0.5
+  minTickInterval: 1
+  maxTickInterval: 1.5
 --- !u!114 &901200003
 MonoBehaviour:
   m_ObjectHideFlags: 0

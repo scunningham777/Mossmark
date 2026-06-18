@@ -47,16 +47,35 @@ MonoBehaviour:
     MaxQuantity: 1
     Weight: 1
   poiRareDropChance: 0.05
+  npcPostSpecStages:
+  - stageId: bog_keeper_drainage
+    displayName: Drainage Channels
+    progressCost: 3
+    useRareItem: 0
+    itemCount: 3
+    flavorText: clears Drainage Channels - the fen's margins grow more passable.
+    worldStateFlag: bog_keeper_drainage
+  - stageId: bog_keeper_iron_sense
+    displayName: Iron-Sense
+    progressCost: 4
+    useRareItem: 1
+    itemCount: 2
+    flavorText: develops Iron-Sense - bog iron deposits reveal themselves more readily.
+    worldStateFlag: bog_keeper_iron_sense
   buildingDilapidatedName: Rotting Sluice
-  buildingRevivedName: Drainage Sluice
-  buildingRepairVerb: shore up
   buildingDilapidatedColor: {r: 0.3, g: 0.28, b: 0.2, a: 1}
-  buildingMaterial: {fileID: 11400000, guid: 8f0377fa9b2340f8820829af08466e49, type: 2}
-  buildingMaterialCostPerTick: 2
-  buildingProgressCost: 6
-  buildingRevivedTint: {r: 0.45, g: 0.5, b: 0.35, a: 1}
-  buildingStage2DisplayName: Shore Up the Channels
-  buildingStage2Verb: shore up
-  buildingStage2MaterialCostPerTick: 2
-  buildingStage2ProgressCost: 4
-  buildingStage2Tint: {r: 0.55, g: 0.62, b: 0.42, a: 1}
+  buildingStages:
+  - displayName: Drainage Sluice
+    verb: shore up
+    material: {fileID: 11400000, guid: 8f0377fa9b2340f8820829af08466e49, type: 2}
+    costPerTick: 2
+    progressCost: 6
+    requiredSpecialization:
+    tint: {r: 0.45, g: 0.5, b: 0.35, a: 1}
+  - displayName: Shore Up the Channels
+    verb: shore up
+    material: {fileID: 11400000, guid: 5c848dfe76124c76b3010becc8cf85fc, type: 2}
+    costPerTick: 2
+    progressCost: 4
+    requiredSpecialization: bog_tender
+    tint: {r: 0.55, g: 0.62, b: 0.42, a: 1}

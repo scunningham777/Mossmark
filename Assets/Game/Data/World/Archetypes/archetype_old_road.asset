@@ -47,16 +47,35 @@ MonoBehaviour:
     MaxQuantity: 1
     Weight: 1
   poiRareDropChance: 0.05
+  npcPostSpecStages:
+  - stageId: herald_trail_markers
+    displayName: Trail Markers
+    progressCost: 3
+    useRareItem: 0
+    itemCount: 3
+    flavorText: marks key paths and crossroads - travelers find the road safer.
+    worldStateFlag: herald_trail_markers
+  - stageId: herald_toll_records
+    displayName: Toll Records
+    progressCost: 4
+    useRareItem: 1
+    itemCount: 2
+    flavorText: establishes toll records - the settlement's standing on the road grows.
+    worldStateFlag: herald_toll_records
   buildingDilapidatedName: Overgrown Waypost
-  buildingRevivedName: Waypost
-  buildingRepairVerb: clear
   buildingDilapidatedColor: {r: 0.42, g: 0.4, b: 0.32, a: 1}
-  buildingMaterial: {fileID: 11400000, guid: 961a0538cbaf46f9a43f9aea11b18552, type: 2}
-  buildingMaterialCostPerTick: 2
-  buildingProgressCost: 6
-  buildingRevivedTint: {r: 0.65, g: 0.62, b: 0.5, a: 1}
-  buildingStage2DisplayName: Mark the Route
-  buildingStage2Verb: mark
-  buildingStage2MaterialCostPerTick: 2
-  buildingStage2ProgressCost: 4
-  buildingStage2Tint: {r: 0.75, g: 0.72, b: 0.58, a: 1}
+  buildingStages:
+  - displayName: Waypost
+    verb: clear
+    material: {fileID: 11400000, guid: 961a0538cbaf46f9a43f9aea11b18552, type: 2}
+    costPerTick: 2
+    progressCost: 6
+    requiredSpecialization:
+    tint: {r: 0.65, g: 0.62, b: 0.5, a: 1}
+  - displayName: Mark the Route
+    verb: mark
+    material: {fileID: 11400000, guid: 1066a13ea81de794aa4f4ff5491bcebc, type: 2}
+    costPerTick: 2
+    progressCost: 4
+    requiredSpecialization: herald
+    tint: {r: 0.75, g: 0.72, b: 0.58, a: 1}

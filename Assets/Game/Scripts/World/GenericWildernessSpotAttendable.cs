@@ -1,5 +1,4 @@
 using System;
-using Mossmark.Attention;
 using Mossmark.Development;
 using Mossmark.Inventory;
 using UnityEngine;
@@ -15,74 +14,30 @@ namespace Mossmark.World
         [Min(0f)] public float Weight = 1f;
     }
 
-    public class GenericWildernessSpotAttendable : MonoBehaviour, IAttendable
+    // Ongoing wilderness spot (foraging, digging, etc.) — thin subclass of
+    // WildernessYieldAttendable that adds the TwilightChanceModifier bias on rare drops.
+    public class GenericWildernessSpotAttendable : WildernessYieldAttendable
     {
-        [SerializeField] private string displayName = "Field";
-        [SerializeField] private string interactionVerb = "forage";
-        [SerializeField] private ItemYield[] commonYields;
-        [SerializeField] private ItemYield rareYield;
-        [SerializeField, Range(0f, 1f)] private float rareDropChance = 0.08f;
-
-        // Ongoing hold: each tick yields and (unless interrupted) the hold resets
-        // and repeats. Each tick rerolls a fresh interval in this range so foraging
-        // doesn't fall into a fixed metronomic rhythm.
-        [SerializeField, Min(0.1f)] private float minTickInterval = 1.5f;
-        [SerializeField, Min(0.1f)] private float maxTickInterval = 2f;
-
-        private bool continueAttending;
-        private float currentTickInterval;
-
-        // Procedural-spawn entry point (Iteration 12's WorldGenerator) - sets the same
-        // serialized fields an inspector-authored instance would carry, before SetActive(true).
         public void Initialize(string displayName, string interactionVerb, ItemYield[] commonYields,
             ItemYield rareYield, float rareDropChance, float minTickInterval, float maxTickInterval)
         {
-            this.displayName = displayName;
-            this.interactionVerb = interactionVerb;
-            this.commonYields = commonYields;
-            this.rareYield = rareYield;
-            this.rareDropChance = rareDropChance;
-            this.minTickInterval = minTickInterval;
-            this.maxTickInterval = maxTickInterval;
+            InitializeBase(displayName, interactionVerb, commonYields, rareYield, rareDropChance,
+                minTickInterval, maxTickInterval);
         }
 
-        private void Awake()
-        {
-            RollTickInterval();
-        }
+        public override bool CanAttend() => true;
 
-        public float AttentionDuration => currentTickInterval;
+        public override string GetOverlayDescription() => displayName;
 
-        public bool RequiresDaylight => true;
+        public override string GetOverlayInteractionLine() => $"Hold E to {interactionVerb}";
 
-        // False on the tick a rare drop is rolled - the hold ends there so the
-        // moment registers rather than disappearing into the next tick. A fresh
-        // press resumes foraging immediately.
-        public bool ContinueAttending => continueAttending;
-
-        public bool CanAttend() => true;
-
-        public string GetOverlayDescription() => displayName;
-
-        public string GetOverlayInteractionLine() => $"Hold E to {interactionVerb}";
-
-        public void OnAttentionComplete()
+        // Dawn/Dusk lifts rare-drop odds by ×1.5 — first outcome modifier responding to
+        // time-of-day rather than town development state (Iteration 16.5).
+        protected override float GetEffectiveRareChance()
         {
             var request = new OutcomeRequest();
             new TwilightChanceModifier(1.5f).Apply(request);
-            float effectiveRareChance = rareDropChance * request.ChanceMultiplier;
-            continueAttending = true;
-            ItemYieldRoller.Roll(displayName, "foraged", commonYields, rareYield, effectiveRareChance);
-            RollTickInterval();
-        }
-
-        public void OnAttentionCancelled()
-        {
-        }
-
-        private void RollTickInterval()
-        {
-            currentTickInterval = UnityEngine.Random.Range(minTickInterval, maxTickInterval);
+            return rareDropChance * request.ChanceMultiplier;
         }
     }
 }

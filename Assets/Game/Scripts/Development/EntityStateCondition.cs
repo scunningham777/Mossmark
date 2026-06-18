@@ -1,10 +1,15 @@
+using System;
+using UnityEngine;
+
 namespace Mossmark.Development
 {
     // Another DevelopableEntity (any type) has reached a given stage.
+    // [Serializable] enables [SerializeReference] polymorphic storage in LandmarkAttendable.
+    [Serializable]
     public class EntityStateCondition : IDependencyCondition
     {
-        private readonly DevelopableEntity targetEntity;
-        private readonly int minimumStageIndex;
+        [SerializeField] private DevelopableEntity targetEntity;
+        [SerializeField] private int minimumStageIndex;
 
         public EntityStateCondition(DevelopableEntity targetEntity, int minimumStageIndex)
         {

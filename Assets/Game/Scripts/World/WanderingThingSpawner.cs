@@ -9,19 +9,11 @@ namespace Mossmark.World
     // Spawns it at a random wilderness position (minDistFromTown clear of town bounds),
     // waits for it to be resolved or to time out (via the onGone callback), then
     // waits a random cooldown before spawning the next one.
+    // Iteration 23 (G4): replaced per-creature serialized fields with a
+    // WanderingThingDefinition[] pool; Spawn() picks one at random each cycle.
     public class WanderingThingSpawner : MonoBehaviour
     {
-        [SerializeField] private string displayName = "Wary Traveler";
-        [SerializeField] private string approachDescription = "A traveler lingers at the path's edge, watching you with wary eyes.";
-        [SerializeField] private string attendVerb = "approach";
-        [SerializeField] private Color color = new(0.5f, 0.45f, 0.55f, 1f);
-        [SerializeField] private float colliderRadius = 0.5f;
-
-        [SerializeField] private ItemYield[] goodYields;
-        [SerializeField] private string goodFlavor = "decides you mean no harm, and presses something into your hand before moving on.";
-        [SerializeField] private string badFlavor = "bolts, snatching everything from your pack as they go.";
-        [SerializeField, Min(0)] private int badDaylightCost = 1;
-        [SerializeField, Range(0f, 1f)] private float baseGoodChance = 0.5f;
+        [SerializeField] private WanderingThingDefinition[] pool;
 
         [SerializeField, Min(1f)] private float minLifespan = 20f;
         [SerializeField, Min(1f)] private float maxLifespan = 35f;
@@ -64,29 +56,29 @@ namespace Mossmark.World
 
         private void Spawn()
         {
+            if (pool == null || pool.Length == 0) return;
+
+            var def = pool[Random.Range(0, pool.Length)];
             var position = FindSpawnPosition();
             float lifespan = Random.Range(minLifespan, maxLifespan);
 
-            var go = new GameObject(displayName);
+            var go = new GameObject(def.displayName);
             go.SetActive(false);
             go.transform.position = position;
 
             go.AddComponent<SpriteRenderer>();
-            go.AddComponent<TriangleSpriteGenerator>().Initialize(color);
-            go.AddComponent<CircleCollider2D>().radius = colliderRadius;
+            go.AddComponent<TriangleSpriteGenerator>().Initialize(def.color);
+            go.AddComponent<CircleCollider2D>().radius = def.colliderRadius;
 
             var attendable = go.AddComponent<WanderingThingAttendable>();
-            attendable.Initialize(displayName, approachDescription, attendVerb,
-                goodYields, goodFlavor, badFlavor, badDaylightCost,
-                baseGoodChance, favorableSpecializationId,
-                lifespan, () => current = null);
+            attendable.Initialize(def, favorableSpecializationId, lifespan, () => current = null);
 
             go.AddComponent<AttendableZone>();
 
             go.SetActive(true);
 
             current = attendable;
-            Debug.Log($"{displayName}: appears, watching the path.", go);
+            Debug.Log($"{def.displayName}: appears, watching the path.", go);
         }
 
         private Vector2 FindSpawnPosition(int maxAttempts = 50)

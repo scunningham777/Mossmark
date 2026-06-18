@@ -24,8 +24,8 @@ MonoBehaviour:
     Weight: 1
   rareDropChance: 0
   tendVerb: tend
-  harvestYield:
-    Item: {fileID: 11400000, guid: 4f53be0c9d7940a6b8213bb827ef3635, type: 2}
+  harvestYields:
+  - Item: {fileID: 11400000, guid: 4f53be0c9d7940a6b8213bb827ef3635, type: 2}
     MinQuantity: 1
     MaxQuantity: 2
     Weight: 1

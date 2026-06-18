@@ -1,12 +1,16 @@
+using System;
 using Mossmark.Inventory;
+using UnityEngine;
 
 namespace Mossmark.Development
 {
     // Item present in carry plus the settlement chest, combined, above a quantity threshold.
+    // [Serializable] enables [SerializeReference] polymorphic storage in LandmarkAttendable.
+    [Serializable]
     public class ItemAvailableCondition : IDependencyCondition
     {
-        private readonly ItemDefinition item;
-        private readonly int quantity;
+        [SerializeField] private ItemDefinition item;
+        [SerializeField] private int quantity = 1;
 
         public ItemAvailableCondition(ItemDefinition item, int quantity = 1)
         {

@@ -20,10 +20,13 @@ namespace Mossmark.World
         [SerializeField] public ItemYield[] commonYields;
         [SerializeField] public ItemYield rareYield;
         [SerializeField, Range(0f, 1f)] public float rareDropChance = 0.08f;
+        // Tick interval range for generic spots (tended spots ignore these).
+        [SerializeField, Min(0.1f)] public float minTickInterval = 1.5f;
+        [SerializeField, Min(0.1f)] public float maxTickInterval = 2f;
 
         // --- Tended spot (mark → wait → harvest) ---
         [SerializeField] public string tendVerb = "tend";
-        [SerializeField] public ItemYield harvestYield;
+        [SerializeField] public ItemYield[] harvestYields;
         [SerializeField, Min(1)] public int restsToHarvest = 1;
         [SerializeField, Min(1)] public int maxConcurrentMarked = 2;
     }

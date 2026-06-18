@@ -16,7 +16,7 @@ namespace Mossmark.World
 
         [SerializeField] private string displayName = "Bramble Patch";
         [SerializeField] private string tendVerb = "tend";
-        [SerializeField] private ItemYield harvestYield;
+        [SerializeField] private ItemYield[] harvestYields;
         [SerializeField, Min(1)] private int restsToHarvest = 1;
         [SerializeField, Min(1)] private int maxConcurrentMarked = 2;
 
@@ -26,12 +26,12 @@ namespace Mossmark.World
 
         // Procedural-spawn entry point (Iteration 18's WorldGenerator) - mirrors
         // GenericWildernessSpotAttendable.Initialize(), called before SetActive(true).
-        public void Initialize(string displayName, string tendVerb, ItemYield harvestYield,
+        public void Initialize(string displayName, string tendVerb, ItemYield[] harvestYields,
             int restsToHarvest, int maxConcurrentMarked)
         {
             this.displayName = displayName;
             this.tendVerb = tendVerb;
-            this.harvestYield = harvestYield;
+            this.harvestYields = harvestYields;
             this.restsToHarvest = restsToHarvest;
             this.maxConcurrentMarked = maxConcurrentMarked;
         }
@@ -124,20 +124,44 @@ namespace Mossmark.World
         private void Harvest()
         {
             var inventory = InventoryManager.Instance;
-            if (inventory == null || harvestYield?.Item == null) return;
+            if (inventory == null) return;
 
-            int qty = Random.Range(harvestYield.MinQuantity, harvestYield.MaxQuantity + 1);
-            int added = inventory.AddItem(harvestYield.Item, qty);
+            var picked = PickWeighted(harvestYields);
+            if (picked?.Item == null) return;
+
+            int qty = Random.Range(picked.MinQuantity, picked.MaxQuantity + 1);
+            int added = inventory.AddItem(picked.Item, qty);
 
             Debug.Log(added > 0
-                ? $"{displayName}: harvested {added}x {harvestYield.Item.DisplayName}."
-                : $"{displayName}: ready to harvest {harvestYield.Item.DisplayName}, but there's no room to carry it.", this);
+                ? $"{displayName}: harvested {added}x {picked.Item.DisplayName}."
+                : $"{displayName}: ready to harvest {picked.Item.DisplayName}, but there's no room to carry it.", this);
 
             if (added <= 0) return;
 
             DecrementMarkedCount();
             state = SpotState.Unmarked;
             UpdateVisual();
+        }
+
+        // Inline weighted pick — same logic as ItemYieldRoller.PickWeighted but kept here
+        // since tended spots have no rare-drop roll and no interrupt, so the full
+        // ItemYieldRoller.Roll signature doesn't fit.
+        private static ItemYield PickWeighted(ItemYield[] yields)
+        {
+            if (yields == null || yields.Length == 0) return null;
+
+            float total = 0f;
+            foreach (var y in yields) total += Mathf.Max(0f, y.Weight);
+            if (total <= 0f) return yields[0];
+
+            float roll = Random.value * total;
+            float cumulative = 0f;
+            foreach (var y in yields)
+            {
+                cumulative += Mathf.Max(0f, y.Weight);
+                if (roll <= cumulative) return y;
+            }
+            return yields[^1];
         }
 
         private void HandleDayAdvanced()

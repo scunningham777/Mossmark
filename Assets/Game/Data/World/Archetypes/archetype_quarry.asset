@@ -47,16 +47,21 @@ MonoBehaviour:
     MaxQuantity: 1
     Weight: 1
   poiRareDropChance: 0.05
+  npcPostSpecStages: []
   buildingDilapidatedName: Crumbled Cutting House
-  buildingRevivedName: Cutting House
-  buildingRepairVerb: clear
   buildingDilapidatedColor: {r: 0.42, g: 0.42, b: 0.46, a: 1}
-  buildingMaterial: {fileID: 11400000, guid: 1b2d1db0ac88c6f45ac553dd0929a3bc, type: 2}
-  buildingMaterialCostPerTick: 2
-  buildingProgressCost: 6
-  buildingRevivedTint: {r: 0.58, g: 0.58, b: 0.65, a: 1}
-  buildingStage2DisplayName: Sharpen the Tools
-  buildingStage2Verb: sharpen
-  buildingStage2MaterialCostPerTick: 2
-  buildingStage2ProgressCost: 4
-  buildingStage2Tint: {r: 0.68, g: 0.68, b: 0.75, a: 1}
+  buildingStages:
+  - displayName: Cutting House
+    verb: clear
+    material: {fileID: 11400000, guid: 1b2d1db0ac88c6f45ac553dd0929a3bc, type: 2}
+    costPerTick: 2
+    progressCost: 6
+    requiredSpecialization:
+    tint: {r: 0.58, g: 0.58, b: 0.65, a: 1}
+  - displayName: Sharpen the Tools
+    verb: sharpen
+    material: {fileID: 11400000, guid: db47a92646d94a099e15f27dbe2a5891, type: 2}
+    costPerTick: 2
+    progressCost: 4
+    requiredSpecialization: stonemason
+    tint: {r: 0.68, g: 0.68, b: 0.75, a: 1}

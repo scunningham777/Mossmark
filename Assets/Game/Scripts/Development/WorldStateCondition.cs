@@ -1,11 +1,16 @@
+using System;
+using UnityEngine;
+
 namespace Mossmark.Development
 {
     // A flag set elsewhere (a wandering thing resolved, a curse lifted, etc.) via WorldState.
+    // [Serializable] enables [SerializeReference] polymorphic storage in LandmarkAttendable.
+    [Serializable]
     public class WorldStateCondition : IDependencyCondition
     {
-        private readonly string flagId;
-        private readonly bool requiredValue;
-        private readonly string needsDescription;
+        [SerializeField] private string flagId;
+        [SerializeField] private bool requiredValue;
+        [SerializeField] private string needsDescription;
 
         public WorldStateCondition(string flagId, bool requiredValue, string needsDescription)
         {

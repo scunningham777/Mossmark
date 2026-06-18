@@ -347,6 +347,10 @@ Iteration 8.5 is inserted between 8 and 9, and Iteration 16.5 between 16 and 17 
 | 18 | [x] | Wilderness Depth + Random Placement | Wilderness spot pool expanded to 7 types (5 generic + 2 tended); all wilderness objects placed via rejection-sampling; 10-12 random generic/tended spots spawned each session | New |
 | 19 | [ ] | Playtest + Tuning Pass | Full day loop playable end-to-end; daylight costs, yield tables, and dependency thresholds tuned for a legible web | — |
 | 20 | [ ] | Code Generalization Audit | Audit all systems for hardcoded field duplication that should be data-driven; produce a prioritized list of ScriptableObject-authoring refactors for subsequent iterations; `BuildingAttendable`'s per-stage duplicate fields are the leading example | New |
+| 21 | [x] | Building Data Generalization (G1 + G2) | `BuildingAttendable`'s parallel stage field groups collapsed into a `BuildingStageDef[]`; `PlaceArchetype`'s building block likewise; any number of stages without code changes; all 5 archetype assets migrated | New |
+| 22 | [x] | NPC Post-Spec + Spot Tick Tuning (G3 + G6) | `NpcPostSpecStageDef[]` on `PlaceArchetype` replaces `BuildPostSpecStages`' hardcoded switch; `WildernessSpotDefinition` and `PlaceArchetype` gain per-type tick interval fields; all archetype assets updated | New |
+| 23 | [x] | Wandering Thing Definition (G4 + G5) | Per-creature data extracted to `WanderingThingDefinition` ScriptableObject pool; spawner picks one at random each cycle; hardcoded Herald modifier calls become data-authored `WorldStateOddsModifier[]` on the definition | New |
+| 24 | [x] | Code Quality Pass (G7 + G8 + G9) | `WildernessYieldAttendable` base class eliminates `GenericWildernessSpotAttendable`/`PoiAttendable` duplication; `OldCairnAttendable`/`WatchersPostAttendable` replaced by a generic `LandmarkAttendable`; `TendedSpotAttendable` and `WildernessSpotDefinition` gain yield-pool support | New |
 
 ---
 
@@ -366,4 +370,221 @@ Iteration 8.5 is inserted between 8 and 9, and Iteration 16.5 between 16 and 17 
 - **Hard `CanAttend()` gates vs. always-something-happens**: flagged in discussion as a tension between the current implementation (POIs, under-resourced buildings, and specialized NPCs all hit a flat `CanAttend() => false` — no hold even starts) and the broader goal of attention almost always producing *some* outcome. Explicitly deferred — this is a content/feel decision, not a code change: softening these gates risks the player burning daylight repeatedly on flavor-only outcomes without a clear signal that nothing is actually changing, which needs to be thought through before touching any code. No action taken in Iteration 16.5.
 - **Outcome Influence Layer scope**: `OutcomeRequest` (Section 10) intentionally starts with a single `ChanceMultiplier` field. Additional dimensions are added only when a specific modifier needs one — not speculatively. **Iteration 17** added `DaylightCostMultiplier` (scales the bad-outcome daylight cost, `WoundLoreModifier` sets it to 0). A yield-weight bonus or quantity bonus remain unneeded so far.
 - **Season / moon phase / weather as influencers**: named as eventual possibilities but not implemented and not stubbed into `WorldContext`. Adding one later is meant to be a small, additive change — one new read on `WorldContext`, one new `IOutcomeModifier` consuming it — revisit if/when any of these become real mechanics.
-- **Code generalization — prefer data-driven, ScriptableObject-authored development paths over hardcoded fields**: as the system matures, hardcoded per-stage field duplication in MonoBehaviours should be replaced with generic data assets. The clearest current example is `BuildingAttendable`: Stage 1 and Stage 2 each have their own separate serialized fields (`revivedName`/`repairVerb`/`material`/`materialCostPerTick`/`progressCost`/`tint` and the `stage2*` mirror set). The right shape is a `List<BuildingStageDefinition>` (a ScriptableObject or plain serializable class) where each entry carries the same fields — `displayName`, `attentionVerb`, `material`, `costPerTick`, `progressCost`, `requiredSpecialization`, `tint` — so that any building can have any number of stages without code changes, and development paths can be altered or extended entirely in data. The same principle applies broadly: NPC post-spec track stages, archetype-specific outcome modifiers, wilderness spot yield tables, and wandering thing outcome pools are all candidates for data-driven extraction rather than hardcoded switch/case blocks or duplicated fields. **A full audit pass is planned (Iteration 20)** to identify every such pattern before individual refactors begin — the audit itself may span enough surface area to be its own iteration.
+- **Code generalization — prefer data-driven, ScriptableObject-authored development paths over hardcoded fields**: as the system matures, hardcoded per-stage field duplication in MonoBehaviours should be replaced with generic data assets. The clearest current example is `BuildingAttendable`: Stage 1 and Stage 2 each have their own separate serialized fields (`revivedName`/`repairVerb`/`material`/`materialCostPerTick`/`progressCost`/`tint` and the `stage2*` mirror set). The right shape is a `List<BuildingStageDefinition>` (a ScriptableObject or plain serializable class) where each entry carries the same fields — `displayName`, `attentionVerb`, `material`, `costPerTick`, `progressCost`, `requiredSpecialization`, `tint` — so that any building can have any number of stages without code changes, and development paths can be altered or extended entirely in data. The same principle applies broadly: NPC post-spec track stages, archetype-specific outcome modifiers, wilderness spot yield tables, and wandering thing outcome pools are all candidates for data-driven extraction rather than hardcoded switch/case blocks or duplicated fields. **A full audit pass was conducted (Iteration 20)** — findings and decisions are documented in the section below.
+
+---
+
+## Code Generalization Audit (Iteration 20)
+
+Full codebase audit of hardcoded duplication and data-authoring gaps. Each candidate is described with the problem it presents and a concrete suggestion. Decisions (approved / deferred / declined) to be recorded here after review.
+
+*Status key: ***approved*** · **approved** · **deferred** · **declined***
+
+---
+
+### G1 — `BuildingAttendable`: duplicate per-stage field groups
+
+**Problem:** Stage 1 and Stage 2 each have their own parallel field groups (`revivedName` / `repairVerb` / `material` / `materialCostPerTick` / `progressCost` / `revivedTint` and the `stage2*` mirror set). A Stage 3 requires another complete duplicate field group and a new `InitializeStage3()` method. `OnAttentionComplete()` switches on `CurrentStageIndex` to pick the right material.
+
+**Suggestion:** Replace both field groups with a `[Serializable] class BuildingStageDef { string displayName; string verb; ItemDefinition material; int costPerTick; int progressCost; string requiredSpecialization; Color tint; }` and a `BuildingStageDef[]` field on `BuildingAttendable`. `Awake()` iterates the array to build the track. `OnAttentionComplete()` indexes into the array by stage. `Initialize()` and `InitializeStage2()` collapse to a single `Initialize(string dilapidatedName, Color dilapidatedColor, BuildingStageDef[])`. Any number of stages, no code changes needed.
+
+**Decision:** **approved**
+
+---
+
+### G2 — `PlaceArchetype` Building section: mirrors G1's duplication in asset fields
+
+**Problem:** `PlaceArchetype` has a `[Header("Building")]` block with two parallel field groups that mirror `BuildingAttendable`'s code duplication (`buildingRepairVerb` / `buildingMaterial` / `buildingProgressCost` / `buildingRevivedTint` for Stage 1 and `buildingStage2DisplayName` / `buildingStage2Verb` / ... for Stage 2, with Stage 2 material sourced indirectly from `PoiCommonYields[0]`). Adding an archetype with three building stages requires touching both the code and every archetype asset.
+
+**Suggestion:** Replace the Building field groups with `BuildingStageDef[] buildingStages` (same type as G1) plus `string buildingDilapidatedName` and `Color buildingDilapidatedColor` (pre-revival identity stays separate). `WorldGenerator.SpawnBuilding()` becomes a pass-through of the stage array. Stage 2 material is authored directly in the asset rather than sourced indirectly via `PoiCommonYields[0]`.
+
+**Note:** Depends on G1. Should be done together.
+
+**Decision:** **approved**
+
+---
+
+### G3 — `NpcAttendable.BuildPostSpecStages`: hardcoded switch per specialization ID
+
+**Problem:** `BuildPostSpecStages(archetype)` is a `switch (specId)` that hardcodes stage IDs, progress costs, item quantities, and which item to require (`CommonYields[0]` vs. `RareYield`) for `hedge_witch`, `bog_keeper`, and `herald`. Adding Weaver or Stonemason post-spec content means editing this switch. `LogPostSpecEffect` has a parallel switch for per-stage flavor text. The two switches must be kept in sync manually.
+
+**Suggestion:** Add a `[Serializable] class NpcPostSpecStageDef { string stageId; string displayName; int progressCost; bool useRareItem; int itemCount; string flavorText; string worldStateFlag; }` and a `NpcPostSpecStageDef[] npcPostSpecStages` field on `PlaceArchetype`. `BuildPostSpecStages` becomes a generic loop over `archetype.NpcPostSpecStages`; `LogPostSpecEffect` reads `flavorText` from the definition. New or modified specialization paths require only asset editing — no code changes.
+
+**Decision:** **approved**
+
+---
+
+### G4 — `WanderingThingSpawner`: all creature data baked into one spawner instance
+
+**Problem:** `WanderingThingSpawner` carries `displayName`, `approachDescription`, `attendVerb`, `color`, `goodYields`, `goodFlavor`, `badFlavor`, `badDaylightCost`, `baseGoodChance` — all per-creature data for exactly one creature type. A second creature variant (a beast, a merchant, a wandering spirit) requires either a second spawner GameObject in the scene or duplicating all these fields on the existing one.
+
+**Suggestion:** Extract per-creature data to a `WanderingThingDefinition` ScriptableObject. The spawner holds a `WanderingThingDefinition[] pool` and picks one at random each spawn cycle. New creatures are new assets, not new scene GameObjects or code changes. Pairs naturally with G5.
+
+**Decision:** **approved**
+
+---
+
+### G5 — `WanderingThingAttendable`: hardcoded outcome modifier list
+
+**Problem:** `OnAttentionComplete()` hardcodes four specific modifier calls by name, including `WorldStateChanceModifier("herald_trail_markers", 1.3f)` and `WorldStateChanceModifier("herald_toll_records", 1.2f)`. As new NPC post-spec stages add WorldState flags that should affect encounter odds, this list grows by hand-editing `WanderingThingAttendable.cs`. The flag strings are also duplicated between `NpcAttendable.HandleDeveloped` (where they're set) and here (where they're read).
+
+**Suggestion:** Add a `[Serializable] class WorldStateOddsModifier { string flagId; float multiplier; }` and a `WorldStateOddsModifier[] additionalModifiers` field on `WanderingThingAttendable` (or on `WanderingThingDefinition` if G4 is adopted). The Herald-specific calls become entries in this array. `WoundLoreModifier` and `RealizedSpecializationChanceModifier` stay hardcoded — they have special logic (a `DaylightCostMultiplier` dimension and a session-specific `favorableSpecializationId`) that can't be collapsed to a simple flag lookup.
+
+**Decision:** **approved** — natural companion to G4
+
+---
+
+### G6 — `WildernessSpotDefinition`: tick interval not configurable per spot type
+
+**Problem:** `WildernessSpotDefinition` has no `minTickInterval` / `maxTickInterval` fields. `WorldGenerator` hardcodes `1.5f, 2f` in every `Initialize()` call for both archetype-driven spots and random generic spots. All spot types share the same foraging rhythm regardless of type — a Hollow Log search can't feel slower and more deliberate than a quick Field forage.
+
+**Suggestion:** Add `minTickInterval` (default `1.5f`) and `maxTickInterval` (default `2f`) to `WildernessSpotDefinition`. Pass them through in `WorldGenerator.SpawnSpotFromDefinition()`. Add the same fields to `PlaceArchetype` for archetype-driven spots, defaulting to the same values so existing assets need no changes unless a designer wants to tune them.
+
+**Decision:** **approved**
+
+---
+
+### G7 — `GenericWildernessSpotAttendable` / `PoiAttendable`: near-duplicate classes
+
+**Problem:** The two classes are almost identical — same fields (`displayName`, `interactionVerb`, `commonYields`, `rareYield`, `rareDropChance`, `minTickInterval`, `maxTickInterval`), same `IAttendable` shape, same `ItemYieldRoller.Roll()` call, same `RollTickInterval()`. The only meaningful difference is `PoiAttendable` adds a `gate` (`IDependencyCondition`) and a `lockedDescription`. Any fix or enhancement to the shared yield/tick logic must currently be made in two places.
+
+**Suggestion:** Extract a shared base class `WildernessYieldAttendable : MonoBehaviour, IAttendable` with all common logic. `PoiAttendable` subclasses it, overriding `CanAttend()`, `GetOverlayDescription()`, and `GetOverlayInteractionLine()` to add the gate. `GenericWildernessSpotAttendable` either subclasses it or is replaced by the base class directly with no gate set.
+
+**Note:** Code-quality / DRY fix rather than a data-authoring change — lower urgency than G1–G5, but the duplication compounds as both classes evolve.
+
+**Decision:** **approved**
+
+---
+
+### G8 — `OldCairnAttendable` / `WatchersPostAttendable`: named one-off debug entities
+
+**Problem:** These are explicit Iteration 8 test entities with hardcoded `DisplayName`, stage IDs, and dependency conditions in `Awake()`. They exist to prove the resolver works, not as authored content. They add two single-purpose `MonoBehaviour` scripts that serve no reusable purpose and will never be spawned by world-gen.
+
+**Option A:** Delete both scripts and their scene GameObjects. The resolver is thoroughly exercised by world-gen-spawned entities; these no longer add coverage.
+
+**Option B:** Replace with a generic `LandmarkAttendable : DevelopableEntity, IAttendable` whose single stage, progress cost, and dependency conditions are all serialized fields — the same pattern `BuildingAttendable` uses, but without material costs. Reusable for future "puzzle landmark" content.
+
+**Decision:** **approved** Option B
+
+---
+
+### G9 — `TendedSpotAttendable`: single harvest yield, no pool support
+
+**Problem:** `harvestYield` is a single `ItemYield` (one item type, random quantity in range). `GenericWildernessSpotAttendable` uses `ItemYield[] commonYields` with a weighted pool. A Bee Skep can only ever yield one item; a tended bed can't yield one of several crops. `WildernessSpotDefinition` has the same limitation.
+
+**Suggestion:** Change `harvestYield` → `harvestYields: ItemYield[]` on both `TendedSpotAttendable` and `WildernessSpotDefinition`, using the same weighted-pick logic already in `ItemYieldRoller`. Single-item cases still work as a length-one array. Existing scene/asset `harvestYield` references need migrating to the new array field.
+
+**Note:** Also a mild design question — tended spots may intentionally always yield the same predictable item as part of their "planning" feel. Decide the design direction before implementing.
+
+**Decision:** **approved**
+
+---
+
+### Noted: `GenericWildernessSpotAttendable` / `PoiAttendable` rare-drop interrupt intentionally removed
+
+**Intentional design decision, not a regression.** Both `GenericWildernessSpotAttendable.OnAttentionComplete()` and `PoiAttendable.OnAttentionComplete()` set `continueAttending = true` unconditionally and ignore the `bool` return value of `ItemYieldRoller.Roll()`. The interrupt-on-rare-drop behavior (`continueAttending = !roll`) was deliberately removed because with `NotificationUI` in place the hold-ending interrupt is no longer needed to surface the moment — the notification banner handles that. The `continueAttending` field is kept as the mechanism for any future interrupt conditions that may be introduced. `ItemYieldRoller.Roll()`'s `bool` return value is likewise kept in case a caller wants to act on it.
+
+---
+
+## Generalization Iterations (21–24)
+
+These four iterations implement all approved generalizations from the Iteration 20 audit, in dependency order. Each is sized to complete in a single session.
+
+---
+
+### Iteration 21 — Building Data Generalization (G1 + G2)
+
+Collapses `BuildingAttendable`'s duplicate per-stage field groups and `PlaceArchetype`'s mirroring asset fields into a shared `BuildingStageDef` serializable type, so any number of building stages can be authored without code changes.
+
+**Deliverables:**
+
+- **`[Serializable] class BuildingStageDef`** (new type, `Mossmark.Development`) with fields: `string displayName`, `string verb`, `ItemDefinition material`, `int costPerTick`, `int progressCost`, `string requiredSpecialization`, `Color tint`. Placed in a new file or alongside `BuildingAttendable`.
+- **`BuildingAttendable` refactor**: replace the `revivedName`/`repairVerb`/`material`/`materialCostPerTick`/`progressCost`/`revivedTint` + `stage2*` parallel field groups with `string dilapidatedName`, `Color dilapidatedColor`, and `BuildingStageDef[] stages`. `Awake()` iterates `stages` to build the `DevelopmentTrack` — one `DevelopmentStage` per entry, with `ItemAvailableCondition(stage.material, stage.costPerTick)` + `SpecializationNeededCondition(stage.requiredSpecialization)` (if non-empty) as before. `OnAttentionComplete()` indexes into `stages[CurrentStageIndex + 1]` to pick the correct material for the tick being attended rather than switching on stage. `UpdateVisual()` reads `stages[CurrentStageIndex].tint` (or `dilapidatedColor` when `CurrentStageIndex < 0`). `InitializeStage2()` is removed; `Initialize()` collapses to `Initialize(string dilapidatedName, Color dilapidatedColor, BuildingStageDef[] stages)`.
+- **`PlaceArchetype` building block refactor**: replace `buildingRepairVerb`/`buildingMaterial`/`buildingProgressCost`/`buildingMaterialCostPerTick`/`buildingRevivedTint` and all `buildingStage2*` fields with `string buildingDilapidatedName`, `Color buildingDilapidatedColor`, and `BuildingStageDef[] buildingStages`. Stage 2 material is now authored directly in the asset rather than sourced indirectly from `PoiCommonYields[0]`. `WorldGenerator.SpawnBuilding()` passes `archetype.BuildingStages` through to `BuildingAttendable.Initialize()` — becomes a direct pass-through of the stage array.
+- **All 5 archetype `.asset` files** migrated: existing Stage 1 + Stage 2 data moved into `buildingStages` array entries. `buildingDilapidatedName`/`buildingDilapidatedColor` carry what was previously the implicit pre-revival state. The Stage 2 material, previously sourced indirectly from `PoiCommonYields[0]` in code, is now explicitly authored on each asset.
+- **`Overworld.unity` not touched**: the hand-placed Wanderer / Roughhand / Bedroll / Chest GameObjects have no `BuildingAttendable` components; all buildings are procedurally spawned by `WorldGenerator`.
+
+**Verification:** `recompile_scripts` returns 0 errors/warnings. `get_gameobject` on "World Generator" shows `regionData` still resolves correctly. In Play mode, reviving any archetype building proceeds through Stage 1 and Stage 2 as before, with correct material consumption per tick and correct tint on each stage's completion.
+
+---
+
+### Iteration 22 — NPC Post-Spec + Spot Tick Tuning (G3 + G6)
+
+Makes NPC post-specialization content fully data-authored (eliminating the hardcoded switch) and adds per-spot-type tick interval tuning to wilderness spot definitions and archetypes.
+
+**Deliverables:**
+
+**G3 — NPC post-spec stages data-driven:**
+
+- **`[Serializable] class NpcPostSpecStageDef`** (new type, `Mossmark.Development` or alongside `PlaceArchetype`) with fields: `string stageId`, `string displayName`, `int progressCost`, `bool useRareItem` (false = `CommonYields[0]`, true = `RareYield`), `int itemCount`, `string flavorText`, `string worldStateFlag` (empty = no flag set on apply).
+- **`PlaceArchetype` gains `NpcPostSpecStageDef[] npcPostSpecStages`**. Each entry describes one post-spec development stage for the archetype's NPC specialization, in progression order.
+- **`NpcAttendable.BuildPostSpecStages(archetype)` becomes a generic loop** over `archetype.NpcPostSpecStages`, constructing each `DevelopmentStage` as: `SpecializationRealizedCondition(archetype.SpecializationId) + ItemAvailableCondition(useRareItem ? archetype.RareYield.Item : archetype.CommonYields[0].Item, entry.itemCount)`. The existing switch on `specId` is deleted.
+- **`NpcAttendable.HandleDeveloped` / `LogPostSpecEffect`**: the per-stage flavor log reads `entry.flavorText` from the definition; `WorldState.SetFlag(entry.worldStateFlag, true)` is called when non-empty. The parallel flavor switch is deleted.
+- **All 5 archetype `.asset` files** gain `npcPostSpecStages` arrays. Existing Hedge Witch (2 stages: `hedge_witch_wound_lore`, `hedge_witch_ravens_eye`) and Bog Keeper (2 stages: `bog_keeper_drainage`, `bog_keeper_iron_sense`) and Herald (2 stages: `herald_trail_markers`, `herald_toll_records`) data migrates from hardcoded C# into assets. Weaver and Stonemason gain empty arrays (no post-spec content yet) — adding their stages later requires only asset editing.
+
+**G6 — Per-spot-type tick intervals:**
+
+- **`WildernessSpotDefinition` gains `float minTickInterval` (default `1.5f`) and `float maxTickInterval` (default `2f`)**. `WorldGenerator.SpawnSpotFromDefinition()` passes these through to `GenericWildernessSpotAttendable.Initialize()` or `TendedSpotAttendable.Initialize()` (tended spots don't use tick intervals, so they're ignored for `kind == Tended`).
+- **`PlaceArchetype` gains `float archetypeSpotMinTickInterval` (default `1.5f`) and `float archetypeSpotMaxTickInterval` (default `2f`)** — used for archetype-driven spots spawned by `WorldGenerator.SpawnWildernessSpot()`. All 5 archetype assets pick up the defaults with no explicit edit needed unless a designer wants to tune them.
+- Existing hardcoded `1.5f, 2f` calls in `WorldGenerator` are replaced with the new fields.
+
+**Implemented (Iteration 22):**
+
+**G3 — NPC post-spec stages data-driven:** `NpcPostSpecStageDef` (`Mossmark.Development`, new `[Serializable]` class) holds `stageId`, `displayName`, `progressCost`, `useRareItem` (false = `archetype.CommonYields[0].Item`, true = `archetype.RareYield.Item`), `itemCount`, `flavorText` (logged as `"{specializedName}: {flavorText}"` — NPC name not included in the asset string), and `worldStateFlag` (empty = no flag set). `PlaceArchetype` gained `NpcPostSpecStageDef[] npcPostSpecStages` (new `[Header("NPC Post-Spec Stages")]` block, default empty array). `NpcAttendable.BuildPostSpecStages(archetype)` is now a generic loop over `archetype.NpcPostSpecStages`, constructing each `DevelopmentStage` with `SpecializationRealizedCondition + ItemAvailableCondition(useRareItem ? rareYield : commonYields[0], itemCount)` — the hardcoded per-archetype `switch` is gone. `NpcAttendable` builds a `Dictionary<string, NpcPostSpecStageDef> postSpecStageDefs` in `Awake()` (one entry per post-spec stage across all selected archetypes). `HandleDeveloped`'s post-spec branch now looks up `stage.Id` in `postSpecStageDefs`: if found, sets the flag (when non-empty) and logs `$"{specializedName}: {def.flavorText}"`; falls back to the old `WorldState.SetFlag(stage.Id) + stage.DisplayName` log if not found. `LogPostSpecEffect` was deleted. All 5 archetype assets updated: Bog (2 stages: `bog_keeper_drainage` progressCost 3 / `bog_keeper_iron_sense` progressCost 4), Sacred Grove (2 stages: `hedge_witch_wound_lore` progressCost 3 / `hedge_witch_ravens_eye` progressCost 4), Old Road (2 stages: `herald_trail_markers` progressCost 3 / `herald_toll_records` progressCost 4), Quarry and Reed Marsh (`npcPostSpecStages: []` — no stages yet, adding content requires only editing the asset). `WoundLoreModifier` and the Herald `WorldStateChanceModifier` calls in `WanderingThingAttendable` remain hardcoded — they have special logic that can't be collapsed to a flag lookup, and moving them to data is G5 (Iteration 23).
+
+**G6 — Per-spot-type tick intervals:** `WildernessSpotDefinition` gained `float minTickInterval` (default `1.5f`) and `float maxTickInterval` (default `2f`) — existing spot assets pick up the defaults with no explicit edit. `PlaceArchetype` gained `float archetypeSpotMinTickInterval` (default `1.5f`) and `float archetypeSpotMaxTickInterval` (default `2f`) under the `[Header("Wilderness Spot")]` block. All three hardcoded `1.5f, 2f` calls in `WorldGenerator` are replaced: `SpawnWildernessSpot` and `SpawnPoi` now pass `archetype.ArchetypeSpotMinTickInterval / MaxTickInterval`; `SpawnSpotFromDefinition` (generic kind) passes `def.minTickInterval / maxTickInterval`. Building tick intervals (`2f, 3f` in `SpawnBuilding`) are unchanged — those are `BuildingAttendable`'s own tuning, not archetype spot tuning.
+
+**Manual playtest sequence (#22):** verify that post-spec stages for Bog Keeper / Hedge Witch / Herald function identically to Iteration 17 (same item requirements, same WorldState flags set, same flavor log lines) — confirming the data migration is behavior-neutral. To test G6: author a `minTickInterval: 3f` / `maxTickInterval: 4f` on any spot definition or archetype asset, enter Play, and confirm spots of that type feel noticeably slower than the default 1.5-2s rhythm. Restore defaults after testing.
+
+---
+
+### Iteration 23 — Wandering Thing Definition (G4 + G5)
+
+Extracts all per-creature data from the single `WanderingThingSpawner` instance into a `WanderingThingDefinition` ScriptableObject pool, and moves the hardcoded outcome modifier list onto the definition.
+
+**Deliverables:**
+
+- **`[Serializable] class WorldStateOddsModifier`** (new type, `Mossmark.World` or alongside `WanderingThingDefinition`) with fields: `string flagId`, `float multiplier`. Used for simple flag-keyed `goodChance` multipliers that don't need special outcome logic.
+- **`WanderingThingDefinition` ScriptableObject** (`[CreateAssetMenu]`, `Mossmark.World`, `Assets/Game/Data/World/WanderingThings/`) with all per-creature fields moved from `WanderingThingSpawner`: `string displayName`, `string approachDescription`, `string attendVerb`, `Color color`, `ItemYield[] goodYields`, `string goodFlavor`, `string badFlavor`, `int badDaylightCost`, `float baseGoodChance`. Gains new field: `WorldStateOddsModifier[] additionalModifiers` (G5) — the Herald-specific `WorldStateChanceModifier("herald_trail_markers", 1.3f)` and `WorldStateChanceModifier("herald_toll_records", 1.2f)` calls become entries in this array.
+- **`WanderingThingSpawner` refactor**: replaces all per-creature serialized fields with `WanderingThingDefinition[] pool`. `Spawn()` picks `pool[Random.Range(0, pool.Length)]` and passes the definition to `WanderingThingAttendable.Initialize()`. `PickFavorableSpecialization()` logic is unchanged (still reads `WorldGenerator.SelectedArchetypes` in `Start()`).
+- **`WanderingThingAttendable.Initialize()` gains a `WanderingThingDefinition def` parameter** (or individual fields from it). `OnAttentionComplete()` loops `def.additionalModifiers`, calling `new WorldStateChanceModifier(m.flagId, m.multiplier).Apply(request)` for each entry — replacing the two hardcoded Herald calls. `WoundLoreModifier` and `RealizedSpecializationChanceModifier` remain hardcoded as noted in the audit decision (their logic can't be collapsed to a flag lookup).
+- **`traveler.asset`** (`WanderingThingDefinition` under `Assets/Game/Data/World/WanderingThings/`) authored with current `WanderingThingSpawner` field values. The two Herald entries go into `additionalModifiers`. Referenced by `WanderingThingSpawner`'s new `pool` field (wired via the hand-edit-YAML pattern for `UnityEngine.Object` references).
+- **`Overworld.unity`**: "Wandering Thing Spawner" YAML updated to replace per-creature fields with `pool` reference.
+
+**Implemented (Iteration 23):**
+
+**G4 — Per-creature data extracted to asset pool:** `WorldStateOddsModifier` (new `[Serializable]` class, `Mossmark.World`) holds `string flagId` and `float multiplier` — a simple flag-keyed goodChance multiplier that can be authored in data rather than hardcoded. `WanderingThingDefinition` (new `[CreateAssetMenu]` ScriptableObject, `Mossmark.World`, `Assets/Game/Data/World/WanderingThings/`) holds all per-creature fields previously on `WanderingThingSpawner`: `displayName`, `approachDescription`, `attendVerb`, `color`, `colliderRadius`, `goodYields`, `goodFlavor`, `badFlavor`, `badDaylightCost`, `baseGoodChance`. `WanderingThingSpawner` replaces all those per-creature serialized fields with a single `WanderingThingDefinition[] pool`; `Spawn()` picks `pool[Random.Range(0, pool.Length)]` and uses it to set up the spawned `TriangleSpriteGenerator`, `CircleCollider2D`, and `WanderingThingAttendable`. `PickFavorableSpecialization()` is unchanged — still reads `WorldGenerator.SelectedArchetypes` in `Start()` and passes the result as a separate `favorableSpecializationId` parameter to `Initialize()`, since it's session-specific rather than per-creature. `WanderingThingAttendable.Initialize()` now accepts `(WanderingThingDefinition def, string favorableSpecializationId, float lifespanSeconds, Action onGone)` — all individual per-creature parameter fields removed; the component stores `def` as a private non-serialized field set before `SetActive(true)` fires `Awake()`.
+
+**(G5) — Hardcoded Herald modifiers become data:** `WanderingThingDefinition` gained `WorldStateOddsModifier[] additionalModifiers` — the two hardcoded `new WorldStateChanceModifier("herald_trail_markers", 1.3f)` and `new WorldStateChanceModifier("herald_toll_records", 1.2f)` calls in `WanderingThingAttendable.OnAttentionComplete()` were replaced by a `foreach` loop over `def.additionalModifiers`, calling `new WorldStateChanceModifier(m.flagId, m.multiplier).Apply(request)` per entry. `WoundLoreModifier` and `RealizedSpecializationChanceModifier` remain hardcoded — `WoundLoreModifier` sets `DaylightCostMultiplier` (a dimension `WorldStateOddsModifier` can't express) and `RealizedSpecializationChanceModifier` uses the session-specific `favorableSpecializationId` not stored on the definition.
+
+**`traveler.asset`** (`Assets/Game/Data/World/WanderingThings/traveler.asset`, GUID `140d91ba06944db41b4b054cd852d69a`) authored with all prior `WanderingThingSpawner` field values: dusty purple `{0.5, 0.45, 0.55, 1}`, `colliderRadius: 0.5`, `goodYields` (Old Coin + Berries), `baseGoodChance: 0.5`, `badDaylightCost: 1`, and `additionalModifiers` with the two Herald entries (`herald_trail_markers × 1.3`, `herald_toll_records × 1.2`). Referenced in the scene's "Wandering Thing Spawner" YAML via `pool` array. Verified post-load via `get_gameobject`: `pool` resolves to `"traveler"`, all spawner timing fields (`minLifespan: 20`, `maxLifespan: 35`, `minSpawnDelay: 5`, `maxSpawnDelay: 15`, `minDistFromTown: 5`) confirmed correct, no console errors.
+
+**Manual playtest sequence (#23):** enter Play and confirm a Wary Traveler appears after 5-15s with the same dusty purple color, approach description, and 2-second hold as before — behavior-neutral confirmation. Verify a good outcome still yields Old Coin or Berries with a flavor line; a bad outcome still clears the inventory and costs 1 extra daylight. Develop a Herald NPC through both post-spec stages (3x Flint, then 2x Old Coin) and confirm good-outcome frequency shifts upward as before — now driven by `def.additionalModifiers` rather than hardcoded calls. To test the pool mechanism: duplicate `traveler.asset` as a second definition with a different color and name, add it to the spawner's `pool` in the Inspector (or scene YAML), and confirm both creature types appear across multiple spawn cycles.
+
+---
+
+### Iteration 24 — Code Quality Pass (G7 + G8 + G9)
+
+Three self-contained code-quality changes with no asset-authoring dependencies on each other. G7 and G8 are code-only; G9 requires migrating two spot `.asset` files.
+
+**Deliverables:**
+
+**G7 — Shared wilderness yield base class:**
+
+- **`WildernessYieldAttendable : MonoBehaviour, IAttendable`** (new abstract class, `Mossmark.World`) extracts all fields and methods shared by `GenericWildernessSpotAttendable` and `PoiAttendable`: `displayName`, `interactionVerb`, `commonYields`, `rareYield`, `rareDropChance`, `minTickInterval`/`maxTickInterval`, `currentTickInterval`, `continueAttending`; `RollTickInterval()`, `AttentionDuration`, `ContinueAttending`, `RequiresDaylight`, `OnAttentionCancelled()`, and the core `OnAttentionComplete()` body (roll yield via `ItemYieldRoller`, reroll tick interval, set `continueAttending = true`). `GetOverlayDescription()` and `GetOverlayInteractionLine()` remain abstract (both subclasses implement them differently).
+- **`GenericWildernessSpotAttendable : WildernessYieldAttendable`** becomes a thin subclass that only implements `CanAttend() => true`, `GetOverlayDescription()`, and `GetOverlayInteractionLine()`. `Initialize()` delegates to the base class fields.
+- **`PoiAttendable : WildernessYieldAttendable`** likewise: adds only `gate` / `lockedDescription`, `CanAttend()`, and the gated overlay methods. No duplication of yield/tick logic remains.
+
+**G8 — Generic `LandmarkAttendable` replaces debug entities:**
+
+- **`LandmarkAttendable : DevelopableEntity, IAttendable`** (new class, `Mossmark.Development`) with serialized fields: `string displayName`, `Color entityColor`, `string attendVerb`, `int progressCost`, `float attendDuration`. Dependencies are authored via `[SerializeReference] IDependencyCondition[]` — polymorphic, set via the hand-edit-YAML pattern since MCP-Unity can't assign them through the inspector. A single `DevelopmentStage` is built in `Awake()` from `progressCost` + the serialized condition array. `RequiresDaylight => LastAttentionMadeProgress`, `ContinueAttending => false` (one-shot), `CanAttend() => CanMakeProgress()`. Overlay interaction line: `GetNeedsOrDefault($"Hold E to {attendVerb}")`.
+- **`OldCairnAttendable.cs` and `WatchersPostAttendable.cs` deleted**. Their two GameObjects in `Overworld.unity` are updated to use `LandmarkAttendable` instead, with the same dependency conditions re-authored in YAML (`ItemAvailableCondition`, `WorldStateCondition`, `EntityStateCondition` already support `[SerializeReference]` serialization as plain C# classes).
+- **`SignalFireAttendable`** is not a `DevelopableEntity` and has no equivalent in `LandmarkAttendable`'s shape — it's a one-shot flag-setter with unique behavior. Retained as-is; the audit's Option B scope was limited to the two cairn/post entities.
+
+**G9 — Tended spot yield pool:**
+
+- **`TendedSpotAttendable.harvestYield: ItemYield`** → **`harvestYields: ItemYield[]`**. `Harvest()` uses the same weighted-pick logic as `ItemYieldRoller` (inline, since tended spots have no rare-drop roll — single pool, no interrupt). `Initialize()` signature updated accordingly.
+- **`WildernessSpotDefinition.harvestYield: ItemYield`** → **`harvestYields: ItemYield[]`**. `WorldGenerator.SpawnSpotFromDefinition()` passes the array through.
+- **`spot_bramble_patch.asset` and `spot_bee_skep.asset`** migrated: `harvestYield` replaced by a length-one `harvestYields` array entry (same item, same quantity range). Functionally identical — single-item tended spots still work as a length-one array. No behavior change for existing spots.
+
+**Verification:** `recompile_scripts` returns 0 errors/warnings. `get_gameobject` on "Old Cairn" and "Watcher's Post" confirms `LandmarkAttendable` is the active component (not the deleted scripts). In Play mode, both landmark entities behave identically to before. Tended-spot harvests (Bramble Patch, Bee Skep) yield the same item as before.

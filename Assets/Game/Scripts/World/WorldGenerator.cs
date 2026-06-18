@@ -102,7 +102,8 @@ namespace Mossmark.World
 
             go.AddComponent<GenericWildernessSpotAttendable>().Initialize(
                 archetype.SpotDisplayName, archetype.SpotVerb,
-                archetype.CommonYields, archetype.RareYield, archetype.RareDropChance, 1.5f, 2f);
+                archetype.CommonYields, archetype.RareYield, archetype.RareDropChance,
+                archetype.ArchetypeSpotMinTickInterval, archetype.ArchetypeSpotMaxTickInterval);
 
             go.AddComponent<AttendableZone>();
 
@@ -129,23 +130,11 @@ namespace Mossmark.World
             go.AddComponent<TriangleSpriteGenerator>().Initialize(archetype.BuildingDilapidatedColor);
             go.AddComponent<CircleCollider2D>().radius = colliderRadius;
 
-            var building = go.AddComponent<BuildingAttendable>();
-            building.Initialize(
-                archetype.BuildingDilapidatedName, archetype.BuildingRevivedName,
-                archetype.BuildingRepairVerb, archetype.BuildingMaterial,
-                archetype.BuildingMaterialCostPerTick, archetype.BuildingProgressCost,
-                2f, 3f, archetype.BuildingRevivedTint, archetype.SpecializationId);
-
-            var stage2Mat = archetype.PoiCommonYields?.Length > 0 ? archetype.PoiCommonYields[0].Item : null;
-            if (!string.IsNullOrEmpty(archetype.BuildingStage2DisplayName) && stage2Mat != null)
-            {
-                building.InitializeStage2(
-                    archetype.BuildingStage2DisplayName, archetype.BuildingStage2Verb,
-                    stage2Mat, archetype.BuildingStage2MaterialCostPerTick,
-                    archetype.BuildingStage2ProgressCost,
-                    archetype.SpecializationId,
-                    archetype.BuildingStage2Tint);
-            }
+            go.AddComponent<BuildingAttendable>().Initialize(
+                archetype.BuildingDilapidatedName,
+                archetype.BuildingStages,
+                archetype.SpecializationId,
+                2f, 3f);
 
             go.AddComponent<AttendableZone>();
 
@@ -174,7 +163,7 @@ namespace Mossmark.World
             go.AddComponent<PoiAttendable>().Initialize(
                 archetype.PoiDisplayName, archetype.PoiLockedDescription, archetype.PoiVerb,
                 archetype.PoiCommonYields, archetype.PoiRareYield, archetype.PoiRareDropChance,
-                1.5f, 2f, gate);
+                archetype.ArchetypeSpotMinTickInterval, archetype.ArchetypeSpotMaxTickInterval, gate);
 
             go.AddComponent<AttendableZone>();
 
@@ -216,13 +205,14 @@ namespace Mossmark.World
             {
                 go.AddComponent<GenericWildernessSpotAttendable>().Initialize(
                     def.displayName, def.interactionVerb,
-                    def.commonYields, def.rareYield, def.rareDropChance, 1.5f, 2f);
+                    def.commonYields, def.rareYield, def.rareDropChance,
+                    def.minTickInterval, def.maxTickInterval);
             }
             else
             {
                 go.AddComponent<TendedSpotAttendable>().Initialize(
                     def.displayName, def.tendVerb,
-                    def.harvestYield, def.restsToHarvest, def.maxConcurrentMarked);
+                    def.harvestYields, def.restsToHarvest, def.maxConcurrentMarked);
             }
 
             go.AddComponent<AttendableZone>();

@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae4ce0d50781fe540a8ca19521812c7b, type: 3}
+  m_Name: traveler
+  m_EditorClassIdentifier: Assembly-CSharp::Mossmark.World.WanderingThingDefinition
+  displayName: Wary Traveler
+  approachDescription: A traveler lingers at the path's edge, watching you with wary
+    eyes.
+  attendVerb: approach
+  color: {r: 0.5, g: 0.45, b: 0.55, a: 1}
+  colliderRadius: 0.5
+  goodYields:
+  - Item: {fileID: 11400000, guid: 1066a13ea81de794aa4f4ff5491bcebc, type: 2}
+    MinQuantity: 1
+    MaxQuantity: 2
+    Weight: 1
+  - Item: {fileID: 11400000, guid: 4f53be0c9d7940a6b8213bb827ef3635, type: 2}
+    MinQuantity: 1
+    MaxQuantity: 3
+    Weight: 1
+  goodFlavor: decides you mean no harm, and presses something into your hand before
+    moving on.
+  badFlavor: bolts, snatching everything from your pack as they go.
+  badDaylightCost: 1
+  baseGoodChance: 0.5
+  additionalModifiers:
+  - flagId: herald_trail_markers
+    multiplier: 1.3
+  - flagId: herald_toll_records
+    multiplier: 1.2

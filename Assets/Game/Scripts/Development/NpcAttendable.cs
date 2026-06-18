@@ -10,13 +10,12 @@ namespace Mossmark.Development
     // PendingProgress reaches progressCost, at which point TryApplyStage's random-among-
     // available selection draws a specialization (interrupting the hold).
     //
-    // Iteration 17: two archetype specializations (hedge_witch, bog_keeper) have post-spec
-    // development stages gated by item availability; pool-sealing lets GetNextStage() reach
-    // those stages after the spec draws.
+    // Iteration 17: post-spec development stages gated by item availability; pool-sealing
+    // lets GetNextStage() reach those stages after the spec draws.
     //
-    // Content pass: "smith" removed from universal pool (folded into Old Quarry archetype
-    // as "stonemason"). progressCost raised to 8 to give the player time to set up a
-    // building direction before specialization fires. Herald archetype gains post-spec stages.
+    // Iteration 22 (G3): BuildPostSpecStages is now a generic loop over
+    // archetype.NpcPostSpecStages — the hardcoded per-archetype switch is gone.
+    // New post-spec content requires only editing the PlaceArchetype asset.
     public class NpcAttendable : DevelopableEntity, IAttendable
     {
         [SerializeField] private string genericName = "Wanderer";
@@ -31,6 +30,7 @@ namespace Mossmark.Development
         private List<string> poolStageIds;
         private Dictionary<string, List<string>> postSpecStageIdsBySpecId;
         private Dictionary<string, (string Title, Color Tint)> specializationInfo;
+        private Dictionary<string, NpcPostSpecStageDef> postSpecStageDefs;
         private float currentTickInterval;
 
         public override string DisplayName => drawnSpecializationId != null ? specializedName : genericName;
@@ -82,6 +82,7 @@ namespace Mossmark.Development
             // Post-spec stages appended after all pool stages so GetNextStage() still
             // resolves to "forager" pre-specialization (ticks 1–(progressCost-1) unaffected).
             postSpecStageIdsBySpecId = new Dictionary<string, List<string>>();
+            postSpecStageDefs = new Dictionary<string, NpcPostSpecStageDef>();
             foreach (var archetype in WorldGenerator.SelectedArchetypes)
             {
                 var postStages = BuildPostSpecStages(archetype);
@@ -89,6 +90,11 @@ namespace Mossmark.Development
 
                 stages.AddRange(postStages);
                 postSpecStageIdsBySpecId[archetype.SpecializationId] = postStages.ConvertAll(s => s.Id);
+
+                // Build the stageId → def lookup for HandleDeveloped.
+                if (archetype.NpcPostSpecStages != null)
+                    foreach (var def in archetype.NpcPostSpecStages)
+                        postSpecStageDefs[def.stageId] = def;
             }
 
             track = new DevelopmentTrack(stages.ToArray());
@@ -160,74 +166,37 @@ namespace Mossmark.Development
             }
 
             // --- Post-specialization stage ---
-            WorldState.SetFlag(stage.Id, true);
-            LogPostSpecEffect(stage);
-        }
-
-        private void LogPostSpecEffect(DevelopmentStage stage)
-        {
-            var message = stage.Id switch
+            if (postSpecStageDefs.TryGetValue(stage.Id, out var stageDef))
             {
-                "hedge_witch_wound_lore" =>
-                    $"{specializedName}: learns Wound Lore - healing herbs ease the hurt of bad encounters.",
-                "hedge_witch_ravens_eye" =>
-                    $"{specializedName}: learns Raven's Eye Reading - the intent of wandering things becomes clearer before you approach.",
-                "bog_keeper_drainage" =>
-                    $"{specializedName}: clears Drainage Channels - the fen's margins grow more passable.",
-                "bog_keeper_iron_sense" =>
-                    $"{specializedName}: develops Iron-Sense - bog iron deposits reveal themselves more readily.",
-                "herald_trail_markers" =>
-                    $"{specializedName}: marks key paths and crossroads - travelers find the road safer.",
-                "herald_toll_records" =>
-                    $"{specializedName}: establishes toll records - the settlement's standing on the road grows.",
-                _ => $"{specializedName}: {stage.DisplayName}.",
-            };
-            Debug.Log(message, this);
+                if (!string.IsNullOrEmpty(stageDef.worldStateFlag))
+                    WorldState.SetFlag(stageDef.worldStateFlag, true);
+                Debug.Log($"{specializedName}: {stageDef.flavorText}", this);
+            }
+            else
+            {
+                WorldState.SetFlag(stage.Id, true);
+                Debug.Log($"{specializedName}: {stage.DisplayName}.", this);
+            }
         }
 
         private List<DevelopmentStage> BuildPostSpecStages(PlaceArchetype archetype)
         {
-            var specId = archetype.SpecializationId;
+            var stages = new List<DevelopmentStage>();
+            if (archetype.NpcPostSpecStages == null || archetype.NpcPostSpecStages.Length == 0)
+                return stages;
+
             var item1 = archetype.CommonYields?.Length > 0 ? archetype.CommonYields[0].Item : null;
             var item2 = archetype.RareYield?.Item;
 
-            var stages = new List<DevelopmentStage>();
-            if (item1 == null) return stages;
-
-            switch (specId)
+            foreach (var def in archetype.NpcPostSpecStages)
             {
-                case "hedge_witch":
-                    stages.Add(new DevelopmentStage("hedge_witch_wound_lore", "Wound Lore", 3,
-                        new SpecializationRealizedCondition(specId, $"needs a {archetype.NpcTitle} in town"),
-                        new ItemAvailableCondition(item1, 2)));
-                    if (item2 != null)
-                        stages.Add(new DevelopmentStage("hedge_witch_ravens_eye", "Raven's Eye Reading", 4,
-                            new SpecializationRealizedCondition(specId, $"needs a {archetype.NpcTitle} in town"),
-                            new ItemAvailableCondition(item2, 2)));
-                    break;
+                var item = def.useRareItem ? item2 : item1;
+                if (item == null) continue;
 
-                case "bog_keeper":
-                    stages.Add(new DevelopmentStage("bog_keeper_drainage", "Drainage Channels", 3,
-                        new SpecializationRealizedCondition(specId, $"needs a {archetype.NpcTitle} in town"),
-                        new ItemAvailableCondition(item1, 3)));
-                    if (item2 != null)
-                        stages.Add(new DevelopmentStage("bog_keeper_iron_sense", "Iron-Sense", 4,
-                            new SpecializationRealizedCondition(specId, $"needs a {archetype.NpcTitle} in town"),
-                            new ItemAvailableCondition(item2, 2)));
-                    break;
-
-                case "herald":
-                    // Trail Markers: needs flint (wilderness common) - something gathered early.
-                    stages.Add(new DevelopmentStage("herald_trail_markers", "Trail Markers", 3,
-                        new SpecializationRealizedCondition(specId, $"needs a {archetype.NpcTitle} in town"),
-                        new ItemAvailableCondition(item1, 3)));
-                    // Toll Records: needs old coin (wilderness rare / POI common) - acquired
-                    // via the Old Road Checkpoint once the POI opens.
-                    if (item2 != null)
-                        stages.Add(new DevelopmentStage("herald_toll_records", "Toll Records", 4,
-                            new SpecializationRealizedCondition(specId, $"needs a {archetype.NpcTitle} in town"),
-                            new ItemAvailableCondition(item2, 2)));
-                    break;
+                stages.Add(new DevelopmentStage(def.stageId, def.displayName, def.progressCost,
+                    new SpecializationRealizedCondition(archetype.SpecializationId,
+                        $"needs a {archetype.NpcTitle} in town"),
+                    new ItemAvailableCondition(item, def.itemCount)));
             }
 
             return stages;

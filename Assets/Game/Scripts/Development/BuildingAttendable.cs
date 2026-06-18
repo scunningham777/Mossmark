@@ -5,77 +5,41 @@ using UnityEngine;
 
 namespace Mossmark.Development
 {
-    // Iteration 9: a dilapidated building, revived via repeated attention while carrying
-    // its required material. Each productive tick consumes material and spends daylight;
-    // the tick that crosses the revival threshold interrupts the hold.
+    // Iteration 9: a dilapidated building, revived and further developed via repeated
+    // attention while carrying its required material. Each productive tick consumes
+    // material and spends daylight; the tick that crosses a stage threshold interrupts
+    // the hold.
     //
-    // Content pass: optional stage 2 (development beyond revival). When stage2DisplayName
-    // is non-empty and stage2Material is assigned, a second DevelopmentStage is added to
-    // the track gated by ItemAvailableCondition(stage2Material) +, optionally,
-    // SpecializationRealizedCondition(stage2RequiredSpecialization). Each stage consumes
-    // its own material on productive ticks; OnAttentionComplete captures which stage was
-    // active before ResolveAttention() advances CurrentStageIndex.
+    // Iteration 21: replaced parallel per-stage field groups with BuildingStageDef[],
+    // so any number of stages can be authored without code changes. stage[0] is always
+    // the revival stage; stage[0].displayName is the building's revived name.
     public class BuildingAttendable : DevelopableEntity, IAttendable
     {
         [SerializeField] private string dilapidatedName = "Tumbledown Building";
-        [SerializeField] private string revivedName = "Building";
-        [SerializeField] private string repairVerb = "repair";
-        [SerializeField] private ItemDefinition material;
-        [SerializeField, Min(1)] private int materialCostPerTick = 2;
-        [SerializeField, Min(1)] private int progressCost = 6;
-
         [SerializeField] private string declaredSpecialization;
-
         [SerializeField, Min(0.1f)] private float minTickInterval = 2f;
         [SerializeField, Min(0.1f)] private float maxTickInterval = 3f;
-
-        [SerializeField] private Color revivedTint = new(1f, 0.85f, 0.5f, 1f);
-
-        [Header("Stage 2 (optional)")]
-        [SerializeField] private string stage2DisplayName;
-        [SerializeField] private string stage2Verb = "develop";
-        [SerializeField] private ItemDefinition stage2Material;
-        [SerializeField, Min(1)] private int stage2MaterialCostPerTick = 2;
-        [SerializeField, Min(1)] private int stage2ProgressCost = 4;
-        // Specialization that must be realized before stage 2 is available. Empty = no dep.
-        [SerializeField] private string stage2RequiredSpecialization;
-        // Color.clear (alpha 0) means "no change from revivedTint."
-        [SerializeField] private Color stage2Tint = Color.clear;
+        [SerializeField] private BuildingStageDef[] stages = System.Array.Empty<BuildingStageDef>();
 
         private DevelopmentTrack track;
         private SpriteRenderer spriteRenderer;
         private float currentTickInterval;
 
-        public void Initialize(string dilapidatedName, string revivedName, string repairVerb,
-            ItemDefinition material, int materialCostPerTick, int progressCost,
-            float minTickInterval, float maxTickInterval, Color revivedTint, string declaredSpecialization)
+        public void Initialize(string dilapidatedName, BuildingStageDef[] stages,
+            string declaredSpecialization, float minTickInterval = 2f, float maxTickInterval = 3f)
         {
             this.dilapidatedName = dilapidatedName;
-            this.revivedName = revivedName;
-            this.repairVerb = repairVerb;
-            this.material = material;
-            this.materialCostPerTick = materialCostPerTick;
-            this.progressCost = progressCost;
+            this.stages = stages;
+            this.declaredSpecialization = declaredSpecialization;
             this.minTickInterval = minTickInterval;
             this.maxTickInterval = maxTickInterval;
-            this.revivedTint = revivedTint;
-            this.declaredSpecialization = declaredSpecialization;
         }
 
-        // Called before SetActive(true), same as Initialize — only needed if stage 2 exists.
-        public void InitializeStage2(string displayName, string verb, ItemDefinition mat,
-            int matCost, int progCost, string requiredSpecialization, Color tint)
-        {
-            stage2DisplayName = displayName;
-            stage2Verb = verb;
-            stage2Material = mat;
-            stage2MaterialCostPerTick = matCost;
-            stage2ProgressCost = progCost;
-            stage2RequiredSpecialization = requiredSpecialization;
-            stage2Tint = tint;
-        }
+        // Stage 0's displayName is the building's revived name; post-revival the name
+        // stays the same regardless of further stage progression.
+        public override string DisplayName =>
+            stages.Length > 0 && CurrentStageIndex >= 0 ? stages[0].displayName : dilapidatedName;
 
-        public override string DisplayName => CurrentStageIndex >= 0 ? revivedName : dilapidatedName;
         protected override DevelopmentTrack Track => track;
 
         public float AttentionDuration => currentTickInterval;
@@ -86,28 +50,28 @@ namespace Mossmark.Development
         {
             spriteRenderer = GetComponent<SpriteRenderer>();
 
-            var stages = new List<DevelopmentStage>
+            var devStages = new List<DevelopmentStage>();
+            for (int i = 0; i < stages.Length; i++)
             {
-                new("revive", $"Revive the {revivedName}", progressCost,
-                    new ItemAvailableCondition(material, materialCostPerTick))
-            };
-
-            if (!string.IsNullOrEmpty(stage2DisplayName) && stage2Material != null)
-            {
+                var def = stages[i];
                 var deps = new List<IDependencyCondition>
                 {
-                    new ItemAvailableCondition(stage2Material, stage2MaterialCostPerTick)
+                    new ItemAvailableCondition(def.material, def.costPerTick)
                 };
-                if (!string.IsNullOrEmpty(stage2RequiredSpecialization))
-                    deps.Insert(0, new SpecializationRealizedCondition(stage2RequiredSpecialization,
-                        $"needs a {stage2RequiredSpecialization} in town to develop further"));
+                if (!string.IsNullOrEmpty(def.requiredSpecialization))
+                    deps.Insert(0, new SpecializationRealizedCondition(def.requiredSpecialization,
+                        $"needs a {def.requiredSpecialization} in town to develop further"));
 
-                stages.Add(new DevelopmentStage("develop", stage2DisplayName, stage2ProgressCost,
-                    deps.ToArray()));
+                // Stage 0's DevelopmentStage name uses "Revive the X" phrasing; later stages
+                // use the stage def's displayName directly (which is the action/development name).
+                string stageName = i == 0
+                    ? $"Revive the {def.displayName}"
+                    : def.displayName;
+
+                devStages.Add(new DevelopmentStage($"stage_{i}", stageName, def.progressCost, deps.ToArray()));
             }
 
-            track = new DevelopmentTrack(stages.ToArray());
-
+            track = new DevelopmentTrack(devStages.ToArray());
             OnDeveloped += HandleDeveloped;
             UpdateVisual();
             RollTickInterval();
@@ -119,27 +83,34 @@ namespace Mossmark.Development
 
         public string GetOverlayInteractionLine()
         {
+            if (GetNextStage() == null)
+                return stages.Length > 0
+                    ? $"The {stages[0].displayName} stands restored."
+                    : $"The {dilapidatedName} stands restored.";
+
+            int nextIndex = CurrentStageIndex + 1;
+            var stageDef = stages[nextIndex];
+
+            // Stage 0: "Hold E to {verb} the {dilapidatedName}" — names the object being worked on.
+            // Stage 1+: "Hold E to {displayName}" — names the specific development action.
             if (CurrentStageIndex < 0)
-                return GetNeedsOrDefault($"Hold E to {repairVerb} the {dilapidatedName}");
-
-            if (GetNextStage() != null)
-                return GetNeedsOrDefault($"Hold E to {stage2Verb} the {revivedName}");
-
-            return $"The {revivedName} stands restored.";
+                return GetNeedsOrDefault($"Hold E to {stageDef.verb} the {dilapidatedName}");
+            else
+                return GetNeedsOrDefault($"Hold E to {stageDef.displayName}");
         }
 
         public void OnAttentionComplete()
         {
-            // Capture which stage is active before ResolveAttention() may advance the index.
-            bool onStage1 = CurrentStageIndex < 0;
+            // Capture the stage index before ResolveAttention() may advance it, so we
+            // know which stage's material to consume.
+            int stageIndexBefore = CurrentStageIndex;
             ResolveAttention();
 
             if (LastAttentionMadeProgress)
             {
-                if (onStage1)
-                    ConsumeMaterial(material, materialCostPerTick);
-                else if (stage2Material != null)
-                    ConsumeMaterial(stage2Material, stage2MaterialCostPerTick);
+                int materialIndex = stageIndexBefore + 1;
+                if (materialIndex < stages.Length)
+                    ConsumeMaterial(stages[materialIndex].material, stages[materialIndex].costPerTick);
             }
             else
             {
@@ -162,25 +133,27 @@ namespace Mossmark.Development
 
         private void RollTickInterval()
         {
-            currentTickInterval = UnityEngine.Random.Range(minTickInterval, maxTickInterval);
+            currentTickInterval = Random.Range(minTickInterval, maxTickInterval);
         }
 
         private void UpdateVisual()
         {
-            if (spriteRenderer == null) return;
+            if (spriteRenderer == null || stages == null || stages.Length == 0) return;
             if (CurrentStageIndex < 0)
+            {
                 spriteRenderer.color = Color.white;
-            else if (CurrentStageIndex >= 1 && stage2Tint.a > 0)
-                spriteRenderer.color = stage2Tint;
-            else
-                spriteRenderer.color = revivedTint;
+                return;
+            }
+            int idx = Mathf.Clamp(CurrentStageIndex, 0, stages.Length - 1);
+            spriteRenderer.color = stages[idx].tint;
         }
 
         private void HandleDeveloped(DevelopmentStage stage)
         {
             UpdateVisual();
 
-            if (stage.Id == "revive")
+            // CurrentStageIndex was just incremented; 0 means stage 0 (revival) just fired.
+            if (CurrentStageIndex == 0)
             {
                 if (!string.IsNullOrEmpty(declaredSpecialization))
                 {
