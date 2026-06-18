@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Mossmark.Visuals;
 using UnityEngine;
 
 namespace Mossmark.Development
@@ -81,6 +82,10 @@ namespace Mossmark.Development
         // so GetNextStage() advances past them to the drawn specialization's own stages.
         public void MarkStageAsApplied(string stageId) => appliedStageIds.Add(stageId);
 
+        // Reverse of MarkStageAsApplied: removes from the sealed set so GetNextStage()
+        // can reach stages that were pre-sealed to prevent premature firing.
+        public void MarkStageAsAvailable(string stageId) => appliedStageIds.Remove(stageId);
+
         // True if attending right now would be productive: the next not-yet-applied
         // stage exists and its dependencies are currently satisfied. Single-stage
         // entities (Old Cairn, Buildings, Watcher's Post) gate CanAttend() on this so a
@@ -119,6 +124,7 @@ namespace Mossmark.Development
             if (TryApplyStage())
             {
                 Debug.Log($"{DisplayName}: developed - {LastAppliedStage.DisplayName}!", this);
+                NotificationManager.Post($"{DisplayName}: {LastAppliedStage.DisplayName}");
                 LastAttentionMadeProgress = true;
                 LastAttentionAppliedStage = true;
                 return true;

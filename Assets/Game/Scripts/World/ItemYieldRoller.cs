@@ -1,4 +1,5 @@
 using Mossmark.Inventory;
+using Mossmark.Visuals;
 using UnityEngine;
 
 namespace Mossmark.World
@@ -35,6 +36,7 @@ namespace Mossmark.World
                 if (added > 0)
                 {
                     Debug.Log($"{sourceName}: found a rare {added}x {rareYield.Item.DisplayName}!");
+                    NotificationManager.Post($"Rare find: {added}x {rareYield.Item.DisplayName}");
                     return true;
                 }
             }

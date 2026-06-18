@@ -88,6 +88,14 @@ namespace Mossmark.Development
 
             track = new DevelopmentTrack(stages.ToArray());
 
+            // Pre-seal all post-spec stages so they can't fire before this NPC has
+            // drawn the matching specialization. SpecializationRealizedCondition is
+            // global (static), so without this seal a second NPC would have its
+            // post-spec stages become candidates the moment the first NPC specializes.
+            foreach (var kvp in postSpecStageIdsBySpecId)
+                foreach (var stageId in kvp.Value)
+                    MarkStageAsApplied(stageId);
+
             OnDeveloped += HandleDeveloped;
         }
 
@@ -131,6 +139,13 @@ namespace Mossmark.Development
                     if (kvp.Key != stage.Id)
                         foreach (var stageId in kvp.Value)
                             MarkStageAsApplied(stageId);
+
+                // Unseal this NPC's own post-spec stages now that specialization has
+                // fired. They were pre-sealed in Awake to prevent cross-NPC contamination
+                // (SpecializationRealizedCondition is global).
+                if (postSpecStageIdsBySpecId.TryGetValue(stage.Id, out var ownPostStageIds))
+                    foreach (var stageId in ownPostStageIds)
+                        MarkStageAsAvailable(stageId);
 
                 return;
             }

@@ -10,14 +10,17 @@ namespace Mossmark.Attention
     public class AttendableOverlayUI : MonoBehaviour
     {
         private const int ProgressBarSegments = 10;
+        // World-space units to offset the label above the entity's pivot.
+        private const float WorldLabelOffset = 1.5f;
 
         private Label descriptionLabel;
         private Label interactionLabel;
         private VisualElement overlayRoot;
+        private UIDocument uiDocument;
 
         private void OnEnable()
         {
-            var uiDocument = GetComponent<UIDocument>();
+            uiDocument = GetComponent<UIDocument>();
 
             // Created at runtime rather than referencing a PanelSettings asset, keeping this
             // overlay fully code-first with no asset wiring required. A theme style sheet is
@@ -36,8 +39,8 @@ namespace Mossmark.Attention
         private void BuildLayout(VisualElement root)
         {
             // UIDocument's rootVisualElement has no explicit size by default, so it collapses
-            // to zero height within the panel's layout. overlayRoot's absolute "bottom: 64"
-            // then resolves against that zero-height containing block and lands off-screen.
+            // to zero height within the panel's layout. overlayRoot's absolute position then
+            // resolves against that zero-height containing block and lands off-screen.
             // Stretch root to fill the panel so descendants position correctly.
             root.style.position = Position.Absolute;
             root.style.left = 0;
@@ -54,11 +57,10 @@ namespace Mossmark.Attention
                 style =
                 {
                     position = Position.Absolute,
-                    left = 0,
-                    right = 0,
-                    bottom = 64,
-                    alignItems = Align.Center,
-                    display = DisplayStyle.None
+                    display = DisplayStyle.None,
+                    // Shift left by half its own width so it centers on the anchor point
+                    // set each frame in Update() via style.left.
+                    translate = new StyleTranslate(new Translate(Length.Percent(-50), 0))
                 }
             };
 
@@ -132,6 +134,16 @@ namespace Mossmark.Attention
             {
                 overlayRoot.style.display = DisplayStyle.None;
                 return;
+            }
+
+            // Position the panel above the target in world space each frame.
+            if (target is Component c && Camera.main != null && uiDocument.rootVisualElement.panel != null)
+            {
+                var worldAbove = c.transform.position + new Vector3(0f, WorldLabelOffset, 0f);
+                var panelPos = RuntimePanelUtils.CameraTransformWorldToPanel(
+                    uiDocument.rootVisualElement.panel, worldAbove, Camera.main);
+                overlayRoot.style.left = panelPos.x;
+                overlayRoot.style.top = panelPos.y;
             }
 
             overlayRoot.style.display = DisplayStyle.Flex;
