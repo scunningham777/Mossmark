@@ -345,12 +345,181 @@ Iteration 8.5 is inserted between 8 and 9, and Iteration 16.5 between 16 and 17 
 | 16.5 | [x] | World Context + Outcome Influence Layer | `WorldContext` static facade and a generic `IOutcomeModifier`/`OutcomeRequest` abstraction extracted from the existing ad hoc bonus pattern; Wandering Things' specialization-bonus odds-shift reimplemented as a modifier with no behavior change, plus a new day-phase-based rare-drop bonus on wilderness spots, proving the same modifier list works across attendable types | New |
 | 17 | [x] | NPC Post-Specialization Tracks | Two archetype specializations (Hedge Witch, Bog Keeper) gain post-spec development stages gated by item availability; pool-sealing mechanism lets `GetNextStage()` reach those stages after a spec draws; `WoundLoreModifier` (new `DaylightCostMultiplier` dimension on `OutcomeRequest`) eliminates the bad-outcome daylight penalty while Wound Lore is active, proving the full flag-set-by-stage → modifier-reads-flag loop | New |
 | 18 | [x] | Wilderness Depth + Random Placement | Wilderness spot pool expanded to 7 types (5 generic + 2 tended); all wilderness objects placed via rejection-sampling; 10-12 random generic/tended spots spawned each session | New |
-| 19 | [ ] | Playtest + Tuning Pass | Full day loop playable end-to-end; daylight costs, yield tables, and dependency thresholds tuned for a legible web | — |
-| 20 | [ ] | Code Generalization Audit | Audit all systems for hardcoded field duplication that should be data-driven; produce a prioritized list of ScriptableObject-authoring refactors for subsequent iterations; `BuildingAttendable`'s per-stage duplicate fields are the leading example | New |
+| 19 | [x] | Playtest + Tuning Pass | Full day loop playable end-to-end; daylight costs, yield tables, and dependency thresholds tuned for a legible web | — |
+| 20 | [x] | Code Generalization Audit | Audit all systems for hardcoded field duplication that should be data-driven; produce a prioritized list of ScriptableObject-authoring refactors for subsequent iterations; `BuildingAttendable`'s per-stage duplicate fields are the leading example | New |
 | 21 | [x] | Building Data Generalization (G1 + G2) | `BuildingAttendable`'s parallel stage field groups collapsed into a `BuildingStageDef[]`; `PlaceArchetype`'s building block likewise; any number of stages without code changes; all 5 archetype assets migrated | New |
 | 22 | [x] | NPC Post-Spec + Spot Tick Tuning (G3 + G6) | `NpcPostSpecStageDef[]` on `PlaceArchetype` replaces `BuildPostSpecStages`' hardcoded switch; `WildernessSpotDefinition` and `PlaceArchetype` gain per-type tick interval fields; all archetype assets updated | New |
 | 23 | [x] | Wandering Thing Definition (G4 + G5) | Per-creature data extracted to `WanderingThingDefinition` ScriptableObject pool; spawner picks one at random each cycle; hardcoded Herald modifier calls become data-authored `WorldStateOddsModifier[]` on the definition | New |
 | 24 | [x] | Code Quality Pass (G7 + G8 + G9) | `WildernessYieldAttendable` base class eliminates `GenericWildernessSpotAttendable`/`PoiAttendable` duplication; `OldCairnAttendable`/`WatchersPostAttendable` replaced by a generic `LandmarkAttendable`; `TendedSpotAttendable` and `WildernessSpotDefinition` gain yield-pool support | New |
+| 25 | [x] | CSV / ScriptableObject Data Pipeline | All `WildernessSpotDefinition`, `PlaceArchetype` building/NPC stages, and `WanderingThingDefinition` assets exported to canonical CSVs; C# Editor importer regenerates all SOs from CSV on demand; Google Sheets serves as the editing surface going forward | P1 data tooling |
+| 26 | [ ] | Playtest + Numeric Tuning Pass | Full day loop played end-to-end; daylight costs, yield weights, tick intervals, dependency thresholds, and rest counts all tuned until the loop feels legible and unhurried; all tuning expressed in CSV data, not code | — |
+| 27 | [ ] | Spot Tendedness — Landscape Reacts to Attention | Each wilderness spot accumulates a `tendedness` float that drifts toward wild when left alone and shifts when attended; yield pool composition, rare-drop chance, and tick interval all respond to tendedness; heavy extraction degrades a spot; patient return visits improve it; no UI exposes this directly | New |
+| 28 | [ ] | Knowledge-Gated Yield Layers | NPC WorldState flags silently unlock additional yield possibilities on wilderness spots — a Bog Keeper with `bog_keeper_iron_sense` adds a weighted bog iron entry to fen-adjacent spots' common pools; a Hedge Witch with `hedge_witch_ravens_eye` changes what the Deep Wood Shrine's inner grove can produce; player discovers this by returning to known spots after NPC development, not by being told | New |
+| 29 | [ ] | Settlement Maintenance + Ongoing Demand | Restored buildings and specialized NPCs accumulate a `driftProgress` counter each rest; crossing a per-entity threshold drops one effective capability stage (not specialization identity — the building doesn't become dilapidated again, but its output or NPC productivity visibly dims); attending with appropriate common materials resets drift; overlay shows a distinct low-maintenance state string before and after threshold ("the hearth is cooling" / "the hearth has gone cold") | New |
+| 30 | [ ] | Settlement Growth — New Arrivals | Two or three WorldState flag combinations, checkable via `WorldContext`, trigger a new-arrival event: a Wandering Thing variant that doesn't despawn but instead becomes a persistent NPC attendable; growth isn't announced, it's noticed; each trigger combination is authored in data and checked at rest-transition | New |
+
+---
+
+### Iteration 25 — CSV / ScriptableObject Data Pipeline
+
+The generalization passes (Iterations 20-24) brought all development content into ScriptableObject assets. The next bottleneck is bulk authoring and comparison: tuning 7 spot definitions side-by-side, comparing NPC post-spec stage costs across archetypes, or adding a new wandering thing creature currently means clicking through individual Inspector panels. A CSV pipeline eliminates that friction and restores the Google Sheets editing surface from P1.
+
+**Deliverables:**
+
+**Export script (`Tools/ExportGameData.py`):**
+- One CSV per asset type: `wilderness_spots.csv`, `place_archetypes.csv`, `wandering_things.csv`
+- Each row is one asset; columns are the asset's editable fields (not Unity internals, not GUIDs — display names and plain values only)
+- `ItemDefinition` references are stored as item display names (a stable lookup key); Unity GUIDs are resolved at import time, not stored in the CSV
+- ItemYield arrays (commonYields, harvestYields, goodYields) use a compact inline format: `"BogIron:0.6:1:2,CrowFeather:0.4:1:1"` (name:weight:minQty:maxQty) — human-readable, parseable without regex
+- `NpcPostSpecStageDef[]` arrays are flattened into numbered column groups: `stage1_id`, `stage1_displayName`, `stage1_progressCost`, `stage1_useRareItem`, `stage1_itemCount`, `stage1_flavorText`, `stage1_worldStateFlag`, `stage2_*`, etc. — enough columns for the maximum number of stages any archetype currently has
+
+**Import script (`Tools/ImportGameData.py`):**
+- Reads each CSV and regenerates all SOs of that type under their existing `Assets/Game/Data/` paths
+- Preserves GUIDs by reading existing `.meta` files before overwriting — Unity scene/prefab references stay intact
+- Validates: item names resolve to known `ItemDefinition` assets; required fields non-empty; numeric ranges sane (weights sum to >0, quantities min ≤ max); duplicate asset names flagged as errors
+- Dry-run mode prints what would change without writing files
+- Reports unchanged assets as skipped (not regenerated) so Unity's asset import doesn't re-process the whole project on every run
+
+**Workflow:**
+1. `python Tools/ExportGameData.py` → produces CSVs under `Tools/Data/`
+2. Upload to Google Sheets (or edit locally); make changes
+3. Download updated CSVs back to `Tools/Data/`
+4. `python Tools/ImportGameData.py` → regenerates changed SOs
+5. Unity auto-imports changed `.asset` files; play and verify
+
+**What stays code-first:** `DevelopmentStage` construction in `NpcAttendable.Awake()` and `BuildingAttendable.Awake()` — these are structural (which conditions get wired to which stages) rather than numeric. The CSV pipeline handles the *values inside* the stage definitions, not the stage-wiring logic itself. This boundary keeps the importer simple and the code readable.
+
+**Verification:** export → edit one field in a CSV → import → enter Play → confirm the changed field is reflected in-game behavior (e.g. change a spot's `rareDropChance` in the CSV, import, confirm the rate is visibly different in the playtest sequence for that spot type).
+
+**Implemented (Iteration 25):**
+- **`Assets/Editor/ExportGameData.cs`** — Unity Editor script (`[MenuItem("Mossmark/Data/Export All")]`) that uses `AssetDatabase.FindAssets`/`LoadAssetAtPath` to load typed C# objects directly, then writes three CSVs to `Tools/Data/`: `wilderness_spots.csv`, `place_archetypes.csv`, `wandering_things.csv`. No external dependencies or YAML parsing required — Unity handles all serialization.
+- **`Assets/Editor/ImportGameData.cs`** — Unity Editor script (`[MenuItem("Mossmark/Data/Import All")]`) that reads CSVs and applies values back to assets via `SerializedObject`/`SerializedProperty`. `ApplyModifiedProperties()` detects changes and marks only modified assets dirty; `AssetDatabase.SaveAssets()` writes them. `PlaceArchetype`'s private fields are reached via `SerializedProperty` (the Unity way); `WildernessSpotDefinition` and `WanderingThingDefinition`'s public fields are equally reachable through the same API for uniformity.
+- **No external dependencies**: no Python, no pyyaml, no install step. Both scripts live in `Assets/Editor/` and are excluded from player builds automatically.
+- **Dynamic column counts**: `place_archetypes.csv` has `stage1_*`/`stage2_*` NPC post-spec columns and `bStage1_*`/`bStage2_*` building stage columns driven by the per-run maximum. Adding a third stage requires only CSV data; the column count auto-expands on next export.
+- **Item references as display names**: `ItemYield.Item` references are stored in CSVs as `ItemDefinition.DisplayName` strings (e.g. `"Bog Iron"`); the importer pre-loads all `ItemDefinition` assets into a `Dictionary<string, ItemDefinition>` keyed by display name and resolves them at import time. Object references in `BuildingStageDef.material` resolve the same way.
+- **Compact yield format**: `ItemYield[]` arrays serialize as `"Name:weight:min:max,Name:weight:min:max"` — human-readable and diffable in Google Sheets without extra tooling.
+- **Tooling language note**: an earlier draft of this iteration used Python + pyyaml for the scripts. Replaced with C# Editor scripts because Unity's own APIs give type-safe, dependency-free access to all game data with less code. See the "Tooling language default" rule in the Code Conventions section of CLAUDE.md.
+
+---
+
+### Iteration 26 — Playtest + Numeric Tuning Pass
+
+Full end-to-end playtest with focus on feel and pacing, now that all numeric parameters are in CSV. No new systems — this is a tuning pass that produces a stable baseline for the new mechanics in Iterations 27-30 to build on.
+
+**What gets tuned:**
+
+- **Daylight pool size and per-tick costs**: does a day feel full without feeling rushed? A productive session should leave the player feeling like they made real choices about where to spend time — not that they barely scratched the surface, and not that they ran out before doing anything meaningful. Target feel: 3-4 meaningful "legs" of activity per day (e.g. a foraging run, attending to two buildings, one NPC interaction, back to bedroll with something left over — but only just).
+- **Wilderness spot tick intervals**: generic spots at 1.5-2s feel like repeated small actions; archetype spots (Fen Bog, Deep Wood, etc.) might warrant a slightly longer 2-2.5s interval to feel more deliberate — like you are doing something careful, not just holding a button.
+- **Rare-drop chance and twilight modifier**: 8% base with ×1.5 at dawn/dusk means roughly 1 rare per 12 common ticks normally, 1 per 8 at the edges of day. Does a wilderness run reliably produce one rare per session without guaranteeing it? That's the target — the rare should feel found, not farmed.
+- **Building material costs**: Stage 1 revival at 3 ticks of a common material (e.g. 3x Clay) and Stage 2 at 4-5 ticks of a rarer material should feel proportional to what those buildings unlock. If reviving a building takes longer than making three foraging trips, the loop drags. If it's faster, development trivializes.
+- **NPC development threshold**: the current 3-tick universal track before specialization should feel like *enough time to notice the NPC exists* before they commit to a role — not a grind, not an instant.
+- **Post-spec stage costs**: the Bog Keeper's `bog_keeper_drainage` costs 3x common item; `bog_keeper_iron_sense` costs 4x rarer item. Both should feel meaningful without feeling like a second job. These are the gating costs for the knowledge-layer mechanics in Iteration 28, so they need to be loose enough that players reach them in a reasonable session count.
+- **Tended spot rest counts**: Bramble Patch (1 rest), Bee Skep (2 rests) — are these distinct enough to feel like different rhythms? Is 1 rest too fast to feel like cultivation?
+
+**Output:** updated CSVs with tuned values committed as the new baseline. All changes justified in a short comment block at the top of each CSV (`# tuned: iteration 26`), so future sessions can see what was changed and why.
+
+---
+
+### Iteration 27 — Spot Tendedness: The Landscape Reacts
+
+The wilderness currently has no memory. A spot attended ten times looks and behaves exactly like one attended for the first time. This iteration gives each spot a simple internal state — `tendedness` — that accumulates from repeated attention and degrades from neglect, and wires that state into yield behavior. The player is never shown a tenderness value; the change is felt, not read.
+
+**Design intent:** Some spots should become noticeably more yielding over the course of a session if visited repeatedly in a patient way. Heavy extraction should cause mild depletion. A spot left alone for several rests should recover and perhaps feel slightly more alive on return. This isn't a stamina system or a resource cooldown — it's the landscape responding to the quality of attention paid to it, expressed through the texture of outcomes.
+
+**Deliverables:**
+
+- **`float tendedness`** (range `0f` to `1f`, initial value `0.5f`) added to `WildernessYieldAttendable`. Not serialized (per-session state only, like all current spot state). Resets to `0.5f` on day transition (the same `OnDayAdvanced` hook that already reseeds spots).
+- **Drift rules**, applied at the end of each `OnAttentionComplete()` tick and at each `OnDayAdvanced()` call:
+  - Each successful tick *during active hold*: `tendedness += 0.04f` (attending raises tenderness, up to cap)
+  - Each rest (day advance) while unattended: `tendedness -= 0.08f` (neglect drops faster than a single visit raises — neglect accumulates)
+  - Each rest while attended (at least once that day): `tendedness += 0.03f` — *less* than a tick, reflecting that a single visit per day is gentle cultivation, not intensive extraction
+  - All values clamped `[0, 1]`; these are tuning baselines, to be revised in the next playtest
+- **Yield effects**, applied inside `ItemYieldRoller.Roll()` when `tendedness` is provided (new optional parameter — existing call sites pass null and get current behavior):
+  - `tendedness > 0.7f` (well-tended): common yield quantity range shifts up by 1 (e.g. a spot that normally yields 1-3 berries yields 2-4); rare-drop chance multiplied by `1.2f`
+  - `tendedness < 0.3f` (depleted): common yield quantity range shifts down by 1 (floor 0 — a tick can produce nothing); rare-drop chance multiplied by `0.7f`
+  - Middle band (`0.3f` to `0.7f`): no adjustment — baseline behavior
+- **Overlay text** reflects tendedness only at the extremes, and only descriptively — not as a stat:
+  - `tendedness > 0.7f`: description line appends `"— this place feels well-known to you"` (or archetype-specific: `"the clay here works easily"`, `"the mushrooms are thick this season"`)
+  - `tendedness < 0.3f`: description line appends `"— the ground here is disturbed"` / `"— you've taken a lot from this spot recently"`
+  - Middle band: description unchanged
+- **Tended spots** (`TendedSpotAttendable`) are excluded — they already have their own rest-cycle rhythm and the tenderness model would conflict with `restsToHarvest`. Tendedness applies to ongoing (`WildernessYieldAttendable`) spots only.
+
+**What this produces in play:** a player who returns to the same field repeatedly over the course of a day will find it gradually more giving. One who strips a clay pit multiple sessions in a row will notice it feeling thinner. A spot left alone for a few rests after heavy use returns to baseline. None of this is communicated as a mechanic — the player notices it as texture.
+
+**Verification:** set `tendedness` to `0.9f` in the Inspector at runtime, hold E on the spot for several ticks, and confirm quantity yields are shifted up. Set it to `0.1f` and confirm some ticks yield nothing. Watch the overlay description change at both extremes. Confirm `tendedness` resets to `0.5f` after a rest (confirm via a `Debug.Log` in `OnDayAdvanced`).
+
+---
+
+### Iteration 28 — Knowledge-Gated Yield Layers
+
+NPC development currently affects Wandering Thing encounter odds and daylight costs via the `IOutcomeModifier` system. This iteration extends that same pattern to wilderness spot yield pools, creating a direct, felt connection between town development and what the wilderness offers.
+
+**Design intent:** A player who has developed a Bog Keeper through `bog_keeper_iron_sense` should eventually notice that the Fen Bog spot yields something it didn't before. They didn't unlock this via a menu or receive a notification. They return to a familiar spot and find it changed. This is the "flame sword" feeling applied to foraging — the world giving you something earned, not a drop you farmed.
+
+The same pattern works across archetypes: the Hedge Witch's knowledge of the grove changes what attention to the Deep Wood Shrine can surface. The Herald's trail records make the Old Road's rubble more legible. These are felt as the landscape becoming more readable as the people who know it develop.
+
+**Deliverables:**
+
+- **`KnowledgeYieldModifier`** (new `IOutcomeModifier` implementation, `Mossmark.World`) — checks a WorldState flag via `WorldContext.GetFlag(flagId)` and, if true, injects an additional `ItemYield` entry into the spot's common pool for this tick only (not permanently modifying the asset). The injected item uses a configurable weight alongside the spot's existing pool weights — `0.15f` by default, which meaningfully increases its appearance without dominating. Multiple `KnowledgeYieldModifier`s can be applied to one spot (one per relevant flag), each adding its item to the pool independently.
+- **`WildernessSpotDefinition` gains `KnowledgeYieldEntry[] knowledgeYields`** — each entry holds `string requiredFlag`, `ItemDefinition item`, `int minQty`, `int maxQty`, `float injectedWeight`. This is authored in the CSV pipeline from Iteration 25 (`knowledge_flag`, `knowledge_item`, etc. column groups, up to a maximum of 2-3 entries per spot). Spots with no knowledge yields leave this array empty — no behavior change.
+- **`WildernessYieldAttendable.OnAttentionComplete()`** builds the `OutcomeRequest` as before, then iterates `def.knowledgeYields`, constructing one `KnowledgeYieldModifier` per entry and calling `Apply(request)`. The roll call to `ItemYieldRoller.Roll()` gains a new `ItemYield[] injectedYields` parameter — a short list of items to include in this tick's pool alongside the base `commonYields`, each injected only if its modifier set it.
+- **Archetype asset updates** — concrete first examples:
+  - `fen_bog.asset` gains one `knowledgeYield` entry: flag `bog_keeper_iron_sense`, item Bog Iron, qty 1-2, weight 0.2f. *A Fen Bog spot already yields Bog Iron as its common item — but with `bog_keeper_iron_sense` active, Bog Iron becomes dramatically more likely and can yield 1-2 instead of 1.* The player notices the spot feels different without being told why.
+  - `sacred_grove.asset` gains one entry: flag `hedge_witch_ravens_eye`, item Raven's Eye, qty 1, weight 0.15f. *Raven's Eye was the POI's rare drop — with Hedge Witch knowledge, it starts appearing in the archetype spot itself, at lower rate.*
+  - `old_road.asset` gains one entry: flag `herald_trail_markers`, item Old Coin, weight 0.2f. *Coins were always in the rubble; the Herald just knows where to look.*
+
+**What this is not:** a quest, a notification, or an explicit unlock. No overlay text changes. No "you can now find X here" message. The player returns to a spot and something is different. Whether they connect it to the NPC development is up to them.
+
+**Verification:** develop a Bog Keeper through `bog_keeper_iron_sense` (confirmed via `WorldState.GetFlag` log). Attend a Fen Bog spot 20+ times and note Bog Iron yield frequency. Reset the flag (temporarily, via a debug toggle), attend the same spot 20+ times, and confirm frequency drops. Repeat for Hedge Witch / Raven's Eye on the Deep Wood Shrine archetype spot.
+
+---
+
+### Iteration 29 — Settlement Maintenance: The Cost of Keeping Things Alive
+
+Restored buildings and specialized NPCs currently stay in their developed state indefinitely at no ongoing cost. This means items become functionally useless once the restoration+upgrade loop is satisfied — there's nothing to spend them on. Maintenance introduces ongoing demand: the wilderness sustains the settlement, not just bootstraps it.
+
+**Design intent:** The maintenance model should feel like natural upkeep, not a timer or a threat. A building that hasn't been tended starts to show it. The player notices before it becomes a problem and has time to respond. Nothing collapses suddenly. The emotional register is "this place needs me to keep coming back" — not "I failed to do something in time."
+
+This is also the natural cap on expansion: the more developed entities in the settlement, the more common materials they collectively consume. Choosing to restore a new building is partly a choice about whether the wilderness can support another mouth.
+
+**Deliverables:**
+
+- **`int driftProgress` and `int driftThreshold`** added to `DevelopableEntity`. `driftProgress` increments by 1 on each `OnDayAdvanced()` call for any entity that has been developed (past its first threshold crossing — pre-development entities don't drift). `driftThreshold` is authored per entity type: buildings use a threshold of 5 rests (about 5 in-game days); NPCs use 7 rests (they're people, slower to feel neglect than a physical structure). These are the first-pass values; Iteration 26's tuning pass will revisit.
+- **Two drift states**, expressed as overlay strings rather than new enums:
+  - `driftProgress >= driftThreshold * 0.6f` and `< driftThreshold`: `"— needs tending"` appended to the entity's current overlay description. The building or NPC is still fully functional — this is a heads-up, not a penalty.
+  - `driftProgress >= driftThreshold`: the entity enters a `MaintenanceNeeded` effective state. One capability is reduced: for buildings, the `DaylightCostMultiplier` on their yield output rises by `0.5f` (attending the building costs more daylight, reflecting reduced efficiency); for NPCs, their `baseGoodChance` equivalent (if applicable) drops, or their post-spec modifier flags temporarily become inactive. The overlay description line changes to `"— the [hearth/practice/path] has grown cold"` (building/NPC/landmark-specific strings authored in the entity's definition).
+- **Maintenance reset:** attending an entity in drift with appropriate materials resets `driftProgress` to 0 and restores full capability. The maintenance materials are the same materials used to restore or develop the entity initially — no new item types required. The hold feels like the same action as development, but now it's upkeep. One or two ticks of the building's Stage 1 material is enough to reset drift — maintenance should be a light recurring cost, not a second full restoration.
+- **`IMaintenanceConsumer` interface** (new, `Mossmark.Development`) — `int DriftThreshold { get; }`, `ItemDefinition MaintenanceMaterial { get; }`, `int MaintenanceCostPerReset { get; }`. `BuildingAttendable` and `NpcAttendable` implement it. `DevelopableEntity.OnDayAdvanced()` checks `this is IMaintenanceConsumer` before incrementing drift — pre-development entities and entities without a maintenance definition never drift.
+- **Overlay integration:** `GetOverlayDescription()` on `DevelopableEntity` appends the drift warning/critical string when relevant. `HorizonUI` already reads `GetOverlayInteractionLine()` for each entity — maintenance state becomes visible in the Settlement Horizon panel automatically, at no UI cost.
+- **What maintenance does not do:** it does not reset specialization, erase NPC identity, re-dilapidate buildings, or create a lose condition. The worst outcome is reduced efficiency for a few days. Recovery is always available and always quick. The point is to create ongoing pull for common materials, not ongoing anxiety.
+
+**Concrete example:** the Smithy has been restored and has produced its `smith` demand. Five rests later, the player notices the Smithy overlay reads "the Forge — the hearth is cooling." Two more rests without attention and it reads "the Forge — the hearth has gone cold." Attending it with 2x Clay (its Stage 1 material) in a single hold resets drift and restores normal behavior. The player now has a reason to keep gathering Clay even after the Smithy is fully developed — and the wilderness keeps mattering.
+
+**Verification:** restore a building, then rest 4 times and confirm `driftProgress` log shows 4/5 and overlay appends `"— needs tending"`. Rest once more and confirm capability reduction (log the `DaylightCostMultiplier` change). Attend with maintenance materials and confirm `driftProgress` resets to 0 and capability restores. Confirm pre-development entities do not drift (their overlay is unchanged after rests).
+
+---
+
+### Iteration 30 — Settlement Growth: New Arrivals
+
+The settlement currently generates its full population at world-gen time and never changes. Development changes the *character* of existing entities but doesn't grow the settlement itself. This iteration introduces the first form of organic growth: new NPCs who arrive because the settlement has become the kind of place people come to.
+
+**Design intent:** Growth shouldn't be announced or unlocked via a menu. The player rests one morning and someone new is standing near the settlement's edge — a presence that wasn't there before. Whether the player connects it to the specific development state they've cultivated is up to them. "The place attracted someone" is the feeling, not "you hit a milestone and received a reward."
+
+The arrival model reuses the Wandering Thing infrastructure (a thing that appears near the settlement) but inverts its nature: instead of disappearing after a lifespan, the arrival stays and eventually becomes a fully attendable NPC.
+
+**Deliverables:**
+
+- **`ArrivalCondition`** — a new `IDependencyCondition` implementation that checks a combination of WorldState flags via `WorldContext`. Each condition is authored as a `string[] requiredFlags` (all must be true) and optionally a `int minimumDevelopedEntities` count (how many `DevelopableEntity` instances have crossed at least one development threshold). Both are checked in `IsSatisfied()`. Failure message: `""` (arrivals don't surface needs — they just don't happen yet).
+- **`ArrivalSpawner`** (`Mossmark.World`) — a scene-level MonoBehaviour that checks its authored `ArrivalCondition` on each `OnDayAdvanced()` call. If satisfied and no arrival has already happened for this slot, it spawns an `ArrivalAttendable` at a position outside the town boundary (rejection-sampled, same as wandering things). Supports multiple spawner instances with different conditions, so the second arrival can be gated on different flags than the first.
+- **`ArrivalAttendable : MonoBehaviour, IAttendable`** (`Mossmark.World`) — an ongoing attendable (same tick shape as `NpcAttendable`). First few ticks: the entity is wary and overlay reads something like `"A stranger resting at the settlement edge — hold E to approach"`. After a `wariness` progress threshold (3 ticks of simple attention, no material cost), the entity transitions: overlay reads `"[Name] — they seem willing to stay"` and `ArrivalSpawner` promotes them to a full `NpcAttendable` (same initialize-and-activate pattern as world-gen-spawned NPCs). From that point they behave like any other NPC, including drawing from the existing specialization pool.
+- **Two authored arrival triggers** for the first prototype:
+  - **First arrival**: `requiredFlags: ["bog_keeper_iron_sense"]` (or whichever flag set represents "the settlement has depth") + `minimumDevelopedEntities: 3`. A place that has started developing and has at least one deeply developed NPC attracts someone new.
+  - **Second arrival**: `requiredFlags: ["herald_trail_markers", "hedge_witch_wound_lore"]` + `minimumDevelopedEntities: 4`. A settlement with knowledge, healing capacity, and a connected road attracts a second settler. The combination implies a place worth stopping at.
+- **WorldState integration:** when an `ArrivalAttendable` transitions to an `NpcAttendable`, it calls `WorldState.SetFlag("settlement_grew", true)` — a hook for future modifiers to read (e.g. a wandering thing modifier that shifts odds when the settlement has grown at least once).
+
+**What this is not:** a building queue, a housing system, a population cap mechanism. It's the smallest possible expression of "the settlement attracts people based on what it's become." Full population dynamics, multi-region migration, and housing requirements are post-prototype.
+
+**Verification:** develop a Bog Keeper through `bog_keeper_iron_sense` and restore 3 entities. Rest once and confirm a new entity appears near the settlement edge (log position and confirm it's outside town bounds). Approach and attend for 3 ticks; confirm overlay transitions from wary to willing. Confirm the entity becomes a full `NpcAttendable` and can be attended/developed the same way as existing NPCs. Confirm a second `ArrivalSpawner` with the second trigger condition does not fire until both flag requirements are met.
 
 ---
 
@@ -369,6 +538,8 @@ Iteration 8.5 is inserted between 8 and 9, and Iteration 16.5 between 16 and 17 
 - **Ongoing-hold tick interval tuning**: **partially resolved (pre-Iteration-13 polish pass)** — `GenericWildernessSpotAttendable` (#8.5) and `BuildingAttendable` (#9), which both defaulted to a fixed `tickInterval = 0.5f`, were retuned to randomized `minTickInterval`/`maxTickInterval` ranges (1.5-2s and 2-3s respectively, rerolled each tick via `RollTickInterval()`). `NpcAttendable` (#10) still defaults to a fixed `tickInterval = 0.5f` and remains an open tuning item for Iteration 17, along with revisiting whether the foraging/building ranges feel right once playtested end-to-end. Separately (also pre-Iteration-13 polish pass): the five one-shot checks — Old Cairn, Signal Fire, Bramble Patch mark/harvest, Watcher's Post — gained a flat 2-second `AttentionDuration` (previously `0f`), and `OldCairnAttendable`/`WatchersPostAttendable`/`BuildingAttendable` gained `CanAttend() => CanMakeProgress()` so a blocked attend no longer enters the `Attending` state at all. See CLAUDE.md for both.
 - **Hard `CanAttend()` gates vs. always-something-happens**: flagged in discussion as a tension between the current implementation (POIs, under-resourced buildings, and specialized NPCs all hit a flat `CanAttend() => false` — no hold even starts) and the broader goal of attention almost always producing *some* outcome. Explicitly deferred — this is a content/feel decision, not a code change: softening these gates risks the player burning daylight repeatedly on flavor-only outcomes without a clear signal that nothing is actually changing, which needs to be thought through before touching any code. No action taken in Iteration 16.5.
 - **Outcome Influence Layer scope**: `OutcomeRequest` (Section 10) intentionally starts with a single `ChanceMultiplier` field. Additional dimensions are added only when a specific modifier needs one — not speculatively. **Iteration 17** added `DaylightCostMultiplier` (scales the bad-outcome daylight cost, `WoundLoreModifier` sets it to 0). A yield-weight bonus or quantity bonus remain unneeded so far.
+- **Shaped attention / spot manipulation (two-button vs. single-verb)**: a "give vs. take" framing was explored and declined — a second button reintroduces player-selected action type, which is what the attention mechanic replaced. The tenderness model (Iteration 27) is the approved alternative: the landscape reacts to *how* it's been attended over time, not to an explicit "cultivate" choice. The two-verb idea remains worth revisiting if the single-verb tenderness system doesn't produce enough felt differentiation between exploitation and cultivation.
+- **Ritual manipulation view (close-up shrine interaction)**: a distinct input mode for special objects — shrines, inner sanctums, POI-class landmarks — where the player places items, arranges carvings, marks runes, and the combination influences downstream systems (NPC productivity, Wandering Thing odds, tended spot recovery rate) with delayed and ambiguous feedback. Not a puzzle with a solution; closer to folk practice than game mechanic. The core design constraint: feedback must be delayed by multiple sessions and indirect enough that causality is never certain. Architecturally new (separate input mode, a spatial canvas, a deferred-modifier system) — significant scope. Captured here as a named future system, not an open question to resolve before the prototype is complete.
 - **Season / moon phase / weather as influencers**: named as eventual possibilities but not implemented and not stubbed into `WorldContext`. Adding one later is meant to be a small, additive change — one new read on `WorldContext`, one new `IOutcomeModifier` consuming it — revisit if/when any of these become real mechanics.
 - **Code generalization — prefer data-driven, ScriptableObject-authored development paths over hardcoded fields**: as the system matures, hardcoded per-stage field duplication in MonoBehaviours should be replaced with generic data assets. The clearest current example is `BuildingAttendable`: Stage 1 and Stage 2 each have their own separate serialized fields (`revivedName`/`repairVerb`/`material`/`materialCostPerTick`/`progressCost`/`tint` and the `stage2*` mirror set). The right shape is a `List<BuildingStageDefinition>` (a ScriptableObject or plain serializable class) where each entry carries the same fields — `displayName`, `attentionVerb`, `material`, `costPerTick`, `progressCost`, `requiredSpecialization`, `tint` — so that any building can have any number of stages without code changes, and development paths can be altered or extended entirely in data. The same principle applies broadly: NPC post-spec track stages, archetype-specific outcome modifiers, wilderness spot yield tables, and wandering thing outcome pools are all candidates for data-driven extraction rather than hardcoded switch/case blocks or duplicated fields. **A full audit pass was conducted (Iteration 20)** — findings and decisions are documented in the section below.
 

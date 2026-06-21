@@ -62,6 +62,10 @@ All scripts live under the `Mossmark` root namespace, organized by system. This 
 
 P1's `Mossmark.Quests` and `Mossmark.Combat` are **not** part of P2 — collection quests and discrete combat encounters were dropped per IDEAS.md's "Prototype 2" section. Add namespaces here as new systems land; keep this table in sync with what's actually implemented.
 
+### Tooling language default
+- **Default to C# for all project tooling** (Editor scripts, build helpers, data importers). Unity's `AssetDatabase`, `SerializedObject`, and `EditorUtility` APIs give direct, type-safe access to all game data without external dependencies. Only reach for another language when there is a concrete reason C# cannot do the job (e.g., a CI script that must run outside the Unity process and has no natural C# equivalent).
+- Editor scripts live in `Assets/Editor/` and use `[MenuItem]` for discoverability inside the Editor. They are excluded from player builds automatically.
+
 ### Architecture rules
 - **Event-driven**: systems communicate via `UnityEvent<T>` or C# `event Action<T>`, not direct method calls across system boundaries
 - **Singleton managers**: one per system (e.g., `AttentionManager.Instance`), implemented as `MonoBehaviour` singletons with `Awake` guard
@@ -113,6 +117,7 @@ Default to no comments. Only add a comment when the *why* is non-obvious (a hidd
 | NPC Post-Spec + Spot Tick Tuning (G3+G6) | Complete | `NpcPostSpecStageDef`, `PlaceArchetype.NpcPostSpecStages`, `WildernessSpotDefinition` tick intervals |
 | Wandering Thing Definition (G4+G5) | Complete | `WanderingThingDefinition`, `WorldStateOddsModifier`, `WanderingThingSpawner` pool, `traveler.asset` |
 | Code Quality Pass (G7+G8+G9) | Complete | `WildernessYieldAttendable` base class, `LandmarkAttendable`, `TendedSpotAttendable.harvestYields[]` |
+| CSV / Data Pipeline | Complete | `Assets/Editor/ExportGameData.cs`, `Assets/Editor/ImportGameData.cs` |
 
 Full iteration plan is in [PROTOTYPE2.md](PROTOTYPE2.md). Update this table as each iteration lands.
 
