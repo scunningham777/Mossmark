@@ -28,6 +28,14 @@ MonoBehaviour:
     MaxQuantity: 1
     Weight: 1
   rareDropChance: 0.08
+  archetypeSpotMinTickInterval: 2
+  archetypeSpotMaxTickInterval: 2.5
+  spotKnowledgeYields:
+  - requiredFlag: bog_keeper_iron_sense
+    item: {fileID: 11400000, guid: 8f0377fa9b2340f8820829af08466e49, type: 2}
+    minQty: 1
+    maxQty: 3
+    injectedWeight: 0.2
   specializationId: bog_tender
   stageDisplayName: Take Up Bog-Tending
   npcTitle: Bog Keeper
@@ -62,6 +70,23 @@ MonoBehaviour:
     itemCount: 2
     flavorText: develops Iron-Sense - bog iron deposits reveal themselves more readily.
     worldStateFlag: bog_keeper_iron_sense
+  npcExchangeChance: 0.2
+  npcExchangeGifts:
+  - Item: {fileID: 11400000, guid: a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6, type: 2}
+    MinQuantity: 1
+    MaxQuantity: 3
+    Weight: 0.65
+  - Item: {fileID: 11400000, guid: 1cc1d330c57b43358132cf3b12f9fcfb, type: 2}
+    MinQuantity: 1
+    MaxQuantity: 1
+    Weight: 0.35
+  npcVisitFlavors:
+  - speaks of the deep water, and what listens from below.
+  - tells you which plants the bog respects, and which ones it takes back.
+  - seems to know the mood of the weather before it arrives.
+  npcExchangeFlavors:
+  - offers mushrooms from the deep edges of the fen. Foraged, not bought.
+  - draws a small bell from their pack, still carrying the weight of what it was.
   buildingDilapidatedName: Rotting Sluice
   buildingDilapidatedColor: {r: 0.3, g: 0.28, b: 0.2, a: 1}
   buildingStages:
@@ -69,8 +94,8 @@ MonoBehaviour:
     verb: shore up
     material: {fileID: 11400000, guid: 8f0377fa9b2340f8820829af08466e49, type: 2}
     costPerTick: 2
-    progressCost: 6
-    requiredSpecialization:
+    progressCost: 4
+    requiredSpecialization: 
     tint: {r: 0.45, g: 0.5, b: 0.35, a: 1}
   - displayName: Shore Up the Channels
     verb: shore up
@@ -79,3 +104,6 @@ MonoBehaviour:
     progressCost: 4
     requiredSpecialization: bog_tender
     tint: {r: 0.55, g: 0.62, b: 0.42, a: 1}
+  buildingRestoredFlavors:
+  - settles into a familiar rhythm, making the most of what the fen provides.
+  - is doing the work it was always meant for.

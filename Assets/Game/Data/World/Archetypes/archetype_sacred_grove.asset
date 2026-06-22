@@ -28,12 +28,21 @@ MonoBehaviour:
     MaxQuantity: 1
     Weight: 1
   rareDropChance: 0.08
+  archetypeSpotMinTickInterval: 2
+  archetypeSpotMaxTickInterval: 2.5
+  spotKnowledgeYields:
+  - requiredFlag: hedge_witch_ravens_eye
+    item: {fileID: 11400000, guid: 71fa745212e8453ab3779c7a6a7cfc84, type: 2}
+    minQty: 1
+    maxQty: 1
+    injectedWeight: 0.15
   specializationId: hedge_witch
   stageDisplayName: Take Up Hedge-Craft
   npcTitle: Hedge Witch
   npcTint: {r: 0.5, g: 0.35, b: 0.6, a: 1}
   poiDisplayName: Deep Wood Shrine - Inner Grove
-  poiLockedDescription: A ring of standing stones marks an inner grove, but the way feels closed to you.
+  poiLockedDescription: A ring of standing stones marks an inner grove, but the way
+    feels closed to you.
   poiVerb: approach the inner grove
   poiColor: {r: 0.2, g: 0.13, b: 0.27, a: 1}
   poiCommonYields:
@@ -60,8 +69,26 @@ MonoBehaviour:
     progressCost: 4
     useRareItem: 1
     itemCount: 2
-    flavorText: learns Raven's Eye Reading - the intent of wandering things becomes clearer before you approach.
+    flavorText: learns Raven's Eye Reading - the intent of wandering things becomes
+      clearer before you approach.
     worldStateFlag: hedge_witch_ravens_eye
+  npcExchangeChance: 0.2
+  npcExchangeGifts:
+  - Item: {fileID: 11400000, guid: e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6, type: 2}
+    MinQuantity: 1
+    MaxQuantity: 2
+    Weight: 0.65
+  - Item: {fileID: 11400000, guid: 71e172de7d9e42918355875ed3e81f72, type: 2}
+    MinQuantity: 1
+    MaxQuantity: 1
+    Weight: 0.35
+  npcVisitFlavors:
+  - turns the names of common plants into something older and heavier.
+  - says nothing, but the silence feels deliberate and companionable.
+  - makes an offering of some kind. You are not entirely sure what.
+  npcExchangeFlavors:
+  - presses a lump of beeswax into your hands. Useful for many things they won't name directly.
+  - places an antler talisman carefully in your palm, without explanation or ceremony.
   buildingDilapidatedName: Ruined Shrine
   buildingDilapidatedColor: {r: 0.3, g: 0.22, b: 0.38, a: 1}
   buildingStages:
@@ -69,8 +96,8 @@ MonoBehaviour:
     verb: tend
     material: {fileID: 11400000, guid: 29a23783858c4e4dae17e837841a7ad7, type: 2}
     costPerTick: 2
-    progressCost: 6
-    requiredSpecialization:
+    progressCost: 4
+    requiredSpecialization: 
     tint: {r: 0.52, g: 0.38, b: 0.62, a: 1}
   - displayName: Consecrate the Hearth
     verb: consecrate
@@ -79,3 +106,6 @@ MonoBehaviour:
     progressCost: 4
     requiredSpecialization: hedge_witch
     tint: {r: 0.62, g: 0.48, b: 0.72, a: 1}
+  buildingRestoredFlavors:
+  - breathes with the wood around it now, not against it.
+  - has taken on the quality of a place that has always been.

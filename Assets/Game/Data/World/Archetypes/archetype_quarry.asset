@@ -28,12 +28,15 @@ MonoBehaviour:
     MaxQuantity: 1
     Weight: 1
   rareDropChance: 0.08
+  archetypeSpotMinTickInterval: 2
+  archetypeSpotMaxTickInterval: 2.5
   specializationId: stonemason
   stageDisplayName: Take Up Stonework
   npcTitle: Stonemason
   npcTint: {r: 0.6, g: 0.62, b: 0.68, a: 1}
   poiDisplayName: Old Quarry Cut
-  poiLockedDescription: A collapsed cut leads deeper into the quarry wall, blocked by rubble.
+  poiLockedDescription: A collapsed cut leads deeper into the quarry wall, blocked
+    by rubble.
   poiVerb: dig through the rubble
   poiColor: {r: 0.4, g: 0.4, b: 0.46, a: 1}
   poiCommonYields:
@@ -48,6 +51,23 @@ MonoBehaviour:
     Weight: 1
   poiRareDropChance: 0.05
   npcPostSpecStages: []
+  npcExchangeChance: 0.2
+  npcExchangeGifts:
+  - Item: {fileID: 11400000, guid: c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6, type: 2}
+    MinQuantity: 2
+    MaxQuantity: 4
+    Weight: 0.65
+  - Item: {fileID: 11400000, guid: 201486684836449b8f900b7942899034, type: 2}
+    MinQuantity: 1
+    MaxQuantity: 1
+    Weight: 0.35
+  npcVisitFlavors:
+  - tells you what the stone says when you know how to listen.
+  - runs a hand along a rough wall and nods. Not approval, just recognition.
+  - works a piece of quartz in their hands and does not stop while you talk.
+  npcExchangeFlavors:
+  - sorts through a handful of pebbles and gives you the best of them. The judgment is sincere.
+  - hands you a stone with something carved into it. You don't know the mark, but it feels like it means something.
   buildingDilapidatedName: Crumbled Cutting House
   buildingDilapidatedColor: {r: 0.42, g: 0.42, b: 0.46, a: 1}
   buildingStages:
@@ -55,8 +75,8 @@ MonoBehaviour:
     verb: clear
     material: {fileID: 11400000, guid: 1b2d1db0ac88c6f45ac553dd0929a3bc, type: 2}
     costPerTick: 2
-    progressCost: 6
-    requiredSpecialization:
+    progressCost: 4
+    requiredSpecialization: 
     tint: {r: 0.58, g: 0.58, b: 0.65, a: 1}
   - displayName: Sharpen the Tools
     verb: sharpen
@@ -65,3 +85,6 @@ MonoBehaviour:
     progressCost: 4
     requiredSpecialization: stonemason
     tint: {r: 0.68, g: 0.68, b: 0.75, a: 1}
+  buildingRestoredFlavors:
+  - grounds the settlement the way a keystone grounds a wall.
+  - has found its function, and it is good at it.

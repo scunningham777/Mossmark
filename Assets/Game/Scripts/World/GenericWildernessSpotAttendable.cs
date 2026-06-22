@@ -14,20 +14,34 @@ namespace Mossmark.World
         [Min(0f)] public float Weight = 1f;
     }
 
+    // Per-entry authored knowledge yield: a WorldState flag gates an extra item injection
+    // into the spot's common pool for a single tick. Authored on PlaceArchetype (archetype
+    // spots) and WildernessSpotDefinition (pool spots). Checked at roll time, not cached.
+    [Serializable]
+    public class KnowledgeYieldEntry
+    {
+        public string requiredFlag;
+        public ItemDefinition item;
+        public int minQty = 1;
+        public int maxQty = 2;
+        public float injectedWeight = 0.15f;
+    }
+
     // Ongoing wilderness spot (foraging, digging, etc.) — thin subclass of
     // WildernessYieldAttendable that adds the TwilightChanceModifier bias on rare drops.
     public class GenericWildernessSpotAttendable : WildernessYieldAttendable
     {
         public void Initialize(string displayName, string interactionVerb, ItemYield[] commonYields,
-            ItemYield rareYield, float rareDropChance, float minTickInterval, float maxTickInterval)
+            ItemYield rareYield, float rareDropChance, float minTickInterval, float maxTickInterval,
+            KnowledgeYieldEntry[] knowledgeYields = null)
         {
             InitializeBase(displayName, interactionVerb, commonYields, rareYield, rareDropChance,
-                minTickInterval, maxTickInterval);
+                minTickInterval, maxTickInterval, knowledgeYields);
         }
 
         public override bool CanAttend() => true;
 
-        public override string GetOverlayDescription() => displayName;
+        public override string GetOverlayDescription() => WithTendednessSuffix(displayName);
 
         public override string GetOverlayInteractionLine() => $"Hold E to {interactionVerb}";
 

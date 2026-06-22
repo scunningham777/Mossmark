@@ -63,6 +63,33 @@ namespace Mossmark.Editor
                 so.FindProperty("restsToHarvest").intValue     = I(row.Get("restsToHarvest", "1"));
                 so.FindProperty("maxConcurrentMarked").intValue = I(row.Get("maxConcurrentMarked", "2"));
 
+                // Knowledge yield entries (Iteration 28)
+                var kEntries = new List<(string flag, ItemDefinition item, int minQ, int maxQ, float weight)>();
+                for (int i = 1; ; i++)
+                {
+                    string flag = row.Get($"knowledge{i}_flag");
+                    if (string.IsNullOrEmpty(flag)) break;
+                    items.TryGetValue(row.Get($"knowledge{i}_item"), out var kItem);
+                    kEntries.Add((
+                        flag, kItem,
+                        I(row.Get($"knowledge{i}_minQty", "1")),
+                        I(row.Get($"knowledge{i}_maxQty", "2")),
+                        F(row.Get($"knowledge{i}_weight", "0.15"))
+                    ));
+                }
+                var kProp = so.FindProperty("knowledgeYields");
+                kProp.arraySize = kEntries.Count;
+                for (int i = 0; i < kEntries.Count; i++)
+                {
+                    var e = kProp.GetArrayElementAtIndex(i);
+                    var (flag, kItem, minQ, maxQ, weight) = kEntries[i];
+                    e.FindPropertyRelative("requiredFlag").stringValue      = flag;
+                    e.FindPropertyRelative("item").objectReferenceValue     = kItem;
+                    e.FindPropertyRelative("minQty").intValue               = minQ;
+                    e.FindPropertyRelative("maxQty").intValue               = maxQ;
+                    e.FindPropertyRelative("injectedWeight").floatValue     = weight;
+                }
+
                 if (so.ApplyModifiedProperties()) changed++;
             }
 
@@ -115,6 +142,33 @@ namespace Mossmark.Editor
                 SetRare(so.FindProperty("poiRareYield"),
                     ParseRare(row.Get("poiRareYield"), items));
                 so.FindProperty("poiRareDropChance").floatValue = F(row.Get("poiRareDropChance", "0.05"));
+
+                // Spot knowledge yields (Iteration 28)
+                var kSpotEntries = new List<(string flag, ItemDefinition item, int minQ, int maxQ, float weight)>();
+                for (int i = 1; ; i++)
+                {
+                    string kFlag = row.Get($"spotKnowledge{i}_flag");
+                    if (string.IsNullOrEmpty(kFlag)) break;
+                    items.TryGetValue(row.Get($"spotKnowledge{i}_item"), out var kItem);
+                    kSpotEntries.Add((
+                        kFlag, kItem,
+                        I(row.Get($"spotKnowledge{i}_minQty", "1")),
+                        I(row.Get($"spotKnowledge{i}_maxQty", "2")),
+                        F(row.Get($"spotKnowledge{i}_weight", "0.15"))
+                    ));
+                }
+                var kSpotProp = so.FindProperty("spotKnowledgeYields");
+                kSpotProp.arraySize = kSpotEntries.Count;
+                for (int i = 0; i < kSpotEntries.Count; i++)
+                {
+                    var e = kSpotProp.GetArrayElementAtIndex(i);
+                    var (kFlag, kItem, kMinQ, kMaxQ, kWeight) = kSpotEntries[i];
+                    e.FindPropertyRelative("requiredFlag").stringValue      = kFlag;
+                    e.FindPropertyRelative("item").objectReferenceValue     = kItem;
+                    e.FindPropertyRelative("minQty").intValue               = kMinQ;
+                    e.FindPropertyRelative("maxQty").intValue               = kMaxQ;
+                    e.FindPropertyRelative("injectedWeight").floatValue     = kWeight;
+                }
 
                 // NPC post-spec stages
                 var npcStages = new List<(string id, string name, int cost,
@@ -335,13 +389,24 @@ namespace Mossmark.Editor
             { Debug.LogWarning($"[Import] CSV not found: {path}\n  Run Mossmark/Data/Export All first."); return null; }
 
             var lines = File.ReadAllLines(path, Encoding.UTF8);
-            if (lines.Length < 2) return new List<Dictionary<string, string>>();
 
-            var headers = ParseCsvLine(lines[0]);
-            var result = new List<Dictionary<string, string>>();
-            for (int i = 1; i < lines.Length; i++)
+            // Find the header: first non-blank, non-comment line.
+            int headerLine = -1;
+            for (int i = 0; i < lines.Length; i++)
             {
                 if (string.IsNullOrWhiteSpace(lines[i])) continue;
+                if (lines[i].TrimStart().StartsWith("#")) continue;
+                headerLine = i;
+                break;
+            }
+            if (headerLine < 0) return new List<Dictionary<string, string>>();
+
+            var headers = ParseCsvLine(lines[headerLine]);
+            var result = new List<Dictionary<string, string>>();
+            for (int i = headerLine + 1; i < lines.Length; i++)
+            {
+                if (string.IsNullOrWhiteSpace(lines[i])) continue;
+                if (lines[i].TrimStart().StartsWith("#")) continue;
                 var vals = ParseCsvLine(lines[i]);
                 var row = new Dictionary<string, string>(StringComparer.Ordinal);
                 for (int j = 0; j < headers.Count && j < vals.Count; j++)

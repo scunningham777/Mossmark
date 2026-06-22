@@ -34,7 +34,15 @@ namespace Mossmark.Editor
             var guids = AssetDatabase.FindAssets("t:WildernessSpotDefinition",
                 new[] { "Assets/Game/Data/World/Spots" });
 
-            var headers = new[]
+            var assets = guids
+                .Select(g => AssetDatabase.LoadAssetAtPath<WildernessSpotDefinition>(
+                    AssetDatabase.GUIDToAssetPath(g)))
+                .Where(a => a != null).ToList();
+
+            int maxKnowledge = assets.Count > 0
+                ? assets.Max(a => a.knowledgeYields?.Length ?? 0) : 0;
+
+            var headers = new List<string>
             {
                 "assetName", "kind", "displayName",
                 "color_r", "color_g", "color_b",
@@ -42,14 +50,15 @@ namespace Mossmark.Editor
                 "minTickInterval", "maxTickInterval",
                 "tendVerb", "harvestYields", "restsToHarvest", "maxConcurrentMarked"
             };
+            for (int i = 1; i <= maxKnowledge; i++)
+                headers.AddRange(new[]
+                    { $"knowledge{i}_flag", $"knowledge{i}_item",
+                      $"knowledge{i}_minQty", $"knowledge{i}_maxQty", $"knowledge{i}_weight" });
 
             var rows = new List<string[]>();
-            foreach (var guid in guids)
+            foreach (var a in assets)
             {
-                var a = AssetDatabase.LoadAssetAtPath<WildernessSpotDefinition>(
-                    AssetDatabase.GUIDToAssetPath(guid));
-                if (a == null) continue;
-                rows.Add(new[]
+                var row = new List<string>
                 {
                     a.name,
                     a.kind == WildernessSpotDefinition.SpotKind.Tended ? "Tended" : "Generic",
@@ -64,10 +73,26 @@ namespace Mossmark.Editor
                     YieldsToCompact(a.harvestYields),
                     a.restsToHarvest.ToString(),
                     a.maxConcurrentMarked.ToString()
-                });
+                };
+                for (int i = 0; i < maxKnowledge; i++)
+                {
+                    if (i < (a.knowledgeYields?.Length ?? 0))
+                    {
+                        var e = a.knowledgeYields[i];
+                        row.AddRange(new[]
+                        {
+                            e.requiredFlag,
+                            e.item != null ? e.item.DisplayName : "",
+                            e.minQty.ToString(), e.maxQty.ToString(),
+                            Fmt(e.injectedWeight)
+                        });
+                    }
+                    else row.AddRange(new[] { "", "", "", "", "" });
+                }
+                rows.Add(row.ToArray());
             }
 
-            WriteCsv(Path.Combine(OutDir, "wilderness_spots.csv"), headers, rows);
+            WriteCsv(Path.Combine(OutDir, "wilderness_spots.csv"), headers.ToArray(), rows);
             Debug.Log($"  Spots: {rows.Count} rows");
         }
 
@@ -89,6 +114,8 @@ namespace Mossmark.Editor
                 ? assets.Max(a => a.NpcPostSpecStages?.Length ?? 0) : 0;
             int maxB = assets.Count > 0
                 ? assets.Max(a => a.BuildingStages?.Length ?? 0) : 0;
+            int maxK = assets.Count > 0
+                ? assets.Max(a => a.SpotKnowledgeYields?.Length ?? 0) : 0;
 
             var headers = new List<string>
             {
@@ -103,6 +130,13 @@ namespace Mossmark.Editor
                 "poiColor_r", "poiColor_g", "poiColor_b",
                 "poiCommonYields", "poiRareYield", "poiRareDropChance"
             };
+            for (int i = 1; i <= maxK; i++)
+                headers.AddRange(new[]
+                {
+                    $"spotKnowledge{i}_flag", $"spotKnowledge{i}_item",
+                    $"spotKnowledge{i}_minQty", $"spotKnowledge{i}_maxQty",
+                    $"spotKnowledge{i}_weight"
+                });
             for (int i = 1; i <= maxNpc; i++)
                 headers.AddRange(new[]
                 {
@@ -142,6 +176,22 @@ namespace Mossmark.Editor
                     YieldsToCompact(a.PoiCommonYields), RareToCompact(a.PoiRareYield),
                     Fmt(a.PoiRareDropChance)
                 };
+
+                for (int i = 0; i < maxK; i++)
+                {
+                    if (i < (a.SpotKnowledgeYields?.Length ?? 0))
+                    {
+                        var e = a.SpotKnowledgeYields[i];
+                        row.AddRange(new[]
+                        {
+                            e.requiredFlag,
+                            e.item != null ? e.item.DisplayName : "",
+                            e.minQty.ToString(), e.maxQty.ToString(),
+                            Fmt(e.injectedWeight)
+                        });
+                    }
+                    else row.AddRange(new[] { "", "", "", "", "" });
+                }
 
                 for (int i = 0; i < maxNpc; i++)
                 {

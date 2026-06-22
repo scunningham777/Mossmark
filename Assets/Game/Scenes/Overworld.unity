@@ -1320,8 +1320,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Development.NpcAttendable
   genericName: Wanderer
   progressCost: 8
-  minTickInterval: 1
-  maxTickInterval: 1.5
+  minTickInterval: 1.5
+  maxTickInterval: 2
 --- !u!114 &900500003
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1960,8 +1960,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Development.NpcAttendable
   genericName: Roughhand
   progressCost: 8
-  minTickInterval: 1
-  maxTickInterval: 1.5
+  minTickInterval: 1.5
+  maxTickInterval: 2
 --- !u!114 &901200003
 MonoBehaviour:
   m_ObjectHideFlags: 0

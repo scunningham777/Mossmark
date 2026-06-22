@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Mossmark.Attention;
 using Mossmark.Inventory;
+using Mossmark.Visuals;
 using UnityEngine;
 
 namespace Mossmark.Development
@@ -13,6 +14,10 @@ namespace Mossmark.Development
     // Iteration 21: replaced parallel per-stage field groups with BuildingStageDef[],
     // so any number of stages can be authored without code changes. stage[0] is always
     // the revival stage; stage[0].displayName is the building's revived name.
+    //
+    // Iteration 28.5: fully-developed buildings (GetNextStage() == null) remain
+    // attendable. A short hold shows a flavor notification from restoredFlavors.
+    // No daylight is spent (lastAttentionWasVisit guards RequiresDaylight).
     public class BuildingAttendable : DevelopableEntity, IAttendable
     {
         [SerializeField] private string dilapidatedName = "Tumbledown Building";
@@ -20,19 +25,23 @@ namespace Mossmark.Development
         [SerializeField, Min(0.1f)] private float minTickInterval = 2f;
         [SerializeField, Min(0.1f)] private float maxTickInterval = 3f;
         [SerializeField] private BuildingStageDef[] stages = System.Array.Empty<BuildingStageDef>();
+        [SerializeField] private string[] restoredFlavors = System.Array.Empty<string>();
 
         private DevelopmentTrack track;
         private SpriteRenderer spriteRenderer;
         private float currentTickInterval;
+        private bool lastAttentionWasVisit;
 
         public void Initialize(string dilapidatedName, BuildingStageDef[] stages,
-            string declaredSpecialization, float minTickInterval = 2f, float maxTickInterval = 3f)
+            string declaredSpecialization, float minTickInterval = 2f, float maxTickInterval = 3f,
+            string[] restoredFlavors = null)
         {
             this.dilapidatedName = dilapidatedName;
             this.stages = stages;
             this.declaredSpecialization = declaredSpecialization;
             this.minTickInterval = minTickInterval;
             this.maxTickInterval = maxTickInterval;
+            this.restoredFlavors = restoredFlavors ?? System.Array.Empty<string>();
         }
 
         // Stage 0's displayName is the building's revived name; post-revival the name
@@ -43,8 +52,8 @@ namespace Mossmark.Development
         protected override DevelopmentTrack Track => track;
 
         public float AttentionDuration => currentTickInterval;
-        public bool RequiresDaylight => LastAttentionMadeProgress;
-        public bool ContinueAttending => LastAttentionMadeProgress && !LastAttentionAppliedStage;
+        public bool RequiresDaylight => !lastAttentionWasVisit && LastAttentionMadeProgress;
+        public bool ContinueAttending => !lastAttentionWasVisit && LastAttentionMadeProgress && !LastAttentionAppliedStage;
 
         private void Awake()
         {
@@ -77,16 +86,14 @@ namespace Mossmark.Development
             RollTickInterval();
         }
 
-        public bool CanAttend() => CanMakeProgress();
+        public bool CanAttend() => GetNextStage() == null || CanMakeProgress();
 
         public string GetOverlayDescription() => DisplayName;
 
         public string GetOverlayInteractionLine()
         {
             if (GetNextStage() == null)
-                return stages.Length > 0
-                    ? $"The {stages[0].displayName} stands restored."
-                    : $"The {dilapidatedName} stands restored.";
+                return $"Hold E to linger near the {DisplayName}";
 
             int nextIndex = CurrentStageIndex + 1;
             var stageDef = stages[nextIndex];
@@ -101,6 +108,16 @@ namespace Mossmark.Development
 
         public void OnAttentionComplete()
         {
+            lastAttentionWasVisit = false;
+
+            if (GetNextStage() == null)
+            {
+                lastAttentionWasVisit = true;
+                PostRestoredFlavor();
+                RollTickInterval();
+                return;
+            }
+
             // Capture the stage index before ResolveAttention() may advance it, so we
             // know which stage's material to consume.
             int stageIndexBefore = CurrentStageIndex;
@@ -121,6 +138,15 @@ namespace Mossmark.Development
         }
 
         public void OnAttentionCancelled() { }
+
+        private void PostRestoredFlavor()
+        {
+            string flavor = restoredFlavors != null && restoredFlavors.Length > 0
+                ? restoredFlavors[Random.Range(0, restoredFlavors.Length)]
+                : "stands quietly, doing the work it was always meant for.";
+            NotificationManager.Post($"{DisplayName}: {flavor}");
+            Debug.Log($"{DisplayName}: {flavor}", this);
+        }
 
         private void ConsumeMaterial(ItemDefinition mat, int amount)
         {

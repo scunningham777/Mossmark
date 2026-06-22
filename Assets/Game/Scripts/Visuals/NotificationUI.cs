@@ -6,7 +6,7 @@ namespace Mossmark.Visuals
     [RequireComponent(typeof(UIDocument))]
     public class NotificationUI : MonoBehaviour
     {
-        private const float DisplayDuration = 3f;
+        private const float DisplayDuration = 5f;
 
         private VisualElement notificationRoot;
         private Label messageLabel;

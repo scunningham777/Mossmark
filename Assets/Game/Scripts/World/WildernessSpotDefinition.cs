@@ -29,5 +29,9 @@ namespace Mossmark.World
         [SerializeField] public ItemYield[] harvestYields;
         [SerializeField, Min(1)] public int restsToHarvest = 1;
         [SerializeField, Min(1)] public int maxConcurrentMarked = 2;
+
+        // Knowledge yield entries — usually empty for generic pool spots; checked at roll
+        // time against WorldState flags to inject extra items into the common pool per tick.
+        [SerializeField] public KnowledgeYieldEntry[] knowledgeYields = System.Array.Empty<KnowledgeYieldEntry>();
     }
 }

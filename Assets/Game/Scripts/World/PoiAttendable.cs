@@ -25,7 +25,7 @@ namespace Mossmark.World
 
         public override bool CanAttend() => gate == null || gate.IsSatisfied(null);
 
-        public override string GetOverlayDescription() => CanAttend() ? displayName : lockedDescription;
+        public override string GetOverlayDescription() => CanAttend() ? WithTendednessSuffix(displayName) : lockedDescription;
 
         public override string GetOverlayInteractionLine() => CanAttend()
             ? $"Hold E to {interactionVerb}"

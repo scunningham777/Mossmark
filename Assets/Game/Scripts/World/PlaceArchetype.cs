@@ -26,6 +26,9 @@ namespace Mossmark.World
         [SerializeField, Min(0.1f)] private float archetypeSpotMinTickInterval = 1.5f;
         [SerializeField, Min(0.1f)] private float archetypeSpotMaxTickInterval = 2f;
 
+        [Header("Knowledge Yield")]
+        [SerializeField] private KnowledgeYieldEntry[] spotKnowledgeYields = System.Array.Empty<KnowledgeYieldEntry>();
+
         [Header("Specialization")]
         [SerializeField] private string specializationId;
         [SerializeField] private string stageDisplayName;
@@ -44,10 +47,17 @@ namespace Mossmark.World
         [Header("NPC Post-Spec Stages")]
         [SerializeField] private NpcPostSpecStageDef[] npcPostSpecStages = System.Array.Empty<NpcPostSpecStageDef>();
 
+        [Header("NPC Exchange (Post-Full-Development)")]
+        [SerializeField, Range(0f, 1f)] private float npcExchangeChance = 0.2f;
+        [SerializeField] private ItemYield[] npcExchangeGifts = System.Array.Empty<ItemYield>();
+        [SerializeField] private string[] npcVisitFlavors = System.Array.Empty<string>();
+        [SerializeField] private string[] npcExchangeFlavors = System.Array.Empty<string>();
+
         [Header("Building")]
         [SerializeField] private string buildingDilapidatedName;
         [SerializeField] private Color buildingDilapidatedColor = new(0.35f, 0.3f, 0.28f, 1f);
         [SerializeField] private BuildingStageDef[] buildingStages = System.Array.Empty<BuildingStageDef>();
+        [SerializeField] private string[] buildingRestoredFlavors = System.Array.Empty<string>();
 
         public string ArchetypeId => archetypeId;
         public string DisplayName => displayName;
@@ -60,6 +70,7 @@ namespace Mossmark.World
         public float RareDropChance => rareDropChance;
         public float ArchetypeSpotMinTickInterval => archetypeSpotMinTickInterval;
         public float ArchetypeSpotMaxTickInterval => archetypeSpotMaxTickInterval;
+        public KnowledgeYieldEntry[] SpotKnowledgeYields => spotKnowledgeYields;
 
         public string SpecializationId => specializationId;
         public string StageDisplayName => stageDisplayName;
@@ -76,8 +87,14 @@ namespace Mossmark.World
 
         public NpcPostSpecStageDef[] NpcPostSpecStages => npcPostSpecStages;
 
+        public float NpcExchangeChance => npcExchangeChance;
+        public ItemYield[] NpcExchangeGifts => npcExchangeGifts;
+        public string[] NpcVisitFlavors => npcVisitFlavors;
+        public string[] NpcExchangeFlavors => npcExchangeFlavors;
+
         public string BuildingDilapidatedName => buildingDilapidatedName;
         public Color BuildingDilapidatedColor => buildingDilapidatedColor;
         public BuildingStageDef[] BuildingStages => buildingStages;
+        public string[] BuildingRestoredFlavors => buildingRestoredFlavors;
     }
 }

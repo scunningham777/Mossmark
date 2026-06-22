@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using Mossmark.Attention;
+using Mossmark.Inventory;
+using Mossmark.Visuals;
 using Mossmark.World;
 using UnityEngine;
 
@@ -16,6 +18,13 @@ namespace Mossmark.Development
     // Iteration 22 (G3): BuildPostSpecStages is now a generic loop over
     // archetype.NpcPostSpecStages — the hardcoded per-archetype switch is gone.
     // New post-spec content requires only editing the PlaceArchetype asset.
+    //
+    // Iteration 28.5: fully-developed NPCs (GetNextStage() == null) remain attendable.
+    // Universal specs (forager/caretaker/tinkerer) give flavor-only visits. Archetype
+    // specs (Bog Keeper, Herald, etc.) have a chance to gift items from their exchange
+    // pool (authored in PlaceArchetype.NpcExchangeGifts). Visiting always costs 1 daylight,
+    // is one-shot per attend (ContinueAttending => false), and uses lastAttentionWasVisit
+    // to override RequiresDaylight/ContinueAttending without touching DevelopableEntity.
     public class NpcAttendable : DevelopableEntity, IAttendable
     {
         [SerializeField] private string genericName = "Wanderer";
@@ -33,12 +42,46 @@ namespace Mossmark.Development
         private Dictionary<string, NpcPostSpecStageDef> postSpecStageDefs;
         private float currentTickInterval;
 
+        // Iteration 28.5: exchange pool set when specialization fires.
+        private NpcExchangePool drawnExchangePool;
+        private bool lastAttentionWasVisit;
+
+        // Flavor text for universal specs — stable enough to live in code.
+        private static readonly Dictionary<string, (string[] visitFlavors, string[] exchangeFlavors)>
+            universalSpecFlavors = new()
+            {
+                ["forager"] = (
+                    new[] {
+                        "points out a plant you hadn't noticed.",
+                        "shares what they know of the land without being asked.",
+                        "is comfortable in a silence that doesn't need filling."
+                    },
+                    System.Array.Empty<string>()
+                ),
+                ["caretaker"] = (
+                    new[] {
+                        "tends to the space between you with quiet, habitual care.",
+                        "has a way of making even a brief visit feel unhurried.",
+                        "notices something about the day you hadn't registered."
+                    },
+                    System.Array.Empty<string>()
+                ),
+                ["tinkerer"] = (
+                    new[] {
+                        "is working on something small and intricate that they don't explain.",
+                        "asks about your pack — curious, but not wanting anything.",
+                        "doesn't look up when you arrive, but seems glad you did."
+                    },
+                    System.Array.Empty<string>()
+                ),
+            };
+
         public override string DisplayName => drawnSpecializationId != null ? specializedName : genericName;
         protected override DevelopmentTrack Track => track;
 
         public float AttentionDuration => currentTickInterval;
-        public bool RequiresDaylight => LastAttentionMadeProgress;
-        public bool ContinueAttending => LastAttentionMadeProgress && !LastAttentionAppliedStage;
+        public bool RequiresDaylight => lastAttentionWasVisit || LastAttentionMadeProgress;
+        public bool ContinueAttending => !lastAttentionWasVisit && LastAttentionMadeProgress && !LastAttentionAppliedStage;
 
         private float RollTickInterval() => Random.Range(minTickInterval, maxTickInterval);
 
@@ -113,6 +156,7 @@ namespace Mossmark.Development
         public bool CanAttend()
         {
             if (drawnSpecializationId == null) return true;
+            if (GetNextStage() == null) return true; // fully developed — still visitable
             return CanMakeProgress();
         }
 
@@ -124,18 +168,72 @@ namespace Mossmark.Development
                 return GetNeedsOrDefault($"Hold E to spend time with {genericName} - they need more time to find their place");
 
             if (GetNextStage() == null)
-                return $"{specializedName} has found their place here.";
+                return $"Hold E to visit with {specializedName}";
 
             return GetNeedsOrDefault($"Hold E to help {specializedName} develop their craft further");
         }
 
         public void OnAttentionComplete()
         {
+            lastAttentionWasVisit = false;
+
+            if (drawnSpecializationId != null && GetNextStage() == null)
+            {
+                lastAttentionWasVisit = true;
+                RunVisitInteraction();
+                currentTickInterval = RollTickInterval();
+                return;
+            }
+
             ResolveAttention();
             currentTickInterval = RollTickInterval();
         }
 
         public void OnAttentionCancelled() { }
+
+        private void RunVisitInteraction()
+        {
+            if (drawnExchangePool == null)
+            {
+                NotificationManager.Post($"{specializedName}: settles quietly into their work nearby.");
+                return;
+            }
+
+            bool exchanged = false;
+
+            if (drawnExchangePool.gifts != null && drawnExchangePool.gifts.Length > 0
+                && Random.value < drawnExchangePool.exchangeChance)
+            {
+                int giftIndex = PickWeightedGiftIndex(drawnExchangePool.gifts);
+                var gift = drawnExchangePool.gifts[giftIndex];
+                if (gift?.Item != null)
+                {
+                    int qty = Random.Range(gift.MinQuantity, gift.MaxQuantity + 1);
+                    int added = InventoryManager.Instance != null
+                        ? InventoryManager.Instance.AddItem(gift.Item, qty) : 0;
+
+                    if (added > 0)
+                    {
+                        exchanged = true;
+                        // Exchange flavors are parallel to gifts — use same index so text matches item.
+                        string flavor = drawnExchangePool.exchangeFlavors != null
+                            && giftIndex < drawnExchangePool.exchangeFlavors.Length
+                            ? drawnExchangePool.exchangeFlavors[giftIndex]
+                            : $"offers {added}x {gift.Item.DisplayName}.";
+                        NotificationManager.Post($"{specializedName}: {flavor}");
+                        Debug.Log($"{specializedName}: gave {added}x {gift.Item.DisplayName}. {flavor}", this);
+                    }
+                }
+            }
+
+            if (!exchanged)
+            {
+                string flavor = PickRandom(drawnExchangePool.visitFlavors);
+                if (string.IsNullOrEmpty(flavor)) flavor = "is quiet company.";
+                NotificationManager.Post($"{specializedName}: {flavor}");
+                Debug.Log($"{specializedName}: {flavor}", this);
+            }
+        }
 
         private void HandleDeveloped(DevelopmentStage stage)
         {
@@ -146,6 +244,10 @@ namespace Mossmark.Development
                 specializedName = $"{genericName} the {info.Title}";
                 if (spriteRenderer != null) spriteRenderer.color = info.Tint;
                 RealizedSpecializations.Declare(stage.Id);
+
+                // Build exchange pool from archetype if this is an archetype spec,
+                // otherwise use hardcoded universal-spec flavors (no item exchange).
+                drawnExchangePool = BuildExchangePool(stage.Id);
 
                 foreach (var id in poolStageIds)
                     if (id != stage.Id) MarkStageAsApplied(id);
@@ -179,6 +281,28 @@ namespace Mossmark.Development
             }
         }
 
+        // Builds the exchange pool for the drawn specialization. Archetype specs get
+        // gift pools and flavors from PlaceArchetype; universal specs get hardcoded
+        // flavor-only pools (no item exchange — their "gift" is time and knowledge).
+        private NpcExchangePool BuildExchangePool(string specId)
+        {
+            foreach (var archetype in WorldGenerator.SelectedArchetypes)
+            {
+                if (archetype.SpecializationId != specId) continue;
+                return new NpcExchangePool(
+                    archetype.NpcExchangeChance,
+                    archetype.NpcExchangeGifts,
+                    archetype.NpcVisitFlavors,
+                    archetype.NpcExchangeFlavors);
+            }
+
+            // Universal spec — flavor only, no item exchange.
+            if (universalSpecFlavors.TryGetValue(specId, out var flavors))
+                return new NpcExchangePool(0f, null, flavors.visitFlavors, flavors.exchangeFlavors);
+
+            return null;
+        }
+
         private List<DevelopmentStage> BuildPostSpecStages(PlaceArchetype archetype)
         {
             var stages = new List<DevelopmentStage>();
@@ -200,6 +324,46 @@ namespace Mossmark.Development
             }
 
             return stages;
+        }
+
+        private static int PickWeightedGiftIndex(ItemYield[] gifts)
+        {
+            float total = 0f;
+            foreach (var g in gifts) total += Mathf.Max(0f, g.Weight);
+            if (total <= 0f) return gifts.Length - 1;
+
+            float roll = Random.value * total;
+            float cumulative = 0f;
+            for (int i = 0; i < gifts.Length; i++)
+            {
+                cumulative += Mathf.Max(0f, gifts[i].Weight);
+                if (roll <= cumulative) return i;
+            }
+            return gifts.Length - 1;
+        }
+
+        private static string PickRandom(string[] lines)
+        {
+            if (lines == null || lines.Length == 0) return null;
+            return lines[Random.Range(0, lines.Length)];
+        }
+
+        // Holds per-spec visit and exchange data built at specialization time.
+        private class NpcExchangePool
+        {
+            public readonly float exchangeChance;
+            public readonly ItemYield[] gifts;
+            public readonly string[] visitFlavors;
+            public readonly string[] exchangeFlavors;
+
+            public NpcExchangePool(float exchangeChance, ItemYield[] gifts,
+                string[] visitFlavors, string[] exchangeFlavors)
+            {
+                this.exchangeChance = exchangeChance;
+                this.gifts = gifts;
+                this.visitFlavors = visitFlavors;
+                this.exchangeFlavors = exchangeFlavors;
+            }
         }
     }
 }

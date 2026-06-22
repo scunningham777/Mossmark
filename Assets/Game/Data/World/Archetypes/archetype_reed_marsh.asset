@@ -28,12 +28,15 @@ MonoBehaviour:
     MaxQuantity: 1
     Weight: 1
   rareDropChance: 0.08
+  archetypeSpotMinTickInterval: 2
+  archetypeSpotMaxTickInterval: 2.5
   specializationId: weaver
   stageDisplayName: Take Up Weaving
   npcTitle: Weaver
   npcTint: {r: 0.65, g: 0.7, b: 0.45, a: 1}
   poiDisplayName: Reed Marsh Blind
-  poiLockedDescription: A half-sunken hunting blind sits deep in the reeds, hidden from the path.
+  poiLockedDescription: A half-sunken hunting blind sits deep in the reeds, hidden
+    from the path.
   poiVerb: search the blind
   poiColor: {r: 0.42, g: 0.47, b: 0.26, a: 1}
   poiCommonYields:
@@ -48,6 +51,23 @@ MonoBehaviour:
     Weight: 1
   poiRareDropChance: 0.05
   npcPostSpecStages: []
+  npcExchangeChance: 0.2
+  npcExchangeGifts:
+  - Item: {fileID: 11400000, guid: f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6, type: 2}
+    MinQuantity: 1
+    MaxQuantity: 2
+    Weight: 0.65
+  - Item: {fileID: 11400000, guid: e00cc95e3157484a979e04c011a6ef0a, type: 2}
+    MinQuantity: 1
+    MaxQuantity: 1
+    Weight: 0.35
+  npcVisitFlavors:
+  - speaks of patterns in the marsh that took years to understand.
+  - shows you a half-finished piece of weaving. The geometry is intricate and strange.
+  - is more talkative than usual, the work going well.
+  npcExchangeFlavors:
+  - wraps a piece of honeycomb in a reed leaf and tucks it in your pack.
+  - presses a small woven charm into your hands — more care in it than it looks like.
   buildingDilapidatedName: Sagging Drying House
   buildingDilapidatedColor: {r: 0.45, g: 0.5, b: 0.32, a: 1}
   buildingStages:
@@ -55,8 +75,8 @@ MonoBehaviour:
     verb: reinforce
     material: {fileID: 11400000, guid: ed43e92716be4f129cbedee37842f471, type: 2}
     costPerTick: 2
-    progressCost: 6
-    requiredSpecialization:
+    progressCost: 4
+    requiredSpecialization: 
     tint: {r: 0.6, g: 0.65, b: 0.42, a: 1}
   - displayName: Hang the Loom
     verb: hang
@@ -65,3 +85,6 @@ MonoBehaviour:
     progressCost: 4
     requiredSpecialization: weaver
     tint: {r: 0.7, g: 0.75, b: 0.52, a: 1}
+  buildingRestoredFlavors:
+  - fills with the smell of cut reeds and the quiet industry of craft.
+  - is already in use, its work spreading gently through the settlement.

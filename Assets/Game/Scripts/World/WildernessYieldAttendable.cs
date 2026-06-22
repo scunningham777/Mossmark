@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using Mossmark.Attention;
+using Mossmark.Day;
 using Mossmark.Development;
 using UnityEngine;
 
@@ -8,6 +10,15 @@ namespace Mossmark.World
     // had identical fields, tick logic, and IAttendable plumbing — only their overlay
     // text and gate logic differ. Subclasses implement the three abstract overlay methods
     // and may override GetEffectiveRareChance() to bias the drop chance with modifiers.
+    //
+    // Iteration 27: tendedness (float [0,1], initial 0.5) is per-session runtime state.
+    // Each attended tick raises it (+0.04); each rest lowers it if unattended (-0.08) or
+    // raises it slightly if attended that day (+0.03). Yield qty range and rare-drop chance
+    // both respond at the extremes (>0.7 well-tended / <0.3 depleted).
+    //
+    // Iteration 28: knowledgeYields is an array of KnowledgeYieldEntry — each entry checks
+    // a WorldState flag at roll time and, if true, injects an extra ItemYield into the common
+    // pool for that tick only (not modifying the asset). Applied in OnAttentionComplete().
     public abstract class WildernessYieldAttendable : MonoBehaviour, IAttendable
     {
         [SerializeField] protected string displayName = "Spot";
@@ -23,9 +34,19 @@ namespace Mossmark.World
         protected float currentTickInterval;
         protected string foundVerb = "foraged";
 
+        // Runtime tendedness — not serialized, per-session only like all other spot state.
+        // Drifts up with each attended tick (+0.04) and adjusts at each rest.
+        private float tendedness = 0.5f;
+        private bool attendedThisDay = false;
+
+        // Knowledge yield entries — set via Initialize(), not serialized on the base class
+        // (each subclass's Initialize path copies from its definition source).
+        private KnowledgeYieldEntry[] knowledgeYields;
+
         protected void InitializeBase(string displayName, string interactionVerb,
             ItemYield[] commonYields, ItemYield rareYield, float rareDropChance,
-            float minTickInterval, float maxTickInterval)
+            float minTickInterval, float maxTickInterval,
+            KnowledgeYieldEntry[] knowledgeYields = null)
         {
             this.displayName = displayName;
             this.interactionVerb = interactionVerb;
@@ -34,11 +55,24 @@ namespace Mossmark.World
             this.rareDropChance = rareDropChance;
             this.minTickInterval = minTickInterval;
             this.maxTickInterval = maxTickInterval;
+            this.knowledgeYields = knowledgeYields;
         }
 
         protected virtual void Awake()
         {
             RollTickInterval();
+        }
+
+        protected virtual void Start()
+        {
+            if (DayCycleManager.Instance != null)
+                DayCycleManager.Instance.DayAdvanced += OnDayAdvanced;
+        }
+
+        protected virtual void OnDestroy()
+        {
+            if (DayCycleManager.Instance != null)
+                DayCycleManager.Instance.DayAdvanced -= OnDayAdvanced;
         }
 
         public float AttentionDuration => currentTickInterval;
@@ -52,8 +86,34 @@ namespace Mossmark.World
         public void OnAttentionComplete()
         {
             continueAttending = true;
-            ItemYieldRoller.Roll(displayName, foundVerb, commonYields, rareYield, GetEffectiveRareChance());
+            tendedness = Mathf.Clamp01(tendedness + 0.04f);
+            attendedThisDay = true;
+            ItemYieldRoller.Roll(displayName, foundVerb, commonYields, rareYield,
+                GetEffectiveRareChance(), tendedness, BuildKnowledgeInjectedYields());
             RollTickInterval();
+        }
+
+        // Checks each knowledge entry against WorldState flags and collects items to inject
+        // into the common pool for this tick only. Returns null when no entries are active —
+        // the null fast-path avoids allocations on every tick for spots with no knowledge yields.
+        private ItemYield[] BuildKnowledgeInjectedYields()
+        {
+            if (knowledgeYields == null || knowledgeYields.Length == 0) return null;
+            List<ItemYield> result = null;
+            foreach (var entry in knowledgeYields)
+            {
+                if (string.IsNullOrEmpty(entry.requiredFlag) || entry.item == null) continue;
+                if (!WorldContext.GetFlag(entry.requiredFlag)) continue;
+                result ??= new List<ItemYield>();
+                result.Add(new ItemYield
+                {
+                    Item = entry.item,
+                    MinQuantity = entry.minQty,
+                    MaxQuantity = entry.maxQty,
+                    Weight = entry.injectedWeight
+                });
+            }
+            return result?.ToArray();
         }
 
         public void OnAttentionCancelled() { }
@@ -66,6 +126,32 @@ namespace Mossmark.World
         protected void RollTickInterval()
         {
             currentTickInterval = Random.Range(minTickInterval, maxTickInterval);
+        }
+
+        // Appends a tendedness description to the base description string at the extremes.
+        // Middle band (0.3 to 0.7) returns the base unchanged so the overlay stays clean
+        // during normal foraging.
+        protected string WithTendednessSuffix(string baseDescription)
+        {
+            if (tendedness > 0.7f)
+                return $"{baseDescription} — this place feels well-known to you";
+            if (tendedness < 0.3f)
+                return $"{baseDescription} — the ground here is disturbed";
+            return baseDescription;
+        }
+
+        // Applies daily drift to tendedness. Attended spots gain a small cultivation bonus;
+        // neglected spots lose ground faster — neglect accumulates over multiple days toward
+        // the depleted (<0.3) band. Values are tuning baselines per Iteration 27 spec.
+        private void OnDayAdvanced()
+        {
+            if (attendedThisDay)
+                tendedness = Mathf.Clamp01(tendedness + 0.03f);
+            else
+                tendedness = Mathf.Clamp01(tendedness - 0.08f);
+
+            attendedThisDay = false;
+            Debug.Log($"{displayName}: tendedness {tendedness:F2} after rest.");
         }
     }
 }

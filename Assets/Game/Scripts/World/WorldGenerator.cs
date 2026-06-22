@@ -103,7 +103,8 @@ namespace Mossmark.World
             go.AddComponent<GenericWildernessSpotAttendable>().Initialize(
                 archetype.SpotDisplayName, archetype.SpotVerb,
                 archetype.CommonYields, archetype.RareYield, archetype.RareDropChance,
-                archetype.ArchetypeSpotMinTickInterval, archetype.ArchetypeSpotMaxTickInterval);
+                archetype.ArchetypeSpotMinTickInterval, archetype.ArchetypeSpotMaxTickInterval,
+                archetype.SpotKnowledgeYields);
 
             go.AddComponent<AttendableZone>();
 
@@ -134,7 +135,8 @@ namespace Mossmark.World
                 archetype.BuildingDilapidatedName,
                 archetype.BuildingStages,
                 archetype.SpecializationId,
-                2f, 3f);
+                2f, 3f,
+                archetype.BuildingRestoredFlavors);
 
             go.AddComponent<AttendableZone>();
 
@@ -206,7 +208,8 @@ namespace Mossmark.World
                 go.AddComponent<GenericWildernessSpotAttendable>().Initialize(
                     def.displayName, def.interactionVerb,
                     def.commonYields, def.rareYield, def.rareDropChance,
-                    def.minTickInterval, def.maxTickInterval);
+                    def.minTickInterval, def.maxTickInterval,
+                    def.knowledgeYields);
             }
             else
             {
