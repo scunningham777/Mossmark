@@ -252,8 +252,14 @@ namespace Mossmark.Development
             {
                 foreach (var entity in entities)
                 {
-                    string status = entity is IAttendable attendable ? attendable.GetOverlayInteractionLine() : "";
-                    entityList.Add(BuildEntityRow(entity.DisplayName, status));
+                    string name = entity.DisplayName;
+                    string status = "";
+                    if (entity is IAttendable attendable)
+                    {
+                        name = attendable.GetOverlayDescription();
+                        status = attendable.GetOverlayInteractionLine();
+                    }
+                    entityList.Add(BuildEntityRow(name, status));
                 }
             }
 

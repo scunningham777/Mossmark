@@ -146,6 +146,8 @@ namespace Mossmark.Editor
                 });
             headers.AddRange(new[]
             {
+                "buildingColdFlavor", "buildingMaintenanceCost",
+                "npcColdFlavor", "npcMaintenanceCost",
                 "buildingDilapidatedName",
                 "buildingDilapidatedColor_r", "buildingDilapidatedColor_g", "buildingDilapidatedColor_b"
             });
@@ -207,6 +209,12 @@ namespace Mossmark.Editor
                     }
                     else row.AddRange(new[] { "", "", "", "", "", "", "" });
                 }
+
+                row.AddRange(new[]
+                {
+                    a.BuildingColdFlavor, a.BuildingMaintenanceCost.ToString(),
+                    a.NpcColdFlavor, a.NpcMaintenanceCost.ToString()
+                });
 
                 var bc = a.BuildingDilapidatedColor;
                 row.AddRange(new[] { a.BuildingDilapidatedName, Fmt(bc.r), Fmt(bc.g), Fmt(bc.b) });

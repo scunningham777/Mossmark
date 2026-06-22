@@ -53,6 +53,12 @@ namespace Mossmark.World
         [SerializeField] private string[] npcVisitFlavors = System.Array.Empty<string>();
         [SerializeField] private string[] npcExchangeFlavors = System.Array.Empty<string>();
 
+        [Header("Maintenance")]
+        [SerializeField] private string buildingColdFlavor;
+        [SerializeField, Min(1)] private int buildingMaintenanceCost = 2;
+        [SerializeField] private string npcColdFlavor;
+        [SerializeField, Min(1)] private int npcMaintenanceCost = 1;
+
         [Header("Building")]
         [SerializeField] private string buildingDilapidatedName;
         [SerializeField] private Color buildingDilapidatedColor = new(0.35f, 0.3f, 0.28f, 1f);
@@ -91,6 +97,11 @@ namespace Mossmark.World
         public ItemYield[] NpcExchangeGifts => npcExchangeGifts;
         public string[] NpcVisitFlavors => npcVisitFlavors;
         public string[] NpcExchangeFlavors => npcExchangeFlavors;
+
+        public string BuildingColdFlavor => buildingColdFlavor;
+        public int BuildingMaintenanceCost => buildingMaintenanceCost;
+        public string NpcColdFlavor => npcColdFlavor;
+        public int NpcMaintenanceCost => npcMaintenanceCost;
 
         public string BuildingDilapidatedName => buildingDilapidatedName;
         public Color BuildingDilapidatedColor => buildingDilapidatedColor;

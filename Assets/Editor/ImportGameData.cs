@@ -202,6 +202,12 @@ namespace Mossmark.Editor
                     e.FindPropertyRelative("worldStateFlag").stringValue = flag;
                 }
 
+                // Maintenance fields (Iteration 29)
+                so.FindProperty("buildingColdFlavor").stringValue   = row.Get("buildingColdFlavor");
+                so.FindProperty("buildingMaintenanceCost").intValue = I(row.Get("buildingMaintenanceCost", "2"));
+                so.FindProperty("npcColdFlavor").stringValue        = row.Get("npcColdFlavor");
+                so.FindProperty("npcMaintenanceCost").intValue      = I(row.Get("npcMaintenanceCost", "1"));
+
                 // Building stages
                 so.FindProperty("buildingDilapidatedName").stringValue = row.Get("buildingDilapidatedName");
                 SetColor(so.FindProperty("buildingDilapidatedColor"), row, "buildingDilapidatedColor");

@@ -17,6 +17,52 @@ namespace Mossmark.Development
         public int CurrentStageIndex { get; private set; } = -1;
         public DevelopmentStage LastAppliedStage { get; private set; }
 
+        // Iteration 29: maintenance drift. Incremented by MaintenanceManager each rest
+        // for entities that have crossed at least one development threshold. Reset by
+        // direct attend-with-material or silent chest consumption.
+        public int DriftProgress { get; private set; }
+
+        // Called by MaintenanceManager once per rest for developed entities.
+        public void IncrementDrift()
+        {
+            if (CurrentStageIndex < 0) return;
+            DriftProgress++;
+            OnDriftChanged();
+        }
+
+        // Called by MaintenanceManager (chest consumption) and by subclass OnAttentionComplete
+        // (direct tending). Subclasses override OnDriftReset to restore suspended flags.
+        public void ResetDrift()
+        {
+            if (DriftProgress == 0) return;
+            DriftProgress = 0;
+            OnDriftReset();
+        }
+
+        // Subclasses override to react when drift crosses the cold threshold — e.g.
+        // NpcAttendable suspends WorldState flags.
+        protected virtual void OnDriftChanged() { }
+
+        // Subclasses override to react when drift resets — e.g. NpcAttendable restores flags.
+        protected virtual void OnDriftReset() { }
+
+        // Returns the entity description including an appropriate drift suffix, for use
+        // in IAttendable.GetOverlayDescription() overrides.
+        //   Warning (>= 60% of threshold): appends "— needs tending"
+        //   Cold (>= threshold): returns coldFlavor (or a generic fallback)
+        //   No drift: returns displayName unchanged
+        protected string GetDriftOverlayDescription(string displayName, int driftThreshold, string coldFlavor)
+        {
+            if (DriftProgress <= 0) return displayName;
+            if (DriftProgress >= driftThreshold)
+                return !string.IsNullOrEmpty(coldFlavor)
+                    ? coldFlavor
+                    : $"{displayName} — seems neglected";
+            if (DriftProgress >= Mathf.RoundToInt(driftThreshold * 0.6f))
+                return $"{displayName} — needs tending";
+            return displayName;
+        }
+
         // Whether this tick's dependencies were satisfied (progress was productive),
         // regardless of whether a stage applied. Drives RequiresDaylight.
         public bool LastAttentionMadeProgress { get; private set; }

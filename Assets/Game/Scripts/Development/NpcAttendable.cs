@@ -25,7 +25,14 @@ namespace Mossmark.Development
     // pool (authored in PlaceArchetype.NpcExchangeGifts). Visiting always costs 1 daylight,
     // is one-shot per attend (ContinueAttending => false), and uses lastAttentionWasVisit
     // to override RequiresDaylight/ContinueAttending without touching DevelopableEntity.
-    public class NpcAttendable : DevelopableEntity, IAttendable
+    //
+    // Iteration 29: settlement maintenance drift. NPCs accumulate drift each rest after
+    // specialization (CurrentStageIndex >= 0). Cold NPCs (driftProgress >= 7) suspend
+    // their WorldState flags (post-spec stage effects go dormant). Direct attend with
+    // maintenanceMaterial (archetype's CommonYields[0].Item) resets drift. Visits (fully
+    // developed) also reset drift — for universal-spec NPCs with no material, the visit
+    // IS the maintenance path.
+    public class NpcAttendable : DevelopableEntity, IAttendable, IMaintenanceConsumer
     {
         [SerializeField] private string genericName = "Wanderer";
         [SerializeField, Min(1)] private int progressCost = 8;
@@ -36,15 +43,25 @@ namespace Mossmark.Development
         private SpriteRenderer spriteRenderer;
         private string specializedName;
         private string drawnSpecializationId;
+        private string coldFlavor;
         private List<string> poolStageIds;
         private Dictionary<string, List<string>> postSpecStageIdsBySpecId;
         private Dictionary<string, (string Title, Color Tint)> specializationInfo;
         private Dictionary<string, NpcPostSpecStageDef> postSpecStageDefs;
         private float currentTickInterval;
 
+        // Maintenance fields set when specialization fires.
+        private ItemDefinition maintenanceMaterial;
+        private int maintenanceCostPerReset = 1;
+
+        // Tracks WorldState flags set by post-spec stages so they can be suspended
+        // (cold) and restored (reset). Built up in HandleDeveloped.
+        private readonly HashSet<string> setWorldStateFlags = new();
+
         // Iteration 28.5: exchange pool set when specialization fires.
         private NpcExchangePool drawnExchangePool;
         private bool lastAttentionWasVisit;
+        private bool lastAttentionWasMaintenance;
 
         // Flavor text for universal specs — stable enough to live in code.
         private static readonly Dictionary<string, (string[] visitFlavors, string[] exchangeFlavors)>
@@ -80,8 +97,19 @@ namespace Mossmark.Development
         protected override DevelopmentTrack Track => track;
 
         public float AttentionDuration => currentTickInterval;
-        public bool RequiresDaylight => lastAttentionWasVisit || LastAttentionMadeProgress;
-        public bool ContinueAttending => !lastAttentionWasVisit && LastAttentionMadeProgress && !LastAttentionAppliedStage;
+
+        public bool RequiresDaylight =>
+            lastAttentionWasVisit || (!lastAttentionWasMaintenance && LastAttentionMadeProgress);
+
+        public bool ContinueAttending =>
+            !lastAttentionWasVisit && !lastAttentionWasMaintenance
+            && LastAttentionMadeProgress && !LastAttentionAppliedStage;
+
+        // IMaintenanceConsumer — universal-spec NPCs have null maintenanceMaterial
+        // (visits are their maintenance path); archetype NPCs use CommonYields[0].Item.
+        public int DriftThreshold => 7;
+        public ItemDefinition MaintenanceMaterial => maintenanceMaterial;
+        public int MaintenanceCostPerReset => maintenanceCostPerReset;
 
         private float RollTickInterval() => Random.Range(minTickInterval, maxTickInterval);
 
@@ -156,16 +184,33 @@ namespace Mossmark.Development
         public bool CanAttend()
         {
             if (drawnSpecializationId == null) return true;
-            if (GetNextStage() == null) return true; // fully developed — still visitable
+
+            // Fully developed: always attendable (visit or maintenance).
+            if (GetNextStage() == null) return true;
+
+            // Direct maintenance: available when drifted and carrying archetype material.
+            if (DriftProgress > 0 && maintenanceMaterial != null
+                && InventoryManager.Instance != null
+                && InventoryManager.Instance.GetQuantity(maintenanceMaterial) >= maintenanceCostPerReset)
+                return true;
+
             return CanMakeProgress();
         }
 
-        public string GetOverlayDescription() => DisplayName;
+        // Drift suffix shows in the overlay name when warning/cold.
+        public string GetOverlayDescription() =>
+            GetDriftOverlayDescription(DisplayName, DriftThreshold, coldFlavor);
 
         public string GetOverlayInteractionLine()
         {
             if (drawnSpecializationId == null)
                 return GetNeedsOrDefault($"Hold E to spend time with {genericName} - they need more time to find their place");
+
+            // Maintenance prompt (archetype NPCs only) — shown when drifted and carrying material.
+            if (DriftProgress > 0 && maintenanceMaterial != null
+                && InventoryManager.Instance != null
+                && InventoryManager.Instance.GetQuantity(maintenanceMaterial) >= maintenanceCostPerReset)
+                return $"Hold E to check in with {specializedName}";
 
             if (GetNextStage() == null)
                 return $"Hold E to visit with {specializedName}";
@@ -176,20 +221,63 @@ namespace Mossmark.Development
         public void OnAttentionComplete()
         {
             lastAttentionWasVisit = false;
+            lastAttentionWasMaintenance = false;
 
-            if (drawnSpecializationId != null && GetNextStage() == null)
+            // Only apply post-specialization logic once drawn.
+            if (drawnSpecializationId != null)
             {
-                lastAttentionWasVisit = true;
-                RunVisitInteraction();
-                currentTickInterval = RollTickInterval();
-                return;
+                // Priority 1: direct maintenance (archetype NPCs with material).
+                if (DriftProgress > 0 && maintenanceMaterial != null
+                    && InventoryManager.Instance != null
+                    && InventoryManager.Instance.GetQuantity(maintenanceMaterial) >= maintenanceCostPerReset)
+                {
+                    lastAttentionWasMaintenance = true;
+                    InventoryManager.Instance.RemoveItem(maintenanceMaterial, maintenanceCostPerReset);
+                    ResetDrift();
+                    NotificationManager.Post($"{specializedName}: feels present again.");
+                    Debug.Log($"{specializedName}: maintained directly by player.", this);
+                    currentTickInterval = RollTickInterval();
+                    return;
+                }
+
+                // Priority 2: visit (fully developed, OR universal-spec NPC maintenance path).
+                if (GetNextStage() == null)
+                {
+                    lastAttentionWasVisit = true;
+                    RunVisitInteraction();
+                    // Visiting always resets drift — for universal-spec NPCs this is the
+                    // only maintenance path (no archetype material).
+                    if (DriftProgress > 0) ResetDrift();
+                    currentTickInterval = RollTickInterval();
+                    return;
+                }
             }
 
+            // Priority 3: pre-specialization development or post-spec stage development.
             ResolveAttention();
             currentTickInterval = RollTickInterval();
         }
 
         public void OnAttentionCancelled() { }
+
+        // When drift reaches the cold threshold, suspend all WorldState flags this NPC
+        // has set (post-spec stage effects go dormant until drift resets).
+        protected override void OnDriftChanged()
+        {
+            if (DriftProgress < DriftThreshold) return;
+            foreach (var flag in setWorldStateFlags)
+                WorldState.SetFlag(flag, false);
+            Debug.Log($"{DisplayName}: gone cold — WorldState effects suspended.", this);
+        }
+
+        // When drift resets, restore all WorldState flags.
+        protected override void OnDriftReset()
+        {
+            foreach (var flag in setWorldStateFlags)
+                WorldState.SetFlag(flag, true);
+            if (setWorldStateFlags.Count > 0)
+                Debug.Log($"{DisplayName}: WorldState effects restored.", this);
+        }
 
         private void RunVisitInteraction()
         {
@@ -245,6 +333,18 @@ namespace Mossmark.Development
                 if (spriteRenderer != null) spriteRenderer.color = info.Tint;
                 RealizedSpecializations.Declare(stage.Id);
 
+                // Set maintenance material from this archetype's common yield.
+                foreach (var archetype in WorldGenerator.SelectedArchetypes)
+                {
+                    if (archetype.SpecializationId != stage.Id) continue;
+                    maintenanceMaterial = archetype.CommonYields?.Length > 0
+                        ? archetype.CommonYields[0].Item : null;
+                    maintenanceCostPerReset = archetype.NpcMaintenanceCost;
+                    coldFlavor = archetype.NpcColdFlavor;
+                    break;
+                }
+                // Universal specs get no maintenance material — visits are their path.
+
                 // Build exchange pool from archetype if this is an archetype spec,
                 // otherwise use hardcoded universal-spec flavors (no item exchange).
                 drawnExchangePool = BuildExchangePool(stage.Id);
@@ -271,12 +371,16 @@ namespace Mossmark.Development
             if (postSpecStageDefs.TryGetValue(stage.Id, out var stageDef))
             {
                 if (!string.IsNullOrEmpty(stageDef.worldStateFlag))
+                {
                     WorldState.SetFlag(stageDef.worldStateFlag, true);
+                    setWorldStateFlags.Add(stageDef.worldStateFlag);
+                }
                 Debug.Log($"{specializedName}: {stageDef.flavorText}", this);
             }
             else
             {
                 WorldState.SetFlag(stage.Id, true);
+                setWorldStateFlags.Add(stage.Id);
                 Debug.Log($"{specializedName}: {stage.DisplayName}.", this);
             }
         }

@@ -136,7 +136,9 @@ namespace Mossmark.World
                 archetype.BuildingStages,
                 archetype.SpecializationId,
                 2f, 3f,
-                archetype.BuildingRestoredFlavors);
+                archetype.BuildingRestoredFlavors,
+                archetype.BuildingColdFlavor,
+                archetype.BuildingMaintenanceCost);
 
             go.AddComponent<AttendableZone>();
 

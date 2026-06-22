@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Mossmark.Attention;
+using Mossmark.Day;
 using Mossmark.Inventory;
 using Mossmark.Visuals;
 using UnityEngine;
@@ -18,7 +19,12 @@ namespace Mossmark.Development
     // Iteration 28.5: fully-developed buildings (GetNextStage() == null) remain
     // attendable. A short hold shows a flavor notification from restoredFlavors.
     // No daylight is spent (lastAttentionWasVisit guards RequiresDaylight).
-    public class BuildingAttendable : DevelopableEntity, IAttendable
+    //
+    // Iteration 29: settlement maintenance drift. Developed buildings accumulate drift
+    // each rest; cold buildings (driftProgress >= driftThreshold) cost extra daylight
+    // per development tick. Direct attend with the maintenance material resets drift.
+    // Chest passive consumption is handled by MaintenanceManager.
+    public class BuildingAttendable : DevelopableEntity, IAttendable, IMaintenanceConsumer
     {
         [SerializeField] private string dilapidatedName = "Tumbledown Building";
         [SerializeField] private string declaredSpecialization;
@@ -26,15 +32,24 @@ namespace Mossmark.Development
         [SerializeField, Min(0.1f)] private float maxTickInterval = 3f;
         [SerializeField] private BuildingStageDef[] stages = System.Array.Empty<BuildingStageDef>();
         [SerializeField] private string[] restoredFlavors = System.Array.Empty<string>();
+        [SerializeField] private string coldFlavor;
+        [SerializeField, Min(1)] private int maintenanceCostPerReset = 2;
 
         private DevelopmentTrack track;
         private SpriteRenderer spriteRenderer;
+        private ItemDefinition maintenanceMaterial;
         private float currentTickInterval;
         private bool lastAttentionWasVisit;
+        private bool lastAttentionWasMaintenance;
+
+        // IMaintenanceConsumer
+        public int DriftThreshold => 5;
+        public ItemDefinition MaintenanceMaterial => maintenanceMaterial;
+        public int MaintenanceCostPerReset => maintenanceCostPerReset;
 
         public void Initialize(string dilapidatedName, BuildingStageDef[] stages,
             string declaredSpecialization, float minTickInterval = 2f, float maxTickInterval = 3f,
-            string[] restoredFlavors = null)
+            string[] restoredFlavors = null, string coldFlavor = null, int maintenanceCostPerReset = 2)
         {
             this.dilapidatedName = dilapidatedName;
             this.stages = stages;
@@ -42,6 +57,8 @@ namespace Mossmark.Development
             this.minTickInterval = minTickInterval;
             this.maxTickInterval = maxTickInterval;
             this.restoredFlavors = restoredFlavors ?? System.Array.Empty<string>();
+            this.coldFlavor = coldFlavor;
+            this.maintenanceCostPerReset = maintenanceCostPerReset;
         }
 
         // Stage 0's displayName is the building's revived name; post-revival the name
@@ -52,12 +69,20 @@ namespace Mossmark.Development
         protected override DevelopmentTrack Track => track;
 
         public float AttentionDuration => currentTickInterval;
-        public bool RequiresDaylight => !lastAttentionWasVisit && LastAttentionMadeProgress;
-        public bool ContinueAttending => !lastAttentionWasVisit && LastAttentionMadeProgress && !LastAttentionAppliedStage;
+
+        public bool RequiresDaylight =>
+            !lastAttentionWasVisit && !lastAttentionWasMaintenance && LastAttentionMadeProgress;
+
+        public bool ContinueAttending =>
+            !lastAttentionWasVisit && !lastAttentionWasMaintenance
+            && LastAttentionMadeProgress && !LastAttentionAppliedStage;
 
         private void Awake()
         {
             spriteRenderer = GetComponent<SpriteRenderer>();
+
+            // Revival material doubles as the ongoing maintenance material.
+            maintenanceMaterial = stages.Length > 0 ? stages[0].material : null;
 
             var devStages = new List<DevelopmentStage>();
             for (int i = 0; i < stages.Length; i++)
@@ -86,12 +111,30 @@ namespace Mossmark.Development
             RollTickInterval();
         }
 
-        public bool CanAttend() => GetNextStage() == null || CanMakeProgress();
+        public bool CanAttend()
+        {
+            // Direct maintenance is always available when drifted and carrying enough material.
+            if (DriftProgress > 0 && maintenanceMaterial != null
+                && InventoryManager.Instance != null
+                && InventoryManager.Instance.GetQuantity(maintenanceMaterial) >= maintenanceCostPerReset)
+                return true;
 
-        public string GetOverlayDescription() => DisplayName;
+            return GetNextStage() == null || CanMakeProgress();
+        }
+
+        // Drift suffix shows in the overlay name so the player sees it while approaching.
+        public string GetOverlayDescription() =>
+            GetDriftOverlayDescription(DisplayName, DriftThreshold, coldFlavor);
 
         public string GetOverlayInteractionLine()
         {
+            // Maintenance takes priority — shown whenever the player is carrying material
+            // and the building has drifted, even if development is available.
+            if (DriftProgress > 0 && maintenanceMaterial != null
+                && InventoryManager.Instance != null
+                && InventoryManager.Instance.GetQuantity(maintenanceMaterial) >= maintenanceCostPerReset)
+                return $"Hold E to tend to the {DisplayName}";
+
             if (GetNextStage() == null)
                 return $"Hold E to linger near the {DisplayName}";
 
@@ -109,7 +152,23 @@ namespace Mossmark.Development
         public void OnAttentionComplete()
         {
             lastAttentionWasVisit = false;
+            lastAttentionWasMaintenance = false;
 
+            // Priority 1: direct maintenance — consuming material resets drift.
+            if (DriftProgress > 0 && maintenanceMaterial != null
+                && InventoryManager.Instance != null
+                && InventoryManager.Instance.GetQuantity(maintenanceMaterial) >= maintenanceCostPerReset)
+            {
+                lastAttentionWasMaintenance = true;
+                ConsumeMaterial(maintenanceMaterial, maintenanceCostPerReset);
+                ResetDrift();
+                NotificationManager.Post($"{DisplayName}: feels tended again.");
+                Debug.Log($"{DisplayName}: maintained directly by player.", this);
+                RollTickInterval();
+                return;
+            }
+
+            // Priority 2: linger when fully developed.
             if (GetNextStage() == null)
             {
                 lastAttentionWasVisit = true;
@@ -118,6 +177,7 @@ namespace Mossmark.Development
                 return;
             }
 
+            // Priority 3: development.
             // Capture the stage index before ResolveAttention() may advance it, so we
             // know which stage's material to consume.
             int stageIndexBefore = CurrentStageIndex;
@@ -128,6 +188,10 @@ namespace Mossmark.Development
                 int materialIndex = stageIndexBefore + 1;
                 if (materialIndex < stages.Length)
                     ConsumeMaterial(stages[materialIndex].material, stages[materialIndex].costPerTick);
+
+                // Cold buildings tax each productive development tick with an extra daylight.
+                if (DriftProgress >= DriftThreshold && DayCycleManager.Instance != null)
+                    DayCycleManager.Instance.SpendDaylight(1);
             }
             else
             {
