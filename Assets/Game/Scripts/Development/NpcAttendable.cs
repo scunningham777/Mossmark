@@ -96,6 +96,17 @@ namespace Mossmark.Development
         public override string DisplayName => drawnSpecializationId != null ? specializedName : genericName;
         protected override DevelopmentTrack Track => track;
 
+        // Procedural-spawn entry point (ArrivalSpawner), following the inactive-GO
+        // pattern — call before SetActive(true) so Awake fires with correct field values.
+        public void Initialize(string genericName, int progressCost = 8,
+            float minTickInterval = 1.5f, float maxTickInterval = 2f)
+        {
+            this.genericName = genericName;
+            this.progressCost = progressCost;
+            this.minTickInterval = minTickInterval;
+            this.maxTickInterval = maxTickInterval;
+        }
+
         public float AttentionDuration => currentTickInterval;
 
         public bool RequiresDaylight =>

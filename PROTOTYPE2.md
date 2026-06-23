@@ -374,7 +374,7 @@ Iteration 8.5 is inserted between 8 and 9, and Iteration 16.5 between 16 and 17 
 | 28 | [x] | Knowledge-Gated Yield Layers | NPC WorldState flags silently unlock additional yield possibilities on wilderness spots — a Bog Keeper with `bog_keeper_iron_sense` adds a weighted bog iron entry to fen-adjacent spots' common pools; a Hedge Witch with `hedge_witch_ravens_eye` changes what the Deep Wood Shrine's inner grove can produce; player discovers this by returning to known spots after NPC development, not by being told | New |
 | 28.5 | [x] | Always-Something-Happens: Visits and Linger | Fully-developed NPCs and fully-restored buildings remain attendable via a lighter interaction mode. Archetype-spec NPCs (Bog Keeper, Herald, etc.) have a 20% chance to gift a thematic item (mushrooms, beeswax, honeycomb, etc. as common; POI-exclusive rarities as the rare option); universal-spec NPCs give flavor-only visits. Buildings deliver a free ambient flavor line at no daylight cost. Exchange flavor text is always paired to the actual item gifted — no mismatch possible | New |
 | 29 | [x] | Settlement Maintenance + Ongoing Demand | Restored buildings and specialized NPCs accumulate `driftProgress` each rest; two drift states (warning / cold) with capability reduction at threshold; direct attend-with-material resets drift immediately; chest stocks passively consumed at rest to cover maintenance silently — maintenance only, not development progress | Complete |
-| 30 | [ ] | Settlement Growth — New Arrivals | Two or three WorldState flag combinations, checkable via `WorldContext`, trigger a new-arrival event: a Wandering Thing variant that doesn't despawn but instead becomes a persistent NPC attendable; growth isn't announced, it's noticed; each trigger combination is authored in data and checked at rest-transition | New |
+| 30 | [x] | Settlement Growth — New Arrivals | Two or three WorldState flag combinations, checkable via `WorldContext`, trigger a new-arrival event: a Wandering Thing variant that doesn't despawn but instead becomes a persistent NPC attendable; growth isn't announced, it's noticed; each trigger combination is authored in data and checked at rest-transition | New |
 
 ---
 
@@ -604,7 +604,7 @@ The player can tend an entity directly (hold E on the building or NPC while carr
 
 ---
 
-### Iteration 30 — Settlement Growth: New Arrivals
+### Iteration 30 — Settlement Growth: New Arrivals ✓
 
 The settlement currently generates its full population at world-gen time and never changes. Development changes the *character* of existing entities but doesn't grow the settlement itself. This iteration introduces the first form of organic growth: new NPCs who arrive because the settlement has become the kind of place people come to.
 
