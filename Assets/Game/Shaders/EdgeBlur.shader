@@ -1,5 +1,13 @@
 Shader "Mossmark/EdgeBlur"
 {
+    Properties
+    {
+        _FalloffStart  ("Falloff Start",         Range(0, 1)) = 0.4
+        _FalloffEnd    ("Falloff End",            Range(0, 1)) = 0.9
+        _MaxBlurRadius ("Max Blur Radius (px)",   Float)       = 12
+        _SampleCount   ("Sample Count",           Float)       = 24
+    }
+
     SubShader
     {
         Tags { "RenderType" = "Opaque" "RenderPipeline" = "UniversalPipeline" }
@@ -19,10 +27,12 @@ Shader "Mossmark/EdgeBlur"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
 
-            float _FalloffStart;
-            float _FalloffEnd;
-            float _MaxBlurRadius;
-            float _SampleCount;
+            CBUFFER_START(UnityPerMaterial)
+                float _FalloffStart;
+                float _FalloffEnd;
+                float _MaxBlurRadius;
+                float _SampleCount;
+            CBUFFER_END
 
             // Golden angle (radians) — distributes samples evenly across the disk
             static const float GOLDEN_ANGLE = 2.39996323;
@@ -41,12 +51,12 @@ Shader "Mossmark/EdgeBlur"
                 if (blurFactor < 0.001)
                     return SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv);
 
-                // Max sample offset in UV space, sized per pixel
-                float2 maxRadius = _MaxBlurRadius * blurFactor * _BlitTexture_TexelSize.xy;
+                // _ScreenParams.xy = (width, height) — always set by Unity, unlike _BlitTexture_TexelSize
+                float2 maxRadius = _MaxBlurRadius * blurFactor / _ScreenParams.xy;
 
                 half4 color = 0;
                 int count = (int)_SampleCount;
-                for (int i = 0; i < count; i++)
+                [loop] for (int i = 0; i < count; i++)
                 {
                     float fi = (float)i;
                     float angle = fi * GOLDEN_ANGLE;
