@@ -1,0 +1,533 @@
+fileFormatVersion: 2
+guid: 43ef3f5f8e03367479d169f85e15a070
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -6193399473105770316
+    second: lucid-origin_Gritty_medieval_high-contrast_woodcut_of_a_Druid_in_extremely_muted_earthy_tones-iso_0
+  - first:
+      213: 7393965126844887068
+    second: lucid-origin_Gritty_medieval_high-contrast_woodcut_of_a_Druid_in_extremely_muted_earthy_tones-iso_1
+  - first:
+      213: -5281210988527559268
+    second: lucid-origin_Gritty_medieval_high-contrast_woodcut_of_a_Druid_in_extremely_muted_earthy_tones-iso_2
+  - first:
+      213: 7888422510392316087
+    second: lucid-origin_Gritty_medieval_high-contrast_woodcut_of_a_Druid_in_extremely_muted_earthy_tones-iso_3
+  - first:
+      213: 4219602521741678517
+    second: lucid-origin_Gritty_medieval_high-contrast_woodcut_of_a_Druid_in_extremely_muted_earthy_tones-iso_4
+  - first:
+      213: -3639037890335292191
+    second: lucid-origin_Gritty_medieval_high-contrast_woodcut_of_a_Druid_in_extremely_muted_earthy_tones-iso_5
+  - first:
+      213: 5653845231640000778
+    second: lucid-origin_Gritty_medieval_high-contrast_woodcut_of_a_Druid_in_extremely_muted_earthy_tones-iso_6
+  - first:
+      213: -1707740181970544447
+    second: lucid-origin_Gritty_medieval_high-contrast_woodcut_of_a_Druid_in_extremely_muted_earthy_tones-iso_7
+  - first:
+      213: -6587447062458341240
+    second: lucid-origin_Gritty_medieval_high-contrast_woodcut_of_a_Druid_in_extremely_muted_earthy_tones-iso_8
+  - first:
+      213: -1665696414511638227
+    second: lucid-origin_Gritty_medieval_high-contrast_woodcut_of_a_Druid_in_extremely_muted_earthy_tones-iso_9
+  - first:
+      213: 2738607821566270400
+    second: lucid-origin_Gritty_medieval_high-contrast_woodcut_of_a_Druid_in_extremely_muted_earthy_tones-iso_10
+  - first:
+      213: 2650473415336612285
+    second: lucid-origin_Gritty_medieval_high-contrast_woodcut_of_a_Druid_in_extremely_muted_earthy_tones-iso_11
+  - first:
+      213: -5458966538560939239
+    second: lucid-origin_Gritty_medieval_high-contrast_woodcut_of_a_Druid_in_extremely_muted_earthy_tones-iso_12
+  - first:
+      213: -3380303043926908600
+    second: lucid-origin_Gritty_medieval_high-contrast_woodcut_of_a_Druid_in_extremely_muted_earthy_tones-iso_13
+  - first:
+      213: 5318893493718169005
+    second: lucid-origin_Gritty_medieval_high-contrast_woodcut_of_a_Druid_in_extremely_muted_earthy_tones-iso_14
+  - first:
+      213: 3291057406847839543
+    second: lucid-origin_Gritty_medieval_high-contrast_woodcut_of_a_Druid_in_extremely_muted_earthy_tones-iso_15
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 1
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 7
+  spritePivot: {x: 0.5, y: 0}
+  spritePixelsToUnits: 400
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: lucid-origin_Gritty_medieval_high-contrast_woodcut_of_a_Druid_in_extremely_muted_earthy_tones-iso_0
+      rect:
+        serializedVersion: 2
+        x: 4
+        y: 0
+        width: 288
+        height: 545
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4b860754eff9c0aa0800000000000000
+      internalID: -6193399473105770316
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lucid-origin_Gritty_medieval_high-contrast_woodcut_of_a_Druid_in_extremely_muted_earthy_tones-iso_1
+      rect:
+        serializedVersion: 2
+        x: 122
+        y: 529
+        width: 17
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c103733ab14ac9660800000000000000
+      internalID: 7393965126844887068
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lucid-origin_Gritty_medieval_high-contrast_woodcut_of_a_Druid_in_extremely_muted_earthy_tones-iso_2
+      rect:
+        serializedVersion: 2
+        x: 157
+        y: 537
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c9ddce4469e55b6b0800000000000000
+      internalID: -5281210988527559268
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lucid-origin_Gritty_medieval_high-contrast_woodcut_of_a_Druid_in_extremely_muted_earthy_tones-iso_3
+      rect:
+        serializedVersion: 2
+        x: 162
+        y: 531
+        width: 11
+        height: 9
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7b011228a7e497d60800000000000000
+      internalID: 7888422510392316087
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lucid-origin_Gritty_medieval_high-contrast_woodcut_of_a_Druid_in_extremely_muted_earthy_tones-iso_4
+      rect:
+        serializedVersion: 2
+        x: 230
+        y: 529
+        width: 21
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5b751c9132a0f8a30800000000000000
+      internalID: 4219602521741678517
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lucid-origin_Gritty_medieval_high-contrast_woodcut_of_a_Druid_in_extremely_muted_earthy_tones-iso_5
+      rect:
+        serializedVersion: 2
+        x: 273
+        y: 520
+        width: 19
+        height: 23
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1e4c066b15a8f7dc0800000000000000
+      internalID: -3639037890335292191
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lucid-origin_Gritty_medieval_high-contrast_woodcut_of_a_Druid_in_extremely_muted_earthy_tones-iso_6
+      rect:
+        serializedVersion: 2
+        x: 282
+        y: 362
+        width: 10
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a0930f6684e767e40800000000000000
+      internalID: 5653845231640000778
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lucid-origin_Gritty_medieval_high-contrast_woodcut_of_a_Druid_in_extremely_muted_earthy_tones-iso_7
+      rect:
+        serializedVersion: 2
+        x: 285
+        y: 332
+        width: 7
+        height: 19
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1c81cfc3a53ec48e0800000000000000
+      internalID: -1707740181970544447
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lucid-origin_Gritty_medieval_high-contrast_woodcut_of_a_Druid_in_extremely_muted_earthy_tones-iso_8
+      rect:
+        serializedVersion: 2
+        x: 281
+        y: 306
+        width: 8
+        height: 13
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 888ea796ccfa494a0800000000000000
+      internalID: -6587447062458341240
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lucid-origin_Gritty_medieval_high-contrast_woodcut_of_a_Druid_in_extremely_muted_earthy_tones-iso_9
+      rect:
+        serializedVersion: 2
+        x: 281
+        y: 142
+        width: 7
+        height: 11
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d29546dafe142e8e0800000000000000
+      internalID: -1665696414511638227
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lucid-origin_Gritty_medieval_high-contrast_woodcut_of_a_Druid_in_extremely_muted_earthy_tones-iso_10
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 51
+        width: 5
+        height: 6
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0cb509fcd4d710620800000000000000
+      internalID: 2738607821566270400
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lucid-origin_Gritty_medieval_high-contrast_woodcut_of_a_Druid_in_extremely_muted_earthy_tones-iso_11
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 21
+        width: 13
+        height: 18
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: db151c7478f58c420800000000000000
+      internalID: 2650473415336612285
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lucid-origin_Gritty_medieval_high-contrast_woodcut_of_a_Druid_in_extremely_muted_earthy_tones-iso_12
+      rect:
+        serializedVersion: 2
+        x: 260
+        y: 4
+        width: 25
+        height: 27
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 91bd4542bdadd34b0800000000000000
+      internalID: -5458966538560939239
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lucid-origin_Gritty_medieval_high-contrast_woodcut_of_a_Druid_in_extremely_muted_earthy_tones-iso_13
+      rect:
+        serializedVersion: 2
+        x: 36
+        y: 0
+        width: 26
+        height: 19
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 841a0998a40c611d0800000000000000
+      internalID: -3380303043926908600
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lucid-origin_Gritty_medieval_high-contrast_woodcut_of_a_Druid_in_extremely_muted_earthy_tones-iso_14
+      rect:
+        serializedVersion: 2
+        x: 161
+        y: 0
+        width: 12
+        height: 7
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: da5353ba37180d940800000000000000
+      internalID: 5318893493718169005
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lucid-origin_Gritty_medieval_high-contrast_woodcut_of_a_Druid_in_extremely_muted_earthy_tones-iso_15
+      rect:
+        serializedVersion: 2
+        x: 248
+        y: 0
+        width: 13
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 73d6596564f2cad20800000000000000
+      internalID: 3291057406847839543
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 1537655665
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      lucid-origin_Gritty_medieval_high-contrast_woodcut_of_a_Druid_in_extremely_muted_earthy_tones-iso_0: -6193399473105770316
+      lucid-origin_Gritty_medieval_high-contrast_woodcut_of_a_Druid_in_extremely_muted_earthy_tones-iso_1: 7393965126844887068
+      lucid-origin_Gritty_medieval_high-contrast_woodcut_of_a_Druid_in_extremely_muted_earthy_tones-iso_10: 2738607821566270400
+      lucid-origin_Gritty_medieval_high-contrast_woodcut_of_a_Druid_in_extremely_muted_earthy_tones-iso_11: 2650473415336612285
+      lucid-origin_Gritty_medieval_high-contrast_woodcut_of_a_Druid_in_extremely_muted_earthy_tones-iso_12: -5458966538560939239
+      lucid-origin_Gritty_medieval_high-contrast_woodcut_of_a_Druid_in_extremely_muted_earthy_tones-iso_13: -3380303043926908600
+      lucid-origin_Gritty_medieval_high-contrast_woodcut_of_a_Druid_in_extremely_muted_earthy_tones-iso_14: 5318893493718169005
+      lucid-origin_Gritty_medieval_high-contrast_woodcut_of_a_Druid_in_extremely_muted_earthy_tones-iso_15: 3291057406847839543
+      lucid-origin_Gritty_medieval_high-contrast_woodcut_of_a_Druid_in_extremely_muted_earthy_tones-iso_2: -5281210988527559268
+      lucid-origin_Gritty_medieval_high-contrast_woodcut_of_a_Druid_in_extremely_muted_earthy_tones-iso_3: 7888422510392316087
+      lucid-origin_Gritty_medieval_high-contrast_woodcut_of_a_Druid_in_extremely_muted_earthy_tones-iso_4: 4219602521741678517
+      lucid-origin_Gritty_medieval_high-contrast_woodcut_of_a_Druid_in_extremely_muted_earthy_tones-iso_5: -3639037890335292191
+      lucid-origin_Gritty_medieval_high-contrast_woodcut_of_a_Druid_in_extremely_muted_earthy_tones-iso_6: 5653845231640000778
+      lucid-origin_Gritty_medieval_high-contrast_woodcut_of_a_Druid_in_extremely_muted_earthy_tones-iso_7: -1707740181970544447
+      lucid-origin_Gritty_medieval_high-contrast_woodcut_of_a_Druid_in_extremely_muted_earthy_tones-iso_8: -6587447062458341240
+      lucid-origin_Gritty_medieval_high-contrast_woodcut_of_a_Druid_in_extremely_muted_earthy_tones-iso_9: -1665696414511638227
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
