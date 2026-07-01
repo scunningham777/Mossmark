@@ -19,9 +19,13 @@ namespace Mossmark.Day
         // DayCycleManager.IsTransitioning, so this attendable has no additional gate.
         public bool CanAttend() => true;
 
+        public string GetShortName() => "Bedroll";
         public string GetOverlayDescription() => "Bedroll";
 
         public string GetOverlayInteractionLine() => "Hold E to rest";
+
+        public System.Collections.Generic.IReadOnlyList<string> GetAppliedUpgrades() =>
+            System.Array.Empty<string>();
 
         public void OnAttentionComplete()
         {

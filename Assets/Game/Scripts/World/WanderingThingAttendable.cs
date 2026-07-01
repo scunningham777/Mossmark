@@ -66,9 +66,13 @@ namespace Mossmark.World
 
         public bool CanAttend() => true;
 
+        public string GetShortName() => def != null ? def.displayName : "Unknown";
         public string GetOverlayDescription() => def.approachDescription;
 
         public string GetOverlayInteractionLine() => $"Hold E to {def.attendVerb}";
+
+        public System.Collections.Generic.IReadOnlyList<string> GetAppliedUpgrades() =>
+            System.Array.Empty<string>();
 
         public void OnAttentionComplete()
         {

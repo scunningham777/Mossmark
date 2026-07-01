@@ -25,9 +25,9 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _FalloffEnd: 0.449
-    - _FalloffStart: 0
-    - _MaxBlurRadius: 26.5
+    - _FalloffEnd: 0.901
+    - _FalloffStart: 0.409
+    - _MaxBlurRadius: 5.3
     - _SampleCount: 24
     m_Colors: []
   m_BuildTextureStacks: []

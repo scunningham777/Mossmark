@@ -39,6 +39,11 @@ namespace Mossmark.World
         private float tendedness = 0.5f;
         private bool attendedThisDay = false;
 
+        // Iteration 31: read-only access for external passive-progress sources
+        // (NpcAttendable's Bog Keeper pilot) — the same continuous value the
+        // overlay/yield logic already uses internally.
+        public float Tendedness => tendedness;
+
         // Knowledge yield entries — set via Initialize(), not serialized on the base class
         // (each subclass's Initialize path copies from its definition source).
         private KnowledgeYieldEntry[] knowledgeYields;
@@ -79,9 +84,16 @@ namespace Mossmark.World
         public bool RequiresDaylight => true;
         public bool ContinueAttending => continueAttending;
 
+        // Fired on every productive OnAttentionComplete() — wilderness spots always make
+        // progress, so this fires every completed tick.
+        public event System.Action OnProgressMade;
+
         public abstract bool CanAttend();
+        public virtual string GetShortName() => displayName;
         public abstract string GetOverlayDescription();
         public abstract string GetOverlayInteractionLine();
+        public virtual System.Collections.Generic.IReadOnlyList<string> GetAppliedUpgrades() =>
+            System.Array.Empty<string>();
 
         public void OnAttentionComplete()
         {
@@ -91,6 +103,7 @@ namespace Mossmark.World
             ItemYieldRoller.Roll(displayName, foundVerb, commonYields, rareYield,
                 GetEffectiveRareChance(), tendedness, BuildKnowledgeInjectedYields());
             RollTickInterval();
+            OnProgressMade?.Invoke();
         }
 
         // Checks each knowledge entry against WorldState flags and collects items to inject

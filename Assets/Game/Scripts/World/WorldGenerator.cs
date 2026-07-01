@@ -36,12 +36,22 @@ namespace Mossmark.World
 
         public static IReadOnlyList<PlaceArchetype> SelectedArchetypes { get; private set; } = Array.Empty<PlaceArchetype>();
 
+        // Iteration 31 pilot: the one wilderness spot spawned per selected archetype,
+        // keyed by archetypeId — lets an archetype's NPC look up its "own" spot's
+        // tendedness as a passive-progress signal (e.g. Bog Keeper / Fen Bog).
+        private static readonly Dictionary<string, GenericWildernessSpotAttendable> archetypeSpots = new();
+
+        public static GenericWildernessSpotAttendable GetArchetypeSpot(string archetypeId) =>
+            archetypeSpots.TryGetValue(archetypeId, out var spot) ? spot : null;
+
         // Tracks every position placed so far; used by FindValidPosition to enforce
         // the minimum separation between all wilderness objects.
         private readonly List<Vector2> placedPositions = new();
 
         private void Awake()
         {
+            archetypeSpots.Clear();
+
             if (regionData == null || regionData.ArchetypePool == null || regionData.ArchetypePool.Length == 0)
             {
                 Debug.LogWarning("WorldGenerator has no region data / archetype pool assigned.", this);
@@ -100,13 +110,16 @@ namespace Mossmark.World
             go.AddComponent<TriangleSpriteGenerator>().Initialize(archetype.SpotColor);
             go.AddComponent<CircleCollider2D>().radius = colliderRadius;
 
-            go.AddComponent<GenericWildernessSpotAttendable>().Initialize(
+            var spot = go.AddComponent<GenericWildernessSpotAttendable>();
+            spot.Initialize(
                 archetype.SpotDisplayName, archetype.SpotVerb,
                 archetype.CommonYields, archetype.RareYield, archetype.RareDropChance,
                 archetype.ArchetypeSpotMinTickInterval, archetype.ArchetypeSpotMaxTickInterval,
                 archetype.SpotKnowledgeYields);
+            archetypeSpots[archetype.ArchetypeId] = spot;
 
             go.AddComponent<AttendableZone>();
+            go.AddComponent<EntityFeedback>();
 
             go.SetActive(true);
         }
@@ -141,6 +154,7 @@ namespace Mossmark.World
                 archetype.BuildingMaintenanceCost);
 
             go.AddComponent<AttendableZone>();
+            go.AddComponent<EntityFeedback>();
 
             go.SetActive(true);
         }
@@ -170,6 +184,7 @@ namespace Mossmark.World
                 archetype.ArchetypeSpotMinTickInterval, archetype.ArchetypeSpotMaxTickInterval, gate);
 
             go.AddComponent<AttendableZone>();
+            go.AddComponent<EntityFeedback>();
 
             go.SetActive(true);
         }
@@ -221,6 +236,7 @@ namespace Mossmark.World
             }
 
             go.AddComponent<AttendableZone>();
+            go.AddComponent<EntityFeedback>();
 
             go.SetActive(true);
         }

@@ -20,6 +20,9 @@ namespace Mossmark.World
         [SerializeField, Min(1)] private int restsToHarvest = 1;
         [SerializeField, Min(1)] private int maxConcurrentMarked = 2;
 
+        // Fired when a mark or harvest succeeds — drives EntityFeedback's progress pulse.
+        public event System.Action OnProgressMade;
+
         private SpotState state = SpotState.Unmarked;
         private int restsRemaining;
         private SpriteRenderer spriteRenderer;
@@ -56,7 +59,10 @@ namespace Mossmark.World
             _ => false
         };
 
+        public string GetShortName() => displayName;
         public string GetOverlayDescription() => displayName;
+
+        public IReadOnlyList<string> GetAppliedUpgrades() => System.Array.Empty<string>();
 
         public string GetOverlayInteractionLine() => state switch
         {
@@ -119,6 +125,7 @@ namespace Mossmark.World
             IncrementMarkedCount();
             UpdateVisual();
             Debug.Log($"{displayName}: marked, ready in {restsRemaining} rest{(restsRemaining == 1 ? "" : "s")}.", this);
+            OnProgressMade?.Invoke();
         }
 
         private void Harvest()
@@ -141,6 +148,7 @@ namespace Mossmark.World
             DecrementMarkedCount();
             state = SpotState.Unmarked;
             UpdateVisual();
+            OnProgressMade?.Invoke();
         }
 
         // Inline weighted pick — same logic as ItemYieldRoller.PickWeighted but kept here

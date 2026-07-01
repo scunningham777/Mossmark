@@ -294,7 +294,7 @@ Transform:
   m_GameObject: {fileID: 278561120}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: -32, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -628,7 +628,7 @@ Transform:
   m_GameObject: {fileID: 519420028}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -10}
+  m_LocalPosition: {x: -32, y: 0, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -747,6 +747,7 @@ GameObject:
   - component: {fileID: 900100004}
   - component: {fileID: 900100003}
   - component: {fileID: 900100002}
+  - component: {fileID: 900100008}
   m_Layer: 0
   m_Name: Old Cairn
   m_TagString: Untagged
@@ -925,6 +926,18 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &900100008
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 900100001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ee97101fdb5f7264f8432e54876e78e8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Visuals.EntityFeedback
 --- !u!1 &900200001
 GameObject:
   m_ObjectHideFlags: 0
@@ -1109,6 +1122,7 @@ GameObject:
   - component: {fileID: 900300004}
   - component: {fileID: 900300003}
   - component: {fileID: 900300002}
+  - component: {fileID: 900300008}
   m_Layer: 0
   m_Name: Watcher's Post
   m_TagString: Untagged
@@ -1285,6 +1299,18 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &900300008
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 900300001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ee97101fdb5f7264f8432e54876e78e8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Visuals.EntityFeedback
 --- !u!1 &900500001
 GameObject:
   m_ObjectHideFlags: 0
@@ -1299,6 +1325,7 @@ GameObject:
   - component: {fileID: 900500004}
   - component: {fileID: 900500003}
   - component: {fileID: 900500002}
+  - component: {fileID: 900500008}
   m_Layer: 0
   m_Name: Wanderer
   m_TagString: Untagged
@@ -1458,6 +1485,18 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &900500008
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 900500001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ee97101fdb5f7264f8432e54876e78e8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Visuals.EntityFeedback
 --- !u!1 &900600001
 GameObject:
   m_ObjectHideFlags: 0
@@ -1939,6 +1978,7 @@ GameObject:
   - component: {fileID: 901200004}
   - component: {fileID: 901200003}
   - component: {fileID: 901200002}
+  - component: {fileID: 901200008}
   m_Layer: 0
   m_Name: Roughhand
   m_TagString: Untagged
@@ -2098,6 +2138,18 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &901200008
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 901200001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ee97101fdb5f7264f8432e54876e78e8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Visuals.EntityFeedback
 --- !u!1 &901300001
 GameObject:
   m_ObjectHideFlags: 0

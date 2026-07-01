@@ -3,7 +3,7 @@ using UnityEngine;
 namespace Mossmark.Visuals
 {
     [RequireComponent(typeof(SpriteRenderer))]
-    public class TriangleSpriteGenerator : MonoBehaviour
+    public class CircleSpriteGenerator : MonoBehaviour
     {
         [SerializeField] private Color _color = new Color(0.55f, 0.55f, 0.55f);
         [SerializeField] private int _textureSize = 32;
@@ -23,16 +23,17 @@ namespace Mossmark.Visuals
             };
 
             var pixels = new Color[textureSize * textureSize];
-            int half = textureSize / 2;
+            float center = (textureSize - 1) * 0.5f;
+            float radiusSq = center * center;
 
             for (int y = 0; y < textureSize; y++)
             {
-                float t = (float)y / (textureSize - 1);
-                float leftEdge = t * half;
-                float rightEdge = (textureSize - 1) - t * half;
-
                 for (int x = 0; x < textureSize; x++)
-                    pixels[y * textureSize + x] = (x >= leftEdge && x <= rightEdge) ? color : Color.clear;
+                {
+                    float dx = x - center;
+                    float dy = y - center;
+                    pixels[y * textureSize + x] = dx * dx + dy * dy <= radiusSq ? color : Color.clear;
+                }
             }
 
             tex.SetPixels(pixels);

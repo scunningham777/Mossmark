@@ -98,6 +98,7 @@ namespace Mossmark.World
                 trigger.npcMinTickInterval, trigger.npcMaxTickInterval);
 
             npcGo.AddComponent<AttendableZone>();
+            npcGo.AddComponent<EntityFeedback>();
             npcGo.SetActive(true);
 
             WorldState.SetFlag("settlement_grew", true);

@@ -39,7 +39,11 @@ namespace Mossmark.Development
 
         public bool CanAttend() => CanMakeProgress();
 
+        public string GetShortName() => displayName;
         public string GetOverlayDescription() => displayName;
+
+        public System.Collections.Generic.IReadOnlyList<string> GetAppliedUpgrades() =>
+            GetAppliedUpgradeNames();
 
         public string GetOverlayInteractionLine() => CurrentStageIndex >= 0
             ? completedDescription

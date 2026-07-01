@@ -37,9 +37,13 @@ namespace Mossmark.Inventory
 
         public bool CanAttend() => true;
 
+        public string GetShortName() => "Settlement Chest";
         public string GetOverlayDescription() => "Settlement Chest";
 
         public string GetOverlayInteractionLine() => "Hold E to open the chest";
+
+        public System.Collections.Generic.IReadOnlyList<string> GetAppliedUpgrades() =>
+            System.Array.Empty<string>();
 
         public void OnAttentionComplete()
         {

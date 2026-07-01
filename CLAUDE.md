@@ -4,9 +4,9 @@
 
 A top-down 2D RPG focused on **world and town development** rather than player character progression. The player moves through the world and holds a single **Attention** action on whatever is nearby — what happens is a property of the thing being attended to, not a menu choice. Sustained attention develops NPCs, buildings, and the town over time, revealing new specializations and access rather than presenting an upgrade menu. Tech is per-town and must be manually transferred between towns in later phases.
 
-See [IDEAS.md](IDEAS.md) for the high-level vision and [PROTOTYPE2.md](PROTOTYPE2.md) for the current prototype design and iteration roadmap.
+See [IDEAS.md](IDEAS.md) for the high-level vision and [FEATURES.md](FEATURES.md) for the current feature design and iteration roadmap.
 
-> **Note:** This is "Prototype 2" — a fresh Unity project started from scratch (see PROTOTYPE2.md's "Why a second prototype"). It is informed by Prototype 1 but does not carry over P1's architecture; P1 systems referenced in PROTOTYPE2.md (e.g. `PlayerMovement`, `DayCycleManager`, `Entity`/`UpgradePool`) are reference material from the old project, not code that exists here yet.
+> **Historical Note:** This is "Prototype 2" — a fresh Unity project started from scratch (see PROTOTYPE2.md's "Why a second prototype"). It is informed by Prototype 1 but does not carry over P1's architecture; P1 systems referenced in PROTOTYPE2.md (e.g. `PlayerMovement`, `DayCycleManager`, `Entity`/`UpgradePool`) are reference material from the old project, not code that exists here yet. (Iterations beyond P2's "30" are currently sourced in FEATURES.md)
 
 ---
 
@@ -82,7 +82,7 @@ Default to no comments. Only add a comment when the *why* is non-obvious (a hidd
 
 ## Active Scenes
 
-- **`Assets/Game/Scenes/Overworld.unity`** — the active prototype scene; all new work targets this scene
+- **`Assets/Game/Scenes/Greybox.unity`** — the active prototype scene; all new work targets this scene
 - **`Assets/Settings/Scenes/URP2DSceneTemplate.unity`** — Unity's URP 2D scene template (used when creating new scenes via the Editor); not part of gameplay
 
 ---
@@ -118,12 +118,14 @@ Default to no comments. Only add a comment when the *why* is non-obvious (a hidd
 | Wandering Thing Definition (G4+G5) | Complete | `WanderingThingDefinition`, `WorldStateOddsModifier`, `WanderingThingSpawner` pool, `traveler.asset` |
 | Code Quality Pass (G7+G8+G9) | Complete | `WildernessYieldAttendable` base class, `LandmarkAttendable`, `TendedSpotAttendable.harvestYields[]` |
 | CSV / Data Pipeline | Complete | `Assets/Editor/ExportGameData.cs`, `Assets/Editor/ImportGameData.cs` |
-| Numeric Tuning Pass (Iteration 26) | Complete | `place_archetypes.csv`, `wilderness_spots.csv`, `wandering_things.csv`, `Overworld.unity` NPC tick fields |
+| Numeric Tuning Pass (Iteration 26) | Complete | `place_archetypes.csv`, `wilderness_spots.csv`, `wandering_things.csv`, `Greybox.unity` NPC tick fields |
 | Always-Something-Happens (Iteration 28.5) | Complete | `NpcAttendable` visit mechanic, `BuildingAttendable` flavor linger, `PlaceArchetype` exchange/restored-flavor data |
 | Settlement Maintenance (Iteration 29) | Complete | `IMaintenanceConsumer`, `MaintenanceManager`, `DevelopableEntity.DriftProgress`, `BuildingAttendable`/`NpcAttendable` cold state, `PlaceArchetype` maintenance fields |
 | Settlement Growth: New Arrivals (Iteration 30) | Complete | `ArrivalCondition`, `ArrivalAttendable`, `ArrivalSpawner`, `NpcAttendable.Initialize()`, `settlement_grew` WorldState flag |
+| Passive Drift Pilot (Iteration 31) | Complete | `NpcAttendable.OnDayAdvanced()`, `WorldGenerator.GetArchetypeSpot()`, `WildernessYieldAttendable.Tendedness` |
+| State-Change Feedback Pass (Iteration 32) | Complete | `EntityFeedback`, `CircleSpriteGenerator`, `DevelopableEntity.OnProgressMade`, `WildernessYieldAttendable.OnProgressMade`, `TendedSpotAttendable.OnProgressMade`, `NpcAttendable.OnPassiveDriftAccrued`, `PlayerController.HandleAttentionRock` |
 
-Full iteration plan is in [PROTOTYPE2.md](PROTOTYPE2.md). Update this table as each iteration lands.
+Full iteration plan is in [FEATURES.md](FEATURES.md). Update this table as each iteration lands.
 
 ---
 
@@ -156,4 +158,7 @@ Active implementation constraints carried forward from prior iterations. Full it
 - **`ArrivalSpawner` (`Mossmark.World`, Iteration 30)**: holds `ArrivalTrigger[]` (each entry a `[Serializable]` inner class with condition, color, name, NPC params). Subscribes to `DayCycleManager.DayAdvanced`. Per-trigger `[NonSerialized] bool fired` and `[NonSerialized] ArrivalAttendable spawnedArrival` prevent duplicate spawning — `fired` is set on promotion and never clears (one arrival per trigger per session). `OnArrivalPromoted()` creates the new `NpcAttendable` via inactive-GO pattern, calls `NpcAttendable.Initialize()`, sets `WorldState.SetFlag("settlement_grew", true)`, posts `"The settlement grows."`, then `Destroy(arrivalGo)` — safe because Unity queues destruction until end-of-frame, so `AttentionManager` reads `ContinueAttending => false` cleanly first.
 - **`NpcAttendable.Initialize()` (Iteration 30)** is a new public method (`genericName`, `progressCost = 8`, `minTickInterval = 1.5f`, `maxTickInterval = 2f`) — the first time `NpcAttendable` is constructed at runtime rather than hand-placed in the scene. Sets private `[SerializeField]` fields before the inactive-GO `Awake()` fires.
 - **`ArrivalSpawner.FindSpawnPosition()` (Iteration 30)** picks a random side of `WorldLayoutGenerator.TownBounds` and places the arrival at a random distance (`minDistFromTown`–`maxDistFromTown`, defaults 2–6) outside that edge — arrivals spawn near the town edge, not the deep wilderness. Validates within `WildernessBounds` and not inside `TownBounds`; falls back to due-south of town center after 50 attempts.
-- **Two `ArrivalTrigger` entries in `Overworld.unity` (Iteration 30)**: (1) "A Stranger" — flags `["bog_keeper_iron_sense"]`, `minimumDevelopedEntities: 3`; (2) "Another Traveler" — flags `["herald_trail_markers", "hedge_witch_wound_lore"]`, `minimumDevelopedEntities: 4`. Both `warnessThreshold: 3`, `npcProgressCost: 8`, tick intervals 1.5–2s.
+- **Two `ArrivalTrigger` entries in `Greybox.unity` (Iteration 30)**: (1) "A Stranger" — flags `["bog_keeper_iron_sense"]`, `minimumDevelopedEntities: 3`; (2) "Another Traveler" — flags `["herald_trail_markers", "hedge_witch_wound_lore"]`, `minimumDevelopedEntities: 4`. Both `warnessThreshold: 3`, `npcProgressCost: 8`, tick intervals 1.5–2s.
+- **`EntityFeedback` (Iteration 32)** (`Mossmark.Visuals`) is added to every entity that can produce signal. Three signals: (1) progress pulse — small scale-up-down animation (peak 1.3×, 0.18s) on `DevelopableEntity.OnProgressMade` / `WildernessYieldAttendable.OnProgressMade` / `TendedSpotAttendable.OnProgressMade`; (2) stage-cross shape swap — sprite transitions triangle→circle (one-way; stays circle for all further stage crosses) plus a larger pop (peak 1.65×, 0.35s) on `DevelopableEntity.OnDeveloped` — the circle is the persistent "this entity has developed" indicator, the pop is the per-cross moment signal; (3) passive drift halo — white circle child GO (scale 1.9×, alpha 0.35) shown on `NpcAttendable.OnPassiveDriftAccrued`, hidden on next productive progress tick. `suppressNextPulse` flag prevents the smaller pulse from firing alongside the pop on stage-cross ticks (since `OnDeveloped` fires before `OnProgressMade` in the same sync chain). `EntityFeedback` is added in all `WorldGenerator` spawn paths, `ArrivalSpawner.OnArrivalPromoted()`, and hand-placed to Old Cairn, Watcher's Post, Wanderer, Roughhand in Greybox.unity.
+- **`CircleSpriteGenerator` (Iteration 32)** follows the same pattern as `TriangleSpriteGenerator`: `Initialize(color)` for spawn-time wiring, `static CreateSprite(color, textureSize)` for on-demand generation (used by `EntityFeedback` for shape swaps and the halo child). Both generators now expose their static factory so visuals can be re-created at runtime without requiring a full component add/remove cycle.
+- **Player attention rock (Iteration 32)** (`Mossmark.Player`): `PlayerController.HandleAttentionRock()` polls `AttentionManager.State` each `Update()`. While `Attending`, rocks Z rotation ±`rockMaxDegrees` (5°) via sine wave at `rockFrequency` (1.5 Hz). Captures pre-attend rotation on the first attending frame; restores it via `Quaternion.RotateTowards` at `rockResetSpeed` (180°/s) when attention ends or is cancelled.

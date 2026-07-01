@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Mossmark.Attention;
+using Mossmark.Day;
 using Mossmark.Inventory;
 using Mossmark.Visuals;
 using Mossmark.World;
@@ -62,6 +63,10 @@ namespace Mossmark.Development
         private NpcExchangePool drawnExchangePool;
         private bool lastAttentionWasVisit;
         private bool lastAttentionWasMaintenance;
+
+        // Iteration 32: fired in OnDayAdvanced when passive progress is added but the
+        // stage doesn't cross that rest — signals EntityFeedback to show the drift halo.
+        public event System.Action OnPassiveDriftAccrued;
 
         // Flavor text for universal specs — stable enough to live in code.
         private static readonly Dictionary<string, (string[] visitFlavors, string[] exchangeFlavors)>
@@ -192,6 +197,45 @@ namespace Mossmark.Development
             OnDeveloped += HandleDeveloped;
         }
 
+        private void Start()
+        {
+            if (DayCycleManager.Instance != null)
+                DayCycleManager.Instance.DayAdvanced += OnDayAdvanced;
+        }
+
+        private void OnDestroy()
+        {
+            if (DayCycleManager.Instance != null)
+                DayCycleManager.Instance.DayAdvanced -= OnDayAdvanced;
+        }
+
+        // Iteration 31 pilot: the Bog Keeper's Drainage Channels stage gains passive
+        // progress each rest, scaled by the Fen Bog spot's own tendedness — a well-tended
+        // bog drains itself a little further on its own. Hardcoded to this one stage per
+        // FEATURES.md's pilot scope; only worth generalizing into shared schema once the
+        // feeling is validated in play.
+        private void OnDayAdvanced()
+        {
+            if (drawnSpecializationId != "bog_tender") return;
+            if (GetNextStage()?.Id != "bog_keeper_drainage") return;
+
+            var fenBog = WorldGenerator.GetArchetypeSpot("bog");
+            if (fenBog == null) return;
+
+            int passive = fenBog.Tendedness > 0.7f ? 2 : fenBog.Tendedness >= 0.3f ? 1 : 0;
+            if (passive <= 0) return;
+
+            AddProgress(passive);
+            Debug.Log($"{specializedName}: Drainage Channels edge forward on their own " +
+                $"(+{passive} passive progress, Fen Bog tendedness {fenBog.Tendedness:F2}).", this);
+
+            // If the stage crossed, OnDeveloped fires (shape swap is the signal).
+            // Otherwise, fire OnPassiveDriftAccrued so EntityFeedback can show the halo.
+            bool stageApplied = TryApplyStage();
+            if (!stageApplied)
+                OnPassiveDriftAccrued?.Invoke();
+        }
+
         public bool CanAttend()
         {
             if (drawnSpecializationId == null) return true;
@@ -209,8 +253,12 @@ namespace Mossmark.Development
         }
 
         // Drift suffix shows in the overlay name when warning/cold.
+        public string GetShortName() => DisplayName;
+
         public string GetOverlayDescription() =>
             GetDriftOverlayDescription(DisplayName, DriftThreshold, coldFlavor);
+
+        public IReadOnlyList<string> GetAppliedUpgrades() => GetAppliedUpgradeNames();
 
         public string GetOverlayInteractionLine()
         {

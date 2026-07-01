@@ -123,8 +123,12 @@ namespace Mossmark.Development
         }
 
         // Drift suffix shows in the overlay name so the player sees it while approaching.
+        public string GetShortName() => DisplayName;
+
         public string GetOverlayDescription() =>
             GetDriftOverlayDescription(DisplayName, DriftThreshold, coldFlavor);
+
+        public IReadOnlyList<string> GetAppliedUpgrades() => GetAppliedUpgradeNames();
 
         public string GetOverlayInteractionLine()
         {

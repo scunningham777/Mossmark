@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Mossmark.Attention;
 using Mossmark.Visuals;
 using UnityEngine;
 
@@ -9,6 +10,9 @@ namespace Mossmark.Development
     public abstract class DevelopableEntity : MonoBehaviour
     {
         private readonly HashSet<string> appliedStageIds = new();
+        // Ordered record of stages actually applied via TryApplyStage (excludes stages
+        // sealed via MarkStageAsApplied, which are suppressed pool entries, not achievements).
+        private readonly List<DevelopmentStage> appliedStagesInOrder = new();
 
         public abstract string DisplayName { get; }
         protected abstract DevelopmentTrack Track { get; }
@@ -75,6 +79,11 @@ namespace Mossmark.Development
 
         public event Action<DevelopmentStage> OnDeveloped;
 
+        // Fired from ResolveAttention() whenever a tick made productive progress
+        // (dependencies satisfied, progress advanced), whether or not a stage crossed.
+        // Does NOT fire when dependencies are unsatisfied (no-progress tick).
+        public event Action OnProgressMade;
+
         public void AddProgress(int amount = 1) => PendingProgress += amount;
 
         public List<DevelopmentStage> GetAvailableStages()
@@ -106,6 +115,7 @@ namespace Mossmark.Development
             var chosen = available[UnityEngine.Random.Range(0, available.Count)];
             PendingProgress -= chosen.ProgressCost;
             appliedStageIds.Add(chosen.Id);
+            appliedStagesInOrder.Add(chosen);
             CurrentStageIndex++;
             LastAppliedStage = chosen;
             DeclaredSpecializationNeeds.Consume(chosen.Id);
@@ -127,6 +137,11 @@ namespace Mossmark.Development
         // Lets subclasses seal pool stages that were not drawn in a random pick,
         // so GetNextStage() advances past them to the drawn specialization's own stages.
         public void MarkStageAsApplied(string stageId) => appliedStageIds.Add(stageId);
+
+        // Display names of all stages that were genuinely applied (sealed/suppressed pool
+        // entries excluded). Used by the detail overlay UI to list entity developments.
+        public IReadOnlyList<string> GetAppliedUpgradeNames() =>
+            appliedStagesInOrder.ConvertAll(s => s.DisplayName);
 
         // Reverse of MarkStageAsApplied: removes from the sealed set so GetNextStage()
         // can reach stages that were pre-sealed to prevent premature firing.
@@ -173,6 +188,7 @@ namespace Mossmark.Development
                 NotificationManager.Post($"{DisplayName}: {LastAppliedStage.DisplayName}");
                 LastAttentionMadeProgress = true;
                 LastAttentionAppliedStage = true;
+                OnProgressMade?.Invoke();
                 return true;
             }
 
@@ -187,6 +203,7 @@ namespace Mossmark.Development
 
             Debug.Log($"{DisplayName}: progress {PendingProgress}.", this);
             LastAttentionMadeProgress = true;
+            OnProgressMade?.Invoke();
             return true;
         }
 

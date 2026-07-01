@@ -18,6 +18,13 @@ namespace Mossmark.Attention
         private VisualElement overlayRoot;
         private UIDocument uiDocument;
 
+        // Bottom-right detail panel
+        private VisualElement detailRoot;
+        private Label detailDescriptionLabel;
+        private VisualElement upgradesContainer;
+        private IAttendable cachedDetailTarget;
+        private FontDefinition fallbackFont;
+
         private void OnEnable()
         {
             uiDocument = GetComponent<UIDocument>();
@@ -50,7 +57,7 @@ namespace Mossmark.Attention
 
             // The minimal theme above defines no default font, so set one explicitly —
             // otherwise label text renders invisibly even though layout/background show up.
-            var fallbackFont = FontDefinition.FromFont(Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf"));
+            fallbackFont = FontDefinition.FromFont(Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf"));
 
             overlayRoot = new VisualElement
             {
@@ -105,6 +112,56 @@ namespace Mossmark.Attention
             panel.Add(interactionLabel);
             overlayRoot.Add(panel);
             root.Add(overlayRoot);
+
+            BuildDetailPanel(root);
+        }
+
+        private void BuildDetailPanel(VisualElement root)
+        {
+            detailRoot = new VisualElement
+            {
+                style =
+                {
+                    position = Position.Absolute,
+                    right = 20,
+                    bottom = 20,
+                    maxWidth = 280,
+                    display = DisplayStyle.None,
+                }
+            };
+
+            var detailPanel = new VisualElement
+            {
+                style =
+                {
+                    backgroundColor = new Color(0f, 0f, 0f, 0.6f),
+                    paddingLeft = 16,
+                    paddingRight = 16,
+                    paddingTop = 8,
+                    paddingBottom = 8,
+                }
+            };
+
+            detailDescriptionLabel = new Label
+            {
+                style =
+                {
+                    color = Color.white,
+                    fontSize = 16,
+                    unityFontStyleAndWeight = FontStyle.Bold,
+                    unityFontDefinition = fallbackFont,
+                }
+            };
+
+            upgradesContainer = new VisualElement
+            {
+                style = { display = DisplayStyle.None }
+            };
+
+            detailPanel.Add(detailDescriptionLabel);
+            detailPanel.Add(upgradesContainer);
+            detailRoot.Add(detailPanel);
+            root.Add(detailRoot);
         }
 
         private void Update()
@@ -114,6 +171,7 @@ namespace Mossmark.Attention
             if (ChestUI.Instance != null && ChestUI.Instance.IsOpen)
             {
                 overlayRoot.style.display = DisplayStyle.None;
+                detailRoot.style.display = DisplayStyle.None;
                 return;
             }
 
@@ -121,6 +179,7 @@ namespace Mossmark.Attention
             if (HorizonUI.Instance != null && HorizonUI.Instance.IsOpen)
             {
                 overlayRoot.style.display = DisplayStyle.None;
+                detailRoot.style.display = DisplayStyle.None;
                 return;
             }
 
@@ -133,6 +192,8 @@ namespace Mossmark.Attention
             if (target == null)
             {
                 overlayRoot.style.display = DisplayStyle.None;
+                detailRoot.style.display = DisplayStyle.None;
+                cachedDetailTarget = null;
                 return;
             }
 
@@ -147,10 +208,48 @@ namespace Mossmark.Attention
             }
 
             overlayRoot.style.display = DisplayStyle.Flex;
-            descriptionLabel.text = target.GetOverlayDescription();
+            descriptionLabel.text = target.GetShortName();
             interactionLabel.text = manager.State == AttentionState.Attending
                 ? BuildProgressBar(manager.HoldProgress01)
                 : GetInteractionLine(target);
+
+            UpdateDetailPanel(target);
+        }
+
+        private void UpdateDetailPanel(IAttendable target)
+        {
+            detailDescriptionLabel.text = target.GetOverlayDescription();
+
+            var upgrades = target.GetAppliedUpgrades();
+            if (upgrades.Count > 0)
+            {
+                if (cachedDetailTarget != target || upgradesContainer.childCount != upgrades.Count)
+                {
+                    upgradesContainer.Clear();
+                    foreach (var upgrade in upgrades)
+                    {
+                        upgradesContainer.Add(new Label($"• {upgrade}")
+                        {
+                            style =
+                            {
+                                color = new Color(0.85f, 0.85f, 0.85f, 1f),
+                                fontSize = 13,
+                                marginTop = 3,
+                                unityFontDefinition = fallbackFont,
+                            }
+                        });
+                    }
+                }
+                upgradesContainer.style.marginTop = 6;
+                upgradesContainer.style.display = DisplayStyle.Flex;
+            }
+            else
+            {
+                upgradesContainer.style.display = DisplayStyle.None;
+            }
+
+            cachedDetailTarget = target;
+            detailRoot.style.display = DisplayStyle.Flex;
         }
 
         private static string GetInteractionLine(IAttendable target)

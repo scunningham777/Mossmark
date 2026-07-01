@@ -40,12 +40,17 @@ namespace Mossmark.World
 
         public bool CanAttend() => !promoted;
 
+        public string GetShortName() => arrivalName;
+
         public string GetOverlayDescription() =>
             warnessProgress > 0
                 ? $"{arrivalName} — still cautious, but watching"
                 : "A stranger resting at the settlement edge";
 
         public string GetOverlayInteractionLine() => "Hold E to approach";
+
+        public System.Collections.Generic.IReadOnlyList<string> GetAppliedUpgrades() =>
+            System.Array.Empty<string>();
 
         public void OnAttentionComplete()
         {

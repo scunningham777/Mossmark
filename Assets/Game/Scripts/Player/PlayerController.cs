@@ -1,3 +1,4 @@
+using Mossmark.Attention;
 using Mossmark.Day;
 using Mossmark.Development;
 using Mossmark.Inventory;
@@ -13,12 +14,19 @@ namespace Mossmark.Player
         [SerializeField] private float moveSpeed = 4f;
         [SerializeField] private float smoothing = .1f;
 
+        [Header("Attention Feedback")]
+        [SerializeField] private float rockMaxDegrees = 5f;
+        [SerializeField] private float rockFrequency = 1.5f;
+        [SerializeField] private float rockResetSpeed = 180f;
+
         private Rigidbody2D rb;
         private InputAction moveAction;
         private Vector2 movement;
         private Vector2 currentVelocity;
 
         private Vector2 lastMoveDirection = Vector2.down;
+        private bool wasRocking;
+        private Quaternion preRockRotation;
 
         private void Awake()
         {
@@ -42,6 +50,7 @@ namespace Mossmark.Player
         private void Update()
         {
             HandleInput();
+            HandleAttentionRock();
         }
 
         private void FixedUpdate()
@@ -91,6 +100,31 @@ namespace Mossmark.Player
         {
             movement = Vector2.zero;
             if (rb != null) rb.linearVelocity = Vector2.zero;
+        }
+
+        private void HandleAttentionRock()
+        {
+            bool attending = AttentionManager.Instance != null && AttentionManager.Instance.State == AttentionState.Attending;
+
+            if (attending)
+            {
+                if (!wasRocking)
+                {
+                    preRockRotation = transform.rotation;
+                    wasRocking = true;
+                }
+                float angle = Mathf.Sin(Time.time * rockFrequency * Mathf.PI * 2f) * rockMaxDegrees;
+                transform.rotation = Quaternion.Euler(0f, 0f, angle);
+            }
+            else if (wasRocking)
+            {
+                transform.rotation = Quaternion.RotateTowards(transform.rotation, preRockRotation, rockResetSpeed * Time.deltaTime);
+                if (Quaternion.Angle(transform.rotation, preRockRotation) < 0.5f)
+                {
+                    transform.rotation = preRockRotation;
+                    wasRocking = false;
+                }
+            }
         }
 
         // Animation helpers
