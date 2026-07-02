@@ -63,15 +63,16 @@ namespace Mossmark.Editor
                 so.FindProperty("restsToHarvest").intValue     = I(row.Get("restsToHarvest", "1"));
                 so.FindProperty("maxConcurrentMarked").intValue = I(row.Get("maxConcurrentMarked", "2"));
 
-                // Knowledge yield entries (Iteration 28)
-                var kEntries = new List<(string flag, ItemDefinition item, int minQ, int maxQ, float weight)>();
+                // Knowledge yield entries (Iteration 28; requiredSpecializationId added Iteration 34)
+                var kEntries = new List<(string flag, string specId, ItemDefinition item, int minQ, int maxQ, float weight)>();
                 for (int i = 1; ; i++)
                 {
-                    string flag = row.Get($"knowledge{i}_flag");
-                    if (string.IsNullOrEmpty(flag)) break;
+                    string flag   = row.Get($"knowledge{i}_flag");
+                    string specId = row.Get($"knowledge{i}_specializationId");
+                    if (string.IsNullOrEmpty(flag) && string.IsNullOrEmpty(specId)) break;
                     items.TryGetValue(row.Get($"knowledge{i}_item"), out var kItem);
                     kEntries.Add((
-                        flag, kItem,
+                        flag, specId, kItem,
                         I(row.Get($"knowledge{i}_minQty", "1")),
                         I(row.Get($"knowledge{i}_maxQty", "2")),
                         F(row.Get($"knowledge{i}_weight", "0.15"))
@@ -82,12 +83,13 @@ namespace Mossmark.Editor
                 for (int i = 0; i < kEntries.Count; i++)
                 {
                     var e = kProp.GetArrayElementAtIndex(i);
-                    var (flag, kItem, minQ, maxQ, weight) = kEntries[i];
-                    e.FindPropertyRelative("requiredFlag").stringValue      = flag;
-                    e.FindPropertyRelative("item").objectReferenceValue     = kItem;
-                    e.FindPropertyRelative("minQty").intValue               = minQ;
-                    e.FindPropertyRelative("maxQty").intValue               = maxQ;
-                    e.FindPropertyRelative("injectedWeight").floatValue     = weight;
+                    var (flag, specId, kItem, minQ, maxQ, weight) = kEntries[i];
+                    e.FindPropertyRelative("requiredFlag").stringValue             = flag;
+                    e.FindPropertyRelative("requiredSpecializationId").stringValue = specId;
+                    e.FindPropertyRelative("item").objectReferenceValue            = kItem;
+                    e.FindPropertyRelative("minQty").intValue                      = minQ;
+                    e.FindPropertyRelative("maxQty").intValue                      = maxQ;
+                    e.FindPropertyRelative("injectedWeight").floatValue            = weight;
                 }
 
                 if (so.ApplyModifiedProperties()) changed++;
@@ -143,15 +145,16 @@ namespace Mossmark.Editor
                     ParseRare(row.Get("poiRareYield"), items));
                 so.FindProperty("poiRareDropChance").floatValue = F(row.Get("poiRareDropChance", "0.05"));
 
-                // Spot knowledge yields (Iteration 28)
-                var kSpotEntries = new List<(string flag, ItemDefinition item, int minQ, int maxQ, float weight)>();
+                // Spot knowledge yields (Iteration 28; requiredSpecializationId added Iteration 34)
+                var kSpotEntries = new List<(string flag, string specId, ItemDefinition item, int minQ, int maxQ, float weight)>();
                 for (int i = 1; ; i++)
                 {
-                    string kFlag = row.Get($"spotKnowledge{i}_flag");
-                    if (string.IsNullOrEmpty(kFlag)) break;
+                    string kFlag   = row.Get($"spotKnowledge{i}_flag");
+                    string kSpecId = row.Get($"spotKnowledge{i}_specializationId");
+                    if (string.IsNullOrEmpty(kFlag) && string.IsNullOrEmpty(kSpecId)) break;
                     items.TryGetValue(row.Get($"spotKnowledge{i}_item"), out var kItem);
                     kSpotEntries.Add((
-                        kFlag, kItem,
+                        kFlag, kSpecId, kItem,
                         I(row.Get($"spotKnowledge{i}_minQty", "1")),
                         I(row.Get($"spotKnowledge{i}_maxQty", "2")),
                         F(row.Get($"spotKnowledge{i}_weight", "0.15"))
@@ -162,17 +165,18 @@ namespace Mossmark.Editor
                 for (int i = 0; i < kSpotEntries.Count; i++)
                 {
                     var e = kSpotProp.GetArrayElementAtIndex(i);
-                    var (kFlag, kItem, kMinQ, kMaxQ, kWeight) = kSpotEntries[i];
-                    e.FindPropertyRelative("requiredFlag").stringValue      = kFlag;
-                    e.FindPropertyRelative("item").objectReferenceValue     = kItem;
-                    e.FindPropertyRelative("minQty").intValue               = kMinQ;
-                    e.FindPropertyRelative("maxQty").intValue               = kMaxQ;
-                    e.FindPropertyRelative("injectedWeight").floatValue     = kWeight;
+                    var (kFlag, kSpecId, kItem, kMinQ, kMaxQ, kWeight) = kSpotEntries[i];
+                    e.FindPropertyRelative("requiredFlag").stringValue             = kFlag;
+                    e.FindPropertyRelative("requiredSpecializationId").stringValue = kSpecId;
+                    e.FindPropertyRelative("item").objectReferenceValue            = kItem;
+                    e.FindPropertyRelative("minQty").intValue                      = kMinQ;
+                    e.FindPropertyRelative("maxQty").intValue                      = kMaxQ;
+                    e.FindPropertyRelative("injectedWeight").floatValue            = kWeight;
                 }
 
-                // NPC post-spec stages
+                // NPC post-spec stages (passiveDriftSourceArchetypeId added Iteration 34)
                 var npcStages = new List<(string id, string name, int cost,
-                    bool useRare, int count, string flavor, string flag)>();
+                    bool useRare, int count, string flavor, string flag, string passiveSrc)>();
                 for (int i = 1; ; i++)
                 {
                     string id = row.Get($"stage{i}_id");
@@ -184,7 +188,8 @@ namespace Mossmark.Editor
                         B(row.Get($"stage{i}_useRareItem")),
                         I(row.Get($"stage{i}_itemCount", "2")),
                         row.Get($"stage{i}_flavorText"),
-                        row.Get($"stage{i}_worldStateFlag")
+                        row.Get($"stage{i}_worldStateFlag"),
+                        row.Get($"stage{i}_passiveDriftSourceArchetypeId")
                     ));
                 }
                 var npcProp = so.FindProperty("npcPostSpecStages");
@@ -192,14 +197,15 @@ namespace Mossmark.Editor
                 for (int i = 0; i < npcStages.Count; i++)
                 {
                     var e = npcProp.GetArrayElementAtIndex(i);
-                    var (id, name, cost, useRare, count, flavor, flag) = npcStages[i];
-                    e.FindPropertyRelative("stageId").stringValue      = id;
-                    e.FindPropertyRelative("displayName").stringValue  = name;
-                    e.FindPropertyRelative("progressCost").intValue    = cost;
-                    e.FindPropertyRelative("useRareItem").boolValue    = useRare;
-                    e.FindPropertyRelative("itemCount").intValue       = count;
-                    e.FindPropertyRelative("flavorText").stringValue   = flavor;
-                    e.FindPropertyRelative("worldStateFlag").stringValue = flag;
+                    var (id, name, cost, useRare, count, flavor, flag, passiveSrc) = npcStages[i];
+                    e.FindPropertyRelative("stageId").stringValue                        = id;
+                    e.FindPropertyRelative("displayName").stringValue                    = name;
+                    e.FindPropertyRelative("progressCost").intValue                      = cost;
+                    e.FindPropertyRelative("useRareItem").boolValue                      = useRare;
+                    e.FindPropertyRelative("itemCount").intValue                         = count;
+                    e.FindPropertyRelative("flavorText").stringValue                     = flavor;
+                    e.FindPropertyRelative("worldStateFlag").stringValue                 = flag;
+                    e.FindPropertyRelative("passiveDriftSourceArchetypeId").stringValue  = passiveSrc;
                 }
 
                 // Maintenance fields (Iteration 29)
@@ -208,11 +214,11 @@ namespace Mossmark.Editor
                 so.FindProperty("npcColdFlavor").stringValue        = row.Get("npcColdFlavor");
                 so.FindProperty("npcMaintenanceCost").intValue      = I(row.Get("npcMaintenanceCost", "1"));
 
-                // Building stages
+                // Building stages (worldStateFlag added Iteration 34)
                 so.FindProperty("buildingDilapidatedName").stringValue = row.Get("buildingDilapidatedName");
                 SetColor(so.FindProperty("buildingDilapidatedColor"), row, "buildingDilapidatedColor");
                 var bStages = new List<(string name, string verb, ItemDefinition mat,
-                    int cost, int prog, string spec, Color tint)>();
+                    int cost, int prog, string spec, Color tint, string wFlag)>();
                 for (int i = 1; ; i++)
                 {
                     string name = row.Get($"bStage{i}_displayName");
@@ -228,7 +234,8 @@ namespace Mossmark.Editor
                         new Color(
                             F(row.Get($"bStage{i}_tint_r", "0.5")),
                             F(row.Get($"bStage{i}_tint_g", "0.5")),
-                            F(row.Get($"bStage{i}_tint_b", "0.45")), 1f)
+                            F(row.Get($"bStage{i}_tint_b", "0.45")), 1f),
+                        row.Get($"bStage{i}_worldStateFlag")
                     ));
                 }
                 var bProp = so.FindProperty("buildingStages");
@@ -236,14 +243,15 @@ namespace Mossmark.Editor
                 for (int i = 0; i < bStages.Count; i++)
                 {
                     var e = bProp.GetArrayElementAtIndex(i);
-                    var (name, verb, mat, cost, prog, spec, tint) = bStages[i];
-                    e.FindPropertyRelative("displayName").stringValue        = name;
-                    e.FindPropertyRelative("verb").stringValue               = verb;
-                    e.FindPropertyRelative("material").objectReferenceValue  = mat;
-                    e.FindPropertyRelative("costPerTick").intValue           = cost;
-                    e.FindPropertyRelative("progressCost").intValue          = prog;
-                    e.FindPropertyRelative("requiredSpecialization").stringValue = spec;
-                    e.FindPropertyRelative("tint").colorValue                = tint;
+                    var (name, verb, mat, cost, prog, spec, tint, wFlag) = bStages[i];
+                    e.FindPropertyRelative("displayName").stringValue            = name;
+                    e.FindPropertyRelative("verb").stringValue                   = verb;
+                    e.FindPropertyRelative("material").objectReferenceValue      = mat;
+                    e.FindPropertyRelative("costPerTick").intValue               = cost;
+                    e.FindPropertyRelative("progressCost").intValue              = prog;
+                    e.FindPropertyRelative("requiredSpecialization").stringValue  = spec;
+                    e.FindPropertyRelative("tint").colorValue                    = tint;
+                    e.FindPropertyRelative("worldStateFlag").stringValue         = wFlag;
                 }
 
                 if (so.ApplyModifiedProperties()) changed++;

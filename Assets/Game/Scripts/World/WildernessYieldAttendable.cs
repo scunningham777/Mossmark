@@ -106,17 +106,22 @@ namespace Mossmark.World
             OnProgressMade?.Invoke();
         }
 
-        // Checks each knowledge entry against WorldState flags and collects items to inject
-        // into the common pool for this tick only. Returns null when no entries are active —
-        // the null fast-path avoids allocations on every tick for spots with no knowledge yields.
+        // Checks each knowledge entry and collects items to inject into the common pool for
+        // this tick only. Entries activate via requiredFlag (WorldState flag, checked first)
+        // or requiredSpecializationId (NPC specialization realized) — flag takes priority if
+        // both are set. Returns null when no entries are active (avoids allocation each tick).
         private ItemYield[] BuildKnowledgeInjectedYields()
         {
             if (knowledgeYields == null || knowledgeYields.Length == 0) return null;
             List<ItemYield> result = null;
             foreach (var entry in knowledgeYields)
             {
-                if (string.IsNullOrEmpty(entry.requiredFlag) || entry.item == null) continue;
-                if (!WorldContext.GetFlag(entry.requiredFlag)) continue;
+                if (entry.item == null) continue;
+                bool conditionMet = !string.IsNullOrEmpty(entry.requiredFlag)
+                    ? WorldContext.GetFlag(entry.requiredFlag)
+                    : !string.IsNullOrEmpty(entry.requiredSpecializationId)
+                        && WorldContext.IsSpecializationRealized(entry.requiredSpecializationId);
+                if (!conditionMet) continue;
                 result ??= new List<ItemYield>();
                 result.Add(new ItemYield
                 {

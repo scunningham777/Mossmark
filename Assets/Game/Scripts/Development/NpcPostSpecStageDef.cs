@@ -21,5 +21,8 @@ namespace Mossmark.Development
         public string flavorText;
         // WorldState flag key to set true on apply. Empty = no flag set.
         public string worldStateFlag;
+        // ArchetypeId of the wilderness spot whose tendedness drives passive progress
+        // each rest. Empty = no passive drift for this stage (attention-only).
+        public string passiveDriftSourceArchetypeId;
     }
 }

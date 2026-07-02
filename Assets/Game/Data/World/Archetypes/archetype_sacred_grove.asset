@@ -32,10 +32,23 @@ MonoBehaviour:
   archetypeSpotMaxTickInterval: 2.5
   spotKnowledgeYields:
   - requiredFlag: hedge_witch_ravens_eye
+    requiredSpecializationId:
     item: {fileID: 11400000, guid: 71fa745212e8453ab3779c7a6a7cfc84, type: 2}
     minQty: 1
     maxQty: 1
     injectedWeight: 0.15
+  - requiredFlag:
+    requiredSpecializationId: hedge_witch
+    item: {fileID: 11400000, guid: d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6, type: 2}
+    minQty: 1
+    maxQty: 2
+    injectedWeight: 0.13
+  - requiredFlag: shrine_tended
+    requiredSpecializationId:
+    item: {fileID: 11400000, guid: 201486684836449b8f900b7942899034, type: 2}
+    minQty: 1
+    maxQty: 1
+    injectedWeight: 0.08
   specializationId: hedge_witch
   stageDisplayName: Take Up Hedge-Craft
   npcTitle: Hedge Witch
@@ -59,19 +72,21 @@ MonoBehaviour:
   npcPostSpecStages:
   - stageId: hedge_witch_wound_lore
     displayName: Wound Lore
-    progressCost: 3
+    progressCost: 6
     useRareItem: 0
     itemCount: 2
     flavorText: learns Wound Lore - healing herbs ease the hurt of bad encounters.
     worldStateFlag: hedge_witch_wound_lore
+    passiveDriftSourceArchetypeId: sacred_grove
   - stageId: hedge_witch_ravens_eye
     displayName: Raven's Eye Reading
-    progressCost: 4
+    progressCost: 8
     useRareItem: 1
     itemCount: 2
     flavorText: learns Raven's Eye Reading - the intent of wandering things becomes
       clearer before you approach.
     worldStateFlag: hedge_witch_ravens_eye
+    passiveDriftSourceArchetypeId:
   npcExchangeChance: 0.2
   npcExchangeGifts:
   - Item: {fileID: 11400000, guid: e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6, type: 2}
@@ -97,8 +112,9 @@ MonoBehaviour:
     material: {fileID: 11400000, guid: 29a23783858c4e4dae17e837841a7ad7, type: 2}
     costPerTick: 2
     progressCost: 4
-    requiredSpecialization: 
+    requiredSpecialization:
     tint: {r: 0.52, g: 0.38, b: 0.62, a: 1}
+    worldStateFlag: shrine_tended
   - displayName: Consecrate the Hearth
     verb: consecrate
     material: {fileID: 11400000, guid: 71fa745212e8453ab3779c7a6a7cfc84, type: 2}

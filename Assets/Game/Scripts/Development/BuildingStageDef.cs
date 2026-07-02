@@ -15,5 +15,7 @@ namespace Mossmark.Development
         // Specialization that must be realized before this stage is available. Empty = no dep.
         public string requiredSpecialization;
         public Color tint = new(0.5f, 0.5f, 0.45f, 1f);
+        // WorldState flag set to true when this stage completes. Empty = no flag.
+        public string worldStateFlag;
     }
 }

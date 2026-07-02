@@ -209,28 +209,33 @@ namespace Mossmark.Development
                 DayCycleManager.Instance.DayAdvanced -= OnDayAdvanced;
         }
 
-        // Iteration 31 pilot: the Bog Keeper's Drainage Channels stage gains passive
-        // progress each rest, scaled by the Fen Bog spot's own tendedness — a well-tended
-        // bog drains itself a little further on its own. Hardcoded to this one stage per
-        // FEATURES.md's pilot scope; only worth generalizing into shared schema once the
-        // feeling is validated in play.
+        // Iteration 34: generalised from the Iteration 31 single-stage pilot.
+        // Loops over the post-spec stage defs for this NPC's drawn specialization and
+        // finds the currently active stage. If it declares a passiveDriftSourceArchetypeId,
+        // the matching archetype spot's tendedness drives a small passive progress increment
+        // each rest — no attention required. Bandscaled: >0.7 tendedness gives +2, ≥0.3 gives
+        // +1, below that gives nothing (depleted spot offers no passive benefit).
         private void OnDayAdvanced()
         {
-            if (drawnSpecializationId != "bog_tender") return;
-            if (GetNextStage()?.Id != "bog_keeper_drainage") return;
+            if (drawnSpecializationId == null) return;
 
-            var fenBog = WorldGenerator.GetArchetypeSpot("bog");
-            if (fenBog == null) return;
+            var nextStage = GetNextStage();
+            if (nextStage == null) return;
 
-            int passive = fenBog.Tendedness > 0.7f ? 2 : fenBog.Tendedness >= 0.3f ? 1 : 0;
+            if (!postSpecStageDefs.TryGetValue(nextStage.Id, out var stageDef)) return;
+            if (string.IsNullOrEmpty(stageDef.passiveDriftSourceArchetypeId)) return;
+
+            var sourceSpot = WorldGenerator.GetArchetypeSpot(stageDef.passiveDriftSourceArchetypeId);
+            if (sourceSpot == null) return;
+
+            int passive = sourceSpot.Tendedness > 0.7f ? 2 : sourceSpot.Tendedness >= 0.3f ? 1 : 0;
             if (passive <= 0) return;
 
             AddProgress(passive);
-            Debug.Log($"{specializedName}: Drainage Channels edge forward on their own " +
-                $"(+{passive} passive progress, Fen Bog tendedness {fenBog.Tendedness:F2}).", this);
+            Debug.Log($"{DisplayName}: {nextStage.DisplayName} edges forward on its own " +
+                $"(+{passive} passive progress, {stageDef.passiveDriftSourceArchetypeId} " +
+                $"tenderness {sourceSpot.Tendedness:F2}).", this);
 
-            // If the stage crossed, OnDeveloped fires (shape swap is the signal).
-            // Otherwise, fire OnPassiveDriftAccrued so EntityFeedback can show the halo.
             bool stageApplied = TryApplyStage();
             if (!stageApplied)
                 OnPassiveDriftAccrued?.Invoke();

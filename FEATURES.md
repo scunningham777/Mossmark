@@ -68,6 +68,116 @@ This is not a juice pass. It is not art. It is the lowest-cost test of whether t
 
 ---
 
+## Iteration 33.1 — Progress Cost Tuning Pass
+
+A pacing adjustment to ensure passive drift (Iteration 31) and cross-influence (Iteration 34) have room to be felt. Currently, NPC post-spec stages complete in one or two rests — fast enough that passive acceleration is invisible before it completes, which undermines the core premise of Iteration 31. Resting is not a burden, so extending timelines is cost-free from a player-friction standpoint.
+
+**Change:** double all `progressCost` values on NPC post-spec stages as a starting baseline. This is a deliberate estimate, not a settled number — revisit after Iteration 34's cross-influence content is in place and a few play sessions have given a feel for the new rhythm. More concurrent things happening passively makes any single track feel slower already; the right final values may be higher or lower than double depending on how the ecosystem density feels once more cross-influence seams are authored.
+
+**Scope:** data-only change to existing `NpcPostSpecStageDef` assets. No code changes, no new fields. Touch only post-spec stages — specialization costs and building restoration costs are separate pacing questions, not in scope here.
+
+**Scope guard:** do not simultaneously tune specialization costs, building costs, or wilderness spot rest counts. Isolate the variable. If the prototype feels sluggish after this, diagnose before adjusting — the cause may be that the loop is thin (too few things to do between rests) rather than that the costs are wrong, and adding cross-influence content (Iteration 34) may resolve it without touching costs again.
+
+---
+
+## Iteration 34 — Cross-Pursuit Influence (Authored Seams)
+
+Establishes loose, discoverable connections between the three pursuit dimensions (wilderness, NPCs, buildings) so that investing in one occasionally opens something visible in another — without creating prescribed chains or required sequences. The player who ignores buildings entirely still has a game; they're just not seeing some of what the world can do. Connections are ambient and authored, not telegraphed by UI.
+
+This is the "loose connections, not tight loops" framing: each seam exists in the world whether or not the player notices it. Discovery is the mechanic.
+
+**Three seams to author, in priority order:**
+
+1. **Wilderness → NPC** (already half-implemented): extend Iteration 31's `tendedness`-driven passive drift from the single `bog_keeper_drainage` hardcode to a small authored set of NPC/spot pairs via `IOutcomeModifier`. Two or three pairs to start — the Bog Keeper/fen spot connection is already proven; add one more NPC whose post-spec drift plausibly responds to a nearby wilderness spot's tendedness (Hedge Witch + herb spot is the natural candidate). Move from hardcode to data-driven `IOutcomeModifier` instances at the same time, since Iteration 33.1's cost increases now give drift enough time to be felt.
+
+2. **NPC → Wilderness**: a specialized NPC changes what nearby wilderness spots can yield — not better yields, *different* yields. A specialized Bog Keeper shifts the fen spot's yield table toward drainage-specific items; a specialized Hedge Witch shifts herb spot yields toward wound-treatment materials. This keeps specialization meaningful beyond inventory accumulation and makes the wilderness feel like it responds to the settlement's character. Author one NPC/spot pair to test the pattern — implement via a new `IOutcomeModifier` that reads `WorldContext` for NPC specialization state and modifies the spot's `OutcomeRequest`.
+
+3. **Building → NPC or Wilderness** (lower priority): a restored building quietly changes what's possible nearby. A restored Granary extends the window before maintenance demands recur; a restored Mill shifts what grain-adjacent spots can produce. Author one building/entity connection — whichever has the clearest world-logic justification given current entity roster. If implementing the first two seams reveals a clean architectural pattern for this, follow it; if it requires significant new plumbing, defer to a future iteration.
+
+**Explicitly out of scope:**
+- No UI labeling of connections. No tooltip saying "tend the bog to help the Bog Keeper." Discovery is the mechanic.
+- No required chains — these are influence modifiers, not unlock gates. Nothing should be *blocked* by whether a cross-influence seam has been triggered.
+- No new pursuit dimensions beyond wilderness/NPC/building. The goal is depth in the existing three, not breadth.
+
+**Success criterion (playtest, not metric):** play through a session focusing on wilderness tending, then visit NPCs without having attended them deliberately. Does anything feel like it has been quietly affected? Does it prompt a theory about why without being explained? That moment of "wait, did tending the bog do that?" is the target.
+
+**Feedback spec:** no new feedback signals for the cross-influence itself — the existing passive drift halo (Iteration 32) handles the "this moved without me" signal. The connection's cause should remain slightly opaque. If it becomes necessary to signal that *a building* specifically affected something, use the same ambient particle tier, not a new dedicated signal type.
+
+---
+
+## The Investigation Loop (Iterations 35–37)
+
+A proof-of-concept arc for a new dimension of play: **items as clues, stations as the place you interrogate them, NPC wants as the place answers become useful.** The core insight this arc tests: the pull of "maybe I should check that bog again" comes from having a *theory* about what things are for — and right now nothing in the game gives items meaning beyond inventory accumulation.
+
+Design shape: items carry 1–2 hidden **properties**, drawn from a small shared vocabulary of folk phrases (e.g. *"holds the cold"*, *"turns water"*, *"binds fast"*). Properties are discovered by experimenting at a conversion station, not read off tooltips. The same phrases appear in NPC wants, so recognition — "wait, the cord I made *binds fast*, and the Bog Keeper needs something that binds" — is the dopamine beat. Learning compounds because phrases are shared across items: learning *"binds fast"* once pays off every time it reappears.
+
+Register decision (settled in design discussion): folk phrases with **rigid exact-match wording** wherever a property appears — item descriptions, discovery moments, NPC wants. The consistency does the mechanical work; the diegetic register keeps it inside "Felt Not Read." Unknown properties are not displayed as "?" — the item's description simply feels incomplete (*"heavy in the hand. There's more to it."*). A mechanical-tag debug display toggle is kept for development.
+
+The three iterations are deliberately ordered so each is independently testable: 35 proves the data and display layer, 36 proves the experimentation verb, 37 closes the loop. Do not start 36 until 35's display reads well in the overlay; do not start 37 until 36's discovery beat feels rewarding in playtest.
+
+---
+
+## Iteration 35 — Item Properties (Folk-Phrase Vocabulary)
+
+The data and display foundation. Items gain hidden properties; the player-facing surface shows only what has been learned.
+
+**Deliverables:**
+
+- **Property vocabulary as data**: a single authored list of ~8–10 properties, each with an `id` and an exact display phrase. Starting set (adjust wording at authoring time, but keep each phrase short and consistent): `holds_the_cold` ("holds the cold"), `turns_water` ("turns water"), `binds_fast` ("binds fast"), `split_prone` ("splits under strain"), `burns_slow` ("burns slow"), `keeps_well` ("keeps well"), `draws_the_eye` ("draws the eye"), `heavy_true` ("heavy and true"). Author as a ScriptableObject asset or static registry — small enough that either works; prefer whatever the CSV pipeline can absorb later.
+- **`ItemDefinition` gains `propertyIds` (1–2 per item)**. Author properties on ~6 existing items to start: Bog Iron (`heavy_true`, `holds_the_cold`), Reeds (`split_prone`, `binds_fast`), Crow Feather (`draws_the_eye`), Mistletoe (`keeps_well`, `turns_water`?), Flint (`burns_slow`?), plus one more chosen at implementation time. Exact assignments are an authoring decision — the constraint that matters is **every property must appear on at least two items** somewhere in the full set, so recognition can compound.
+- **Discovery state**: per-item-per-property known/unknown flags on a new `PropertyKnowledge` store (player-scoped, session-only for now — no save system exists). `WorldState`-flag-style access via `WorldContext` so future `IOutcomeModifier`s can read it.
+- **Display**: the detail overlay (Iteration 33) shows known properties as their folk phrases under the item name. Items with undiscovered properties append a single fixed line: *"There's more to it."* Items with all properties known show no such line. No question marks, no empty slots, no counts.
+- **Debug affordances**: a debug key/command to reveal all properties (for testing 36/37 without grinding discovery), and a debug toggle to render properties as mechanical tags instead of phrases.
+
+**Out of scope:** any discovery *mechanism* beyond debug reveal — that's Iteration 36's job. This iteration ships with all properties unknown in normal play; that's fine, it's testable via the debug toggle.
+
+**Feedback spec:** none needed yet — no new player-facing events occur in this iteration. Display-only.
+
+**Success criterion:** with debug-revealed properties, does reading the overlay across several items make the shared vocabulary *visible* — do you notice that two items share a phrase, and does that noticing feel like it means something? If the phrases read as flavor text rather than signal, tighten the wording before proceeding.
+
+---
+
+## Iteration 36 — Conversion Station (Crude Working Surface)
+
+The experimentation verb. One station where items are combined, with discovery as the payoff for every attempt — successful or not.
+
+**Deliverables:**
+
+- **One station**: the restored Workshop becomes the working surface. Attending the restored Workshop (which currently short-circuits to flavor) now opens the **working view** — a minimal UI panel, not a new scene: pack list on one side, 2–3 placement slots, a "work" hold-interaction. Reuse the chest UI's interaction pattern (`InteractionMenuControllerUITK` rendering, movement freeze, Esc to close). This is deliberately the *crude* version of the Ritual Manipulation View — no spatial canvas, no runes; just place, hold, resolve. If this loop proves out, the full ritual view (Open Threads) inherits from it.
+- **Recipe data**: `ConversionDef` assets, each holding input requirements, output `ItemDefinition` + qty, and a result flavor line. Two recipe key styles, both supported from the start:
+  - *Item-keyed* (exact items): 3× Reeds → 1× Plaited Cord. Author 2 of these.
+  - *Property-keyed* (any items with matching properties): 1× item with `binds_fast` + 1× item with `heavy_true` → 1× Weighted Snare (or similar — output item chosen at authoring time). Author 1 of these. Property-keyed recipes are the payoff for learning the vocabulary; item-keyed recipes are the on-ramp.
+- **New output items**: Plaited Cord (`binds_fast`, second property TBD) and one property-keyed output, each a new `ItemDefinition` with its own properties — conversions produce new questions, not dead ends.
+- **Discovery on every attempt**: a successful conversion reveals the properties that *made it work* on the consumed items (and marks them known). A failed attempt (no recipe matches) consumes nothing, produces a diegetic failure line, and reveals **one** unknown property on one placed item — chosen randomly among placed items with unknowns. Failure always teaches. This is the core honesty of the loop: experiments pay in knowledge even when they don't pay in goods.
+- **Daylight cost**: each work attempt costs 1 daylight (same as a productive attention tick) — experimentation is real activity, not free menu time.
+
+**Out of scope:** more than one station; station-specific recipe pools; multi-step chains (output-of-output recipes) beyond what falls out naturally from Cord being usable as an input; any UI polish beyond functional.
+
+**Feedback spec (required per Iteration 32 principle):** successful conversion = the stage-cross tier signal (bigger pop + sting) on the Workshop, plus the output item's arrival notification. Property discovery = its own small distinct beat — a brief highlight on the item row + the folk phrase appearing with a short fade-in, whether from success or failure. Failed attempt with no discovery remaining = flat diegetic line only, no juice ("nothing comes of it").
+
+**Success criterion (playtest, not metric):** place random junk in the Workshop with zero foreknowledge. After ~5 attempts, do you have theories? Do you *want* to go gather something specific to test one? The pull to leave the station and go get something is the whole test.
+
+---
+
+## Iteration 37 — Property-Phrased Wants (Loop Closure)
+
+The loop's destination. One NPC want expressed in the shared vocabulary, satisfiable by property rather than by exact item.
+
+**Deliverables:**
+
+- **One want, on the Bog Keeper**: an existing or new post-spec stage whose item gate changes from "requires exact item X" to "requires any item with `turns_water`" (or `binds_fast` — pick whichever has better item coverage after 35's authoring pass). The overlay/detail text phrases it diegetically with the exact folk phrase: *"needs something that turns water for the drainage channels."*
+- **Property-gate resolution**: extend the existing stage item-gate check to accept a `requiredPropertyId` as an alternative to `requiredItem`. When satisfied by property, consume the matched item as usual. If multiple carried items match, consume the cheapest/most-common one (or prompt — implementation's choice, don't overbuild).
+- **Recognition guard**: the want's phrase must be discoverable through Iteration 36 — i.e., at least one reachable item with the required property must be learnable at the Workshop before this want appears. Verify the content path at authoring time; this is a content-ordering check, not a system.
+- **Keep one exact-item want** elsewhere unchanged, for contrast in playtest.
+
+**Out of scope:** converting all existing wants to property-phrasing; multiple property-wants; want generation. One authored instance, tested against one authored discovery path.
+
+**Feedback spec:** satisfying a property-want uses the existing stage-cross signal — no new tier. The recognition moment itself needs no signal; it happens in the player's head, which is the point.
+
+**Success criterion (playtest, not metric):** the full loop, cold: gather → experiment at the Workshop → learn a phrase → encounter the Bog Keeper's want → recognize that something you carry (or know how to make) answers it. Does the recognition land as *your* insight rather than a fetch instruction? If yes, this dimension is worth building out — more properties, more stations, the full ritual view. If the recognition feels like menu-matching with extra steps, the vocabulary is too small or the phrases too legible — diagnose before expanding.
+
+---
+
 ## Iteration Status
 
 Numbering continues from PROTOTYPE2.md's final iteration (30) to avoid renumbering confusion across documents — this table is the active one going forward. PROTOTYPE2.md's own table stops at 30 and is not updated further.
@@ -77,6 +187,11 @@ Numbering continues from PROTOTYPE2.md's final iteration (30) to avoid renumberi
 | 31 | [x] | Passive Drift on a Single Post-Spec Stage (Pilot) | Bog Keeper's `bog_keeper_drainage` stage gains rest-driven passive progress (0/1/2, banded off the Fen Bog spot's `tendedness`), additive with existing attention-driven progress and gated the same as any other stage (item still required to apply) — pending playtest verdict | `NpcAttendable.OnDayAdvanced()`, `WorldGenerator.GetArchetypeSpot()`, `WildernessYieldAttendable.Tendedness` |
 | 32 | [x] | State-Change Feedback Pass (Greybox) | Wire visible/audible feedback to three signal tiers (progress tick → scale pulse, stage-cross → shape swap triangle↔circle + bigger pop, passive drift → white halo child until next productive attend); player sprite rocks ±5° Z while attending | `EntityFeedback`, `CircleSpriteGenerator`, `DevelopableEntity.OnProgressMade`, `WildernessYieldAttendable.OnProgressMade`, `TendedSpotAttendable.OnProgressMade`, `NpcAttendable.OnPassiveDriftAccrued`, `PlayerController.HandleAttentionRock` |
 | 33 | [x] | Detail Overlay (Bottom-Right) | Second UI panel anchored to the bottom-right corner showing the hovered entity's name and a bullet list of all development stages permanently applied to it — gives the player a persistent at-a-glance record of what has been achieved without attending | `IAttendable.GetAppliedUpgrades()`, `DevelopableEntity.GetAppliedUpgradeNames()`, `AttendableOverlayUI` detail panel |
+| 33.1 | [x] | Progress Cost Tuning Pass | Doubled all NPC post-spec stage `progressCost` values: stage 1 (common-item) 3→6, stage 2 (rare-item) 4→8, across bog/old_road/sacred_grove archetypes; data-only change to `.asset` files and `place_archetypes.csv`; reed_marsh and quarry have no post-spec stages and were untouched | `NpcPostSpecStageDef` fields in `archetype_bog.asset`, `archetype_old_road.asset`, `archetype_sacred_grove.asset`, `place_archetypes.csv` |
+| 34 | [x] | Cross-Pursuit Influence (Authored Seams) | Three authored seams between pursuit dimensions — Seam 1: generalized Iteration 31 hardcode to data-driven `passiveDriftSourceArchetypeId` on `NpcPostSpecStageDef`; two live pairs (bog_keeper_drainage ← bog, hedge_witch_wound_lore ← sacred_grove). Seam 2: `KnowledgeYieldEntry.requiredSpecializationId` — hedge_witch specialization injects Bark Strips into Deep Wood Shrine yields. Seam 3: `BuildingStageDef.worldStateFlag` — Woodland Shrine restoration sets `shrine_tended` flag, which unlocks Carved Sigil Stone injection at Deep Wood Shrine. No new UI; discovery is the mechanic. | `NpcPostSpecStageDef.passiveDriftSourceArchetypeId`, `KnowledgeYieldEntry.requiredSpecializationId`, `BuildingStageDef.worldStateFlag`, `BuildingAttendable.HandleDeveloped()`, `WorldContext.IsSpecializationRealized()` |
+| 35 | [ ] | Item Properties (Folk-Phrase Vocabulary) | ~8–10 shared folk-phrase properties as data; 1–2 authored per item on ~6 existing items (each property on ≥2 items); per-player discovery state; detail overlay shows known phrases, undiscovered = "There's more to it."; debug reveal + tag-display toggles | `PropertyDefinition` registry, `ItemDefinition.propertyIds`, `PropertyKnowledge` store, `WorldContext` read access, detail overlay extension |
+| 36 | [ ] | Conversion Station (Crude Working Surface) | Restored Workshop opens a minimal place-2–3-items-and-hold working view (chest-UI pattern); 2 item-keyed + 1 property-keyed `ConversionDef` recipes; success reveals the properties that made it work, failure consumes nothing and reveals one unknown property; 1 daylight per attempt; new output items carry their own properties | `ConversionDef` SO, working view UI (reuse `InteractionMenuControllerUITK` pattern), `BuildingAttendable` post-restored hook, discovery feedback beats |
+| 37 | [ ] | Property-Phrased Wants (Loop Closure) | One Bog Keeper stage gate changes from exact-item to any-item-with-property, phrased in the exact folk phrase; stage gate check extended with `requiredPropertyId` alternative; content-path check ensures the phrase is learnable at the Workshop first; one exact-item want kept elsewhere for contrast | Stage gate resolution in `NpcAttendable`/`DevelopableEntity`, `PropertyKnowledge` read, overlay want-phrasing |
 
 Update this table as each iteration lands, the same way CLAUDE.md's System Overview table tracked PROTOTYPE2.md's iterations.
 

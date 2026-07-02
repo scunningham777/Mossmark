@@ -199,6 +199,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Player.PlayerController
   moveSpeed: 4
   smoothing: 0.1
+  rockMaxDegrees: 5
+  rockFrequency: 0.5
+  rockResetSpeed: 180
 --- !u!212 &278561123
 SpriteRenderer:
   serializedVersion: 2

@@ -52,7 +52,8 @@ namespace Mossmark.Editor
             };
             for (int i = 1; i <= maxKnowledge; i++)
                 headers.AddRange(new[]
-                    { $"knowledge{i}_flag", $"knowledge{i}_item",
+                    { $"knowledge{i}_flag", $"knowledge{i}_specializationId",
+                      $"knowledge{i}_item",
                       $"knowledge{i}_minQty", $"knowledge{i}_maxQty", $"knowledge{i}_weight" });
 
             var rows = new List<string[]>();
@@ -81,13 +82,13 @@ namespace Mossmark.Editor
                         var e = a.knowledgeYields[i];
                         row.AddRange(new[]
                         {
-                            e.requiredFlag,
+                            e.requiredFlag, e.requiredSpecializationId,
                             e.item != null ? e.item.DisplayName : "",
                             e.minQty.ToString(), e.maxQty.ToString(),
                             Fmt(e.injectedWeight)
                         });
                     }
-                    else row.AddRange(new[] { "", "", "", "", "" });
+                    else row.AddRange(new[] { "", "", "", "", "", "" });
                 }
                 rows.Add(row.ToArray());
             }
@@ -133,7 +134,8 @@ namespace Mossmark.Editor
             for (int i = 1; i <= maxK; i++)
                 headers.AddRange(new[]
                 {
-                    $"spotKnowledge{i}_flag", $"spotKnowledge{i}_item",
+                    $"spotKnowledge{i}_flag", $"spotKnowledge{i}_specializationId",
+                    $"spotKnowledge{i}_item",
                     $"spotKnowledge{i}_minQty", $"spotKnowledge{i}_maxQty",
                     $"spotKnowledge{i}_weight"
                 });
@@ -142,7 +144,8 @@ namespace Mossmark.Editor
                 {
                     $"stage{i}_id", $"stage{i}_displayName", $"stage{i}_progressCost",
                     $"stage{i}_useRareItem", $"stage{i}_itemCount",
-                    $"stage{i}_flavorText", $"stage{i}_worldStateFlag"
+                    $"stage{i}_flavorText", $"stage{i}_worldStateFlag",
+                    $"stage{i}_passiveDriftSourceArchetypeId"
                 });
             headers.AddRange(new[]
             {
@@ -157,7 +160,8 @@ namespace Mossmark.Editor
                     $"bStage{i}_displayName", $"bStage{i}_verb", $"bStage{i}_material",
                     $"bStage{i}_costPerTick", $"bStage{i}_progressCost",
                     $"bStage{i}_requiredSpecialization",
-                    $"bStage{i}_tint_r", $"bStage{i}_tint_g", $"bStage{i}_tint_b"
+                    $"bStage{i}_tint_r", $"bStage{i}_tint_g", $"bStage{i}_tint_b",
+                    $"bStage{i}_worldStateFlag"
                 });
 
             var rows = new List<string[]>();
@@ -186,13 +190,13 @@ namespace Mossmark.Editor
                         var e = a.SpotKnowledgeYields[i];
                         row.AddRange(new[]
                         {
-                            e.requiredFlag,
+                            e.requiredFlag, e.requiredSpecializationId,
                             e.item != null ? e.item.DisplayName : "",
                             e.minQty.ToString(), e.maxQty.ToString(),
                             Fmt(e.injectedWeight)
                         });
                     }
-                    else row.AddRange(new[] { "", "", "", "", "" });
+                    else row.AddRange(new[] { "", "", "", "", "", "" });
                 }
 
                 for (int i = 0; i < maxNpc; i++)
@@ -204,10 +208,10 @@ namespace Mossmark.Editor
                         {
                             s.stageId, s.displayName, s.progressCost.ToString(),
                             s.useRareItem ? "true" : "false", s.itemCount.ToString(),
-                            s.flavorText, s.worldStateFlag
+                            s.flavorText, s.worldStateFlag, s.passiveDriftSourceArchetypeId
                         });
                     }
-                    else row.AddRange(new[] { "", "", "", "", "", "", "" });
+                    else row.AddRange(new[] { "", "", "", "", "", "", "", "" });
                 }
 
                 row.AddRange(new[]
@@ -230,10 +234,11 @@ namespace Mossmark.Editor
                             s.material != null ? s.material.DisplayName : "",
                             s.costPerTick.ToString(), s.progressCost.ToString(),
                             s.requiredSpecialization,
-                            Fmt(s.tint.r), Fmt(s.tint.g), Fmt(s.tint.b)
+                            Fmt(s.tint.r), Fmt(s.tint.g), Fmt(s.tint.b),
+                            s.worldStateFlag
                         });
                     }
-                    else row.AddRange(new[] { "", "", "", "", "", "", "", "", "" });
+                    else row.AddRange(new[] { "", "", "", "", "", "", "", "", "", "" });
                 }
 
                 rows.Add(row.ToArray());

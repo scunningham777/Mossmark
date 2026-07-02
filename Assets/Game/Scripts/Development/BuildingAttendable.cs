@@ -259,6 +259,14 @@ namespace Mossmark.Development
             {
                 Debug.Log($"{DisplayName}: {stage.DisplayName} complete.", this);
             }
+
+            int defIndex = CurrentStageIndex;
+            if (defIndex >= 0 && defIndex < stages.Length
+                && !string.IsNullOrEmpty(stages[defIndex].worldStateFlag))
+            {
+                WorldState.SetFlag(stages[defIndex].worldStateFlag, true);
+                Debug.Log($"{DisplayName}: WorldState flag '{stages[defIndex].worldStateFlag}' set.", this);
+            }
         }
     }
 }

@@ -14,13 +14,15 @@ namespace Mossmark.World
         [Min(0f)] public float Weight = 1f;
     }
 
-    // Per-entry authored knowledge yield: a WorldState flag gates an extra item injection
-    // into the spot's common pool for a single tick. Authored on PlaceArchetype (archetype
-    // spots) and WildernessSpotDefinition (pool spots). Checked at roll time, not cached.
+    // Per-entry authored knowledge yield: gates an extra item injection into the spot's
+    // common pool for a single tick. Either requiredFlag (WorldState flag) or
+    // requiredSpecializationId (specialization realized) activates the entry — flag takes
+    // priority if both are set. Authored on PlaceArchetype and WildernessSpotDefinition.
     [Serializable]
     public class KnowledgeYieldEntry
     {
         public string requiredFlag;
+        public string requiredSpecializationId;
         public ItemDefinition item;
         public int minQty = 1;
         public int maxQty = 2;
