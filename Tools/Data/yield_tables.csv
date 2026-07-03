@@ -1,9 +1,2 @@
-# Relational yield pools: one row per entry, grouped by tableId — the P2 analogue of P1's
-# loot_tables.csv. tableId is the asset name under Assets/Game/Data/World/YieldTables/
-# (created by import if missing). Spot definitions reference a table via commonYieldTable /
-# rareYieldTable; a set reference REPLACES that spot's inline list. Author a table only when a
-# pool is genuinely shared — inline lists remain right for one-off content.
-# old_coin_finds: shared rare pool for the road-adjacent generic spots (Clay Pit, Field), which
-# previously duplicated identical inline Old Coin rare yields.
-tableId,item,weight,minQty,maxQty
+﻿tableId,item,weight,minQty,maxQty
 old_coin_finds,Old Coin,1,1,1

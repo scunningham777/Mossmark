@@ -22,6 +22,14 @@ MonoBehaviour:
   - rid: 478763229186883717
   tint: {r: 0.62, g: 0.48, b: 0.72, a: 1}
   worldStateFlag: 
+  stationName: Consecrated Hearth
+  biasPropertyIds:
+  - burns_slow
+  - keeps_well
+  - turns_water
+  - holds_the_cold
+  - heavy_true
+  - split_prone
   references:
     version: 2
     RefIds:

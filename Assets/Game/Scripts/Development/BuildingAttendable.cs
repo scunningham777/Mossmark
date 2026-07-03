@@ -24,7 +24,13 @@ namespace Mossmark.Development
     // each rest; cold buildings (driftProgress >= driftThreshold) cost extra daylight
     // per development tick. Direct attend with the maintenance material resets drift.
     // Chest passive consumption is handled by MaintenanceManager.
-    public class BuildingAttendable : DevelopableEntity, IAttendable, IMaintenanceConsumer
+    //
+    // Iteration 39: conversion stations. A building whose FINAL stage def carries
+    // biasPropertyIds becomes a station once fully developed — attending it opens the
+    // working view (WorkshopUI) instead of the linger flavor. Opening is free and
+    // one-shot, same as the chest. Station-ness is pure stage data; unlocking one is
+    // exactly restoring a building.
+    public class BuildingAttendable : DevelopableEntity, IAttendable, IMaintenanceConsumer, IWorkStation
     {
         [SerializeField] private string dilapidatedName = "Tumbledown Building";
         [SerializeField] private string declaredSpecialization;
@@ -41,11 +47,27 @@ namespace Mossmark.Development
         private float currentTickInterval;
         private bool lastAttentionWasVisit;
         private bool lastAttentionWasMaintenance;
+        private bool lastAttentionWasOpen;
 
         // IMaintenanceConsumer
         public int DriftThreshold => 5;
         public ItemDefinition MaintenanceMaterial => maintenanceMaterial;
         public int MaintenanceCostPerReset => maintenanceCostPerReset;
+
+        // IWorkStation — station-ness lives on the pool's final stage def.
+        private BuildingStageDef FinalStage =>
+            stages.Length > 0 ? stages[stages.Length - 1] : null;
+
+        private bool IsStationCapable =>
+            FinalStage != null && FinalStage.biasPropertyIds != null
+            && FinalStage.biasPropertyIds.Length > 0;
+
+        private bool IsStationOpen => IsStationCapable && GetNextStage() == null;
+
+        public string StationDisplayName => DisplayName;
+        public IReadOnlyList<string> BiasPropertyIds =>
+            IsStationCapable ? FinalStage.biasPropertyIds : System.Array.Empty<string>();
+        public GameObject StationObject => gameObject;
 
         public void Initialize(string dilapidatedName, BuildingStageDef[] stages,
             string declaredSpecialization, float minTickInterval = 2f, float maxTickInterval = 3f,
@@ -62,19 +84,24 @@ namespace Mossmark.Development
         }
 
         // Stage 0's displayName is the building's revived name; post-revival the name
-        // stays the same regardless of further stage progression.
+        // stays the same regardless of further stage progression — unless the final
+        // stage opened a station with its own stationName (the building has become
+        // something else: Woodland Shrine -> Consecrated Hearth).
         public override string DisplayName =>
-            stages.Length > 0 && CurrentStageIndex >= 0 ? stages[0].displayName : dilapidatedName;
+            IsStationOpen && !string.IsNullOrEmpty(FinalStage.stationName)
+                ? FinalStage.stationName
+                : stages.Length > 0 && CurrentStageIndex >= 0 ? stages[0].displayName : dilapidatedName;
 
         protected override DevelopmentTrack Track => track;
 
         public float AttentionDuration => currentTickInterval;
 
         public bool RequiresDaylight =>
-            !lastAttentionWasVisit && !lastAttentionWasMaintenance && LastAttentionMadeProgress;
+            !lastAttentionWasVisit && !lastAttentionWasMaintenance && !lastAttentionWasOpen
+            && LastAttentionMadeProgress;
 
         public bool ContinueAttending =>
-            !lastAttentionWasVisit && !lastAttentionWasMaintenance
+            !lastAttentionWasVisit && !lastAttentionWasMaintenance && !lastAttentionWasOpen
             && LastAttentionMadeProgress && !LastAttentionAppliedStage;
 
         private void Awake()
@@ -144,7 +171,9 @@ namespace Mossmark.Development
                 return $"Hold E to tend to the {DisplayName}";
 
             if (GetNextStage() == null)
-                return $"Hold E to linger near the {DisplayName}";
+                return IsStationOpen
+                    ? $"Hold E to work at the {DisplayName}"
+                    : $"Hold E to linger near the {DisplayName}";
 
             int nextIndex = CurrentStageIndex + 1;
             var stageDef = stages[nextIndex];
@@ -161,6 +190,7 @@ namespace Mossmark.Development
         {
             lastAttentionWasVisit = false;
             lastAttentionWasMaintenance = false;
+            lastAttentionWasOpen = false;
 
             // Priority 1: direct maintenance — consuming material resets drift.
             if (DriftProgress > 0 && maintenanceMaterial != null
@@ -176,9 +206,18 @@ namespace Mossmark.Development
                 return;
             }
 
-            // Priority 2: linger when fully developed.
+            // Priority 2: fully developed — stations open the working view (free,
+            // one-shot, same as the chest); everything else lingers for flavor.
             if (GetNextStage() == null)
             {
+                if (IsStationOpen)
+                {
+                    lastAttentionWasOpen = true;
+                    WorkshopUI.Instance?.Open(this);
+                    RollTickInterval();
+                    return;
+                }
+
                 lastAttentionWasVisit = true;
                 PostRestoredFlavor();
                 RollTickInterval();

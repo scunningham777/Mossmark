@@ -13,16 +13,16 @@ MonoBehaviour:
   m_Name: spot_bee_skep
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.World.WildernessSpotDefinition
   kind: 1
+  spotId:
   displayName: Bee Skep
   color: {r: 0.85, g: 0.65, b: 0.15, a: 1}
   interactionVerb: forage
   commonYields: []
-  rareYield:
-    Item: {fileID: 0}
-    MinQuantity: 1
-    MaxQuantity: 1
-    Weight: 1
+  rareYields: []
   rareDropChance: 0
+  rareYieldTable: {fileID: 0}
+  minTickInterval: 1.5
+  maxTickInterval: 2
   tendVerb: tend
   harvestYields:
   - Item: {fileID: 11400000, guid: f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6, type: 2}
@@ -31,3 +31,4 @@ MonoBehaviour:
     Weight: 1
   restsToHarvest: 2
   maxConcurrentMarked: 2
+  knowledgeYields: []

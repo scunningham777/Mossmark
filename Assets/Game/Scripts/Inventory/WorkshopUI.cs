@@ -12,6 +12,12 @@ namespace Mossmark.Inventory
     // Items referenced in slots are NOT pre-removed from inventory; consumption happens
     // at Work time. Failure consumes nothing and reveals one unknown property.
     // Reuses ChestUI's code-first UIDocument + UI action map pattern.
+    //
+    // Iteration 39: one shared working view for any number of IWorkStation instances.
+    // The open station's biasPropertyIds filter both recipe resolution and property
+    // discovery (success and failure) — a property outside the station's bias can
+    // neither be confirmed nor stumbled onto here. That filter is what makes station
+    // choice a decision instead of a UI skin.
     [RequireComponent(typeof(UIDocument))]
     public class WorkshopUI : MonoBehaviour
     {
@@ -27,11 +33,15 @@ namespace Mossmark.Inventory
 
         private enum Column { Pack, Slots }
 
-        private WorkshopAttendable currentWorkshop;
+        private IWorkStation currentStation;
+        private readonly HashSet<string> stationBias = new();
         private VisualElement root;
+        private Label titleLabel;
         private VisualElement packList;
         private VisualElement slotsList;
         private FontDefinition fallbackFont;
+
+        private string StationName => currentStation?.StationDisplayName ?? "Workshop";
 
         private InputAction navigateAction;
         private InputAction submitAction;
@@ -118,7 +128,7 @@ namespace Mossmark.Inventory
                 }
             };
 
-            var title = MakeLabel("The Workshop", 18, FontStyle.Bold, marginBottom: 8);
+            titleLabel = MakeLabel("The Workshop", 18, FontStyle.Bold, marginBottom: 8);
             var columns = new VisualElement { style = { flexDirection = FlexDirection.Row } };
 
             packList = BuildColumn("Pack", columns);
@@ -126,7 +136,7 @@ namespace Mossmark.Inventory
 
             var hint = MakeLabel("W/S select  A/D switch  Enter place/work  Esc close", 11, color: new Color(1f, 1f, 1f, 0.7f), marginTop: 8);
 
-            root.Add(title);
+            root.Add(titleLabel);
             root.Add(columns);
             root.Add(hint);
             uiRoot.Add(root);
@@ -147,13 +157,19 @@ namespace Mossmark.Inventory
             return list;
         }
 
-        public void Open(WorkshopAttendable workshop)
+        public void Open(IWorkStation station)
         {
-            currentWorkshop = workshop;
+            currentStation = station;
+            stationBias.Clear();
+            if (station.BiasPropertyIds != null)
+                foreach (var pid in station.BiasPropertyIds)
+                    if (!string.IsNullOrEmpty(pid)) stationBias.Add(pid);
+
             IsOpen = true;
             selectedColumn = Column.Pack;
             selectedIndex = 0;
             lastNavigate = Vector2.zero;
+            titleLabel.text = $"The {StationName}";
             root.style.display = DisplayStyle.Flex;
             Refresh();
         }
@@ -161,7 +177,8 @@ namespace Mossmark.Inventory
         public void Close()
         {
             IsOpen = false;
-            currentWorkshop = null;
+            currentStation = null;
+            stationBias.Clear();
             ClearSlots();
             root.style.display = DisplayStyle.None;
         }
@@ -258,7 +275,7 @@ namespace Mossmark.Inventory
         {
             if (DayCycleManager.Instance != null && !DayCycleManager.Instance.HasDaylight)
             {
-                NotificationManager.Post("Workshop: too dark to work now.");
+                NotificationManager.Post($"{StationName}: too dark to work now.");
                 return;
             }
 
@@ -268,7 +285,7 @@ namespace Mossmark.Inventory
 
             if (!hasAnyPlaced)
             {
-                NotificationManager.Post("Workshop: place something to work with.");
+                NotificationManager.Post($"{StationName}: place something to work with.");
                 return;
             }
 
@@ -288,7 +305,7 @@ namespace Mossmark.Inventory
         {
             foreach (var recipe in recipes)
             {
-                if (recipe == null) continue;
+                if (recipe == null || !IsRecipeInStationBias(recipe)) continue;
                 if (recipe.TryMatch(placedItems, out matchedSlots))
                 {
                     matched = recipe;
@@ -301,11 +318,43 @@ namespace Mossmark.Inventory
             return false;
         }
 
+        // Iteration 39: recipes partition across stations by property bias. A
+        // property-keyed recipe resolves only where the station can resolve every
+        // property it hinges on. An item-keyed recipe hooks in through its input
+        // items' latent properties — available where at least one is in the bias
+        // (or everywhere, if its items carry no properties at all).
+        private bool IsRecipeInStationBias(ConversionDef recipe)
+        {
+            bool anyPropertyInput = false;
+            foreach (var input in recipe.inputs)
+            {
+                if (input.kind != ConversionDef.Input.Kind.Property) continue;
+                anyPropertyInput = true;
+                if (!stationBias.Contains(input.propertyId)) return false;
+            }
+
+            if (anyPropertyInput) return true;
+
+            bool anyItemProperty = false;
+            foreach (var input in recipe.inputs)
+            {
+                var ids = input.item != null ? input.item.PropertyIds : null;
+                if (ids == null) continue;
+                foreach (var pid in ids)
+                {
+                    anyItemProperty = true;
+                    if (stationBias.Contains(pid)) return true;
+                }
+            }
+
+            return !anyItemProperty;
+        }
+
         private void HandleSuccess(ConversionDef recipe, int[] matchedSlots)
         {
             var discoveredItemIds = new List<string>();
 
-            // Consume matched inputs and reveal all their properties.
+            // Consume matched inputs and reveal their properties (bias-filtered).
             for (int i = 0; i < recipe.inputs.Length; i++)
             {
                 var input = recipe.inputs[i];
@@ -314,7 +363,7 @@ namespace Mossmark.Inventory
                 {
                     // Remove required quantity from inventory (item-keyed).
                     ConsumeFromInventory(input.item, input.quantity);
-                    RevealAllProperties(input.item, discoveredItemIds);
+                    RevealBiasedProperties(input.item, discoveredItemIds);
 
                     // Clear the matching slots for item-keyed inputs.
                     int needed = input.quantity;
@@ -331,7 +380,7 @@ namespace Mossmark.Inventory
                     if (item != null)
                     {
                         ConsumeFromInventory(item, 1);
-                        RevealAllProperties(item, discoveredItemIds);
+                        RevealBiasedProperties(item, discoveredItemIds);
                         placedItems[slot] = null;
                     }
                 }
@@ -345,10 +394,10 @@ namespace Mossmark.Inventory
             string flavor = !string.IsNullOrEmpty(recipe.flavorText)
                 ? recipe.flavorText
                 : $"yields {recipe.outputItem?.DisplayName ?? "something"}.";
-            NotificationManager.Post($"Workshop: {flavor}");
+            NotificationManager.Post($"{StationName}: {flavor}");
 
-            // Trigger stage-cross tier signal on the Workshop entity.
-            currentWorkshop?.GetComponent<Mossmark.Visuals.EntityFeedback>()?.TriggerPop();
+            // Trigger stage-cross tier signal on the station entity.
+            currentStation?.StationObject?.GetComponent<Mossmark.Visuals.EntityFeedback>()?.TriggerPop();
 
             // Highlight newly discovered items then fade after 1.5s.
             foreach (var id in discoveredItemIds)
@@ -360,7 +409,9 @@ namespace Mossmark.Inventory
 
         private void HandleFailure()
         {
-            // Try to reveal one unknown property from placed items.
+            // Try to reveal one unknown property from placed items — only properties
+            // this station can resolve (Iteration 39): off-bias properties can't be
+            // stumbled onto here, which is what makes visiting another station matter.
             var candidates = new List<(ItemDefinition item, string propId)>();
             for (int i = 0; i < SlotCount; i++)
             {
@@ -368,7 +419,7 @@ namespace Mossmark.Inventory
                 if (item?.PropertyIds == null) continue;
                 foreach (var pid in item.PropertyIds)
                 {
-                    if (!PropertyKnowledge.IsKnown(item.ItemId, pid))
+                    if (stationBias.Contains(pid) && !PropertyKnowledge.IsKnown(item.ItemId, pid))
                         candidates.Add((item, pid));
                 }
             }
@@ -380,7 +431,7 @@ namespace Mossmark.Inventory
 
                 var def = PropertyRegistry.GetById(pick.propId);
                 string phrase = def != null ? def.Phrase : pick.propId;
-                NotificationManager.Post($"Workshop: nothing comes of it — though you notice {pick.item.DisplayName} {phrase}.");
+                NotificationManager.Post($"{StationName}: nothing comes of it — though you notice {pick.item.DisplayName} {phrase}.");
 
                 highlightDiscoveredItemIds.Add(pick.item.ItemId);
                 Refresh();
@@ -388,7 +439,7 @@ namespace Mossmark.Inventory
             }
             else
             {
-                NotificationManager.Post("Workshop: nothing comes of it.");
+                NotificationManager.Post($"{StationName}: nothing comes of it.");
                 Refresh();
             }
         }
@@ -398,12 +449,12 @@ namespace Mossmark.Inventory
             InventoryManager.Instance?.RemoveItem(item, qty);
         }
 
-        private static void RevealAllProperties(ItemDefinition item, List<string> discoveredOut)
+        private void RevealBiasedProperties(ItemDefinition item, List<string> discoveredOut)
         {
             if (item?.PropertyIds == null) return;
             foreach (var pid in item.PropertyIds)
             {
-                if (!PropertyKnowledge.IsKnown(item.ItemId, pid))
+                if (stationBias.Contains(pid) && !PropertyKnowledge.IsKnown(item.ItemId, pid))
                 {
                     PropertyKnowledge.MarkKnown(item.ItemId, pid);
                     discoveredOut.Add(item.ItemId);

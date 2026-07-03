@@ -2364,16 +2364,18 @@ MonoBehaviour:
   m_GameObject: {fileID: 902000001}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9def689cf7bd9094295c266097a408b7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Inventory.WorkshopAttendable
+  m_Script: {fileID: 11500000, guid: d5e807800cdac3c499b7e9fe1fef3409, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Development.BuildingAttendable
   dilapidatedName: Derelict Workshop
-  restorationMaterial: {fileID: 11400000, guid: 1b2d1db0ac88c6f45ac553dd0929a3bc, type: 2}
-  restorationCostPerTick: 2
-  restorationProgressCost: 4
+  declaredSpecialization:
   minTickInterval: 2
   maxTickInterval: 3
-  restoredTint: {r: 0.55, g: 0.5, b: 0.4, a: 1}
+  stages:
+  - {fileID: 11400000, guid: ca952feaf06cc6947990b465d18f2f6d, type: 2}
+  restoredFlavors: []
+  coldFlavor:
+  maintenanceCostPerReset: 2
 --- !u!114 &902000003
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2556,6 +2558,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4, type: 2}
   - {fileID: 11400000, guid: c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5, type: 2}
   - {fileID: 11400000, guid: d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a8, type: 2}
+  - {fileID: 11400000, guid: 888c74542dd64db38f9d0ef2f133175c, type: 2}
+  - {fileID: 11400000, guid: a2b4812b6538489e88ce0bc25d1a77c4, type: 2}
 --- !u!114 &902100003
 MonoBehaviour:
   m_ObjectHideFlags: 0

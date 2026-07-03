@@ -13,16 +13,16 @@ MonoBehaviour:
   m_Name: spot_bramble_patch
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.World.WildernessSpotDefinition
   kind: 1
+  spotId:
   displayName: Bramble Patch
   color: {r: 0.5, g: 0.1, b: 0.45, a: 1}
   interactionVerb: forage
   commonYields: []
-  rareYield:
-    Item: {fileID: 0}
-    MinQuantity: 1
-    MaxQuantity: 1
-    Weight: 1
+  rareYields: []
   rareDropChance: 0
+  rareYieldTable: {fileID: 0}
+  minTickInterval: 1.5
+  maxTickInterval: 2
   tendVerb: tend
   harvestYields:
   - Item: {fileID: 11400000, guid: 4f53be0c9d7940a6b8213bb827ef3635, type: 2}
@@ -31,3 +31,4 @@ MonoBehaviour:
     Weight: 1
   restsToHarvest: 1
   maxConcurrentMarked: 2
+  knowledgeYields: []

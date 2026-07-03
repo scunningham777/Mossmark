@@ -85,7 +85,7 @@ namespace Mossmark.Editor
                 "assetName", "spotId", "kind", "displayName",
                 "color_r", "color_g", "color_b",
                 "interactionVerb", "commonYields", "rareYields", "rareDropChance",
-                "commonYieldTable", "rareYieldTable",
+                "rareYieldTable",
                 "minTickInterval", "maxTickInterval",
                 "tendVerb", "harvestYields", "restsToHarvest", "maxConcurrentMarked"
             };
@@ -109,7 +109,6 @@ namespace Mossmark.Editor
                     YieldsToCompact(a.commonYields),
                     YieldsToCompact(a.rareYields),
                     Fmt(a.rareDropChance),
-                    a.commonYieldTable != null ? a.commonYieldTable.name : "",
                     a.rareYieldTable != null ? a.rareYieldTable.name : "",
                     Fmt(a.minTickInterval), Fmt(a.maxTickInterval),
                     a.tendVerb,
@@ -195,7 +194,8 @@ namespace Mossmark.Editor
             var headers = new[]
             {
                 "stageId", "displayName", "verb", "material", "costPerTick", "progressCost",
-                "pool", "tint_r", "tint_g", "tint_b", "worldStateFlag"
+                "pool", "tint_r", "tint_g", "tint_b", "worldStateFlag",
+                "stationName", "biasPropertyIds"
             };
             var rows = new List<string[]>();
             foreach (var s in stages)
@@ -206,7 +206,9 @@ namespace Mossmark.Editor
                     s.costPerTick.ToString(), s.progressCost.ToString(),
                     poolOf.TryGetValue(s, out var pool) ? pool : "",
                     Fmt(s.tint.r), Fmt(s.tint.g), Fmt(s.tint.b),
-                    s.worldStateFlag
+                    s.worldStateFlag,
+                    s.stationName,
+                    string.Join(";", s.biasPropertyIds ?? System.Array.Empty<string>())
                 });
 
             WriteCsv(Path.Combine(OutDir, "building_stages.csv"), headers, rows);

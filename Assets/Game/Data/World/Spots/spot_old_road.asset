@@ -22,14 +22,9 @@ MonoBehaviour:
     MinQuantity: 1
     MaxQuantity: 2
     Weight: 1
-  rareYields:
-  - Item: {fileID: 11400000, guid: 1066a13ea81de794aa4f4ff5491bcebc, type: 2}
-    MinQuantity: 1
-    MaxQuantity: 1
-    Weight: 1
+  rareYields: []
   rareDropChance: 0.08
-  commonYieldTable: {fileID: 0}
-  rareYieldTable: {fileID: 0}
+  rareYieldTable: {fileID: 11400000, guid: 19de3c0383ac120498470c0f5720d0a4, type: 2}
   minTickInterval: 2
   maxTickInterval: 2.5
   tendVerb: tend

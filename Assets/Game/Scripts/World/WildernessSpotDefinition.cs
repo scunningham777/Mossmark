@@ -28,10 +28,10 @@ namespace Mossmark.World
         // the pool decides which. A single entry reproduces the old scalar behavior.
         [SerializeField] public ItemYield[] rareYields;
         [SerializeField, Range(0f, 1f)] public float rareDropChance = 0.08f;
-        // Optional shared-pool references (P1 LootTable pattern): when set, the table's
-        // entries REPLACE the corresponding inline list above. Use for pools genuinely
-        // shared across spot types; inline lists remain right for one-off content.
-        [SerializeField] public YieldTable commonYieldTable;
+        // Optional shared-pool reference (P1 LootTable pattern): when set, the table's
+        // entries REPLACE rareYields above. Use for pools genuinely shared across spot
+        // types (e.g. old_coin_finds); inline lists remain right for one-off content.
+        // commonYields has no table counterpart — no shared common pool has existed yet.
         [SerializeField] public YieldTable rareYieldTable;
         // Tick interval range for generic spots (tended spots ignore these).
         [SerializeField, Min(0.1f)] public float minTickInterval = 1.5f;
@@ -46,9 +46,6 @@ namespace Mossmark.World
         // Knowledge yield entries — usually empty for generic pool spots; checked at roll
         // time against WorldState flags to inject extra items into the common pool per tick.
         [SerializeField] public KnowledgeYieldEntry[] knowledgeYields = System.Array.Empty<KnowledgeYieldEntry>();
-
-        public ItemYield[] EffectiveCommonYields =>
-            commonYieldTable != null ? commonYieldTable.Entries : commonYields;
 
         public ItemYield[] EffectiveRareYields =>
             rareYieldTable != null ? rareYieldTable.Entries : rareYields;

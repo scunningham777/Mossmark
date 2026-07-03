@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace Mossmark.Development
@@ -16,6 +17,11 @@ namespace Mossmark.Development
         // instead of folk phrases, so you can see the mechanical layer directly).
         public static bool ShowDebugTags => showDebugTags;
 
+        // Fires whenever a property is newly revealed (single item or RevealAll),
+        // so UI showing property text (e.g. InventoryUI) can refresh without
+        // relying on InventoryManager.InventoryChanged, which doesn't fire on discovery.
+        public static event Action PropertyRevealed;
+
         public static bool IsKnown(string itemId, string propertyId)
         {
             if (allRevealed) return true;
@@ -26,11 +32,16 @@ namespace Mossmark.Development
         {
             if (!known.ContainsKey(itemId))
                 known[itemId] = new HashSet<string>();
-            known[itemId].Add(propertyId);
+            if (known[itemId].Add(propertyId))
+                PropertyRevealed?.Invoke();
         }
 
         // Debug: reveal all properties on all items without discovery grinding.
-        public static void RevealAll() => allRevealed = true;
+        public static void RevealAll()
+        {
+            allRevealed = true;
+            PropertyRevealed?.Invoke();
+        }
 
         // Debug: cycle back to normal (unknown) state for testing fresh discovery.
         public static void HideAll()

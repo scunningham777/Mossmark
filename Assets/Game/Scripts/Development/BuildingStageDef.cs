@@ -23,5 +23,12 @@ namespace Mossmark.Development
         public Color tint = new(0.5f, 0.5f, 0.45f, 1f);
         // WorldState flag set to true when this stage completes. Empty = no flag.
         public string worldStateFlag;
+        // Station block (Iteration 39): a non-empty biasPropertyIds on a pool's FINAL
+        // stage makes the fully-developed building a conversion station — attending it
+        // opens the working view instead of the linger flavor, and recipe matching plus
+        // property discovery are filtered to these property ids. stationName, when set,
+        // replaces the building's display name once the station opens.
+        public string stationName;
+        public string[] biasPropertyIds = System.Array.Empty<string>();
     }
 }

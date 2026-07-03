@@ -1,11 +1,4 @@
-﻿# NPC post-specialization stages: one row per NpcStageDef asset (created by import if missing
-# at Assets/Game/Data/Development/NpcStages/{stageId}.asset). The `pool` column groups stages
-# in row order into NpcStagePool assets — row order IS track order. Gates live in
-# stage_conditions.csv; the archetype's own spec-realized gate is prepended structurally by
-# NpcAttendable, not authored. progressCost carries the iteration-33.1 doubling (6/8).
-# passiveDriftSourceSpotId: wilderness_spots.csv spotId whose tendedness drives passive
-# progress each rest (iterations 31/34); empty = attention-only. Export drops these comments.
-stageId,displayName,progressCost,pool,flavorText,worldStateFlag,passiveDriftSourceSpotId
+﻿stageId,displayName,progressCost,pool,flavorText,worldStateFlag,passiveDriftSourceSpotId
 bog_keeper_drainage,Drainage Channels,6,bog_keeper_pool,clears Drainage Channels - the fen's margins grow more passable.,bog_keeper_drainage,bog
 bog_keeper_iron_sense,Iron-Sense,8,bog_keeper_pool,develops Iron-Sense - bog iron deposits reveal themselves more readily.,bog_keeper_iron_sense,
 hedge_witch_wound_lore,Wound Lore,6,hedge_witch_pool,learns Wound Lore - healing herbs ease the hurt of bad encounters.,hedge_witch_wound_lore,sacred_grove

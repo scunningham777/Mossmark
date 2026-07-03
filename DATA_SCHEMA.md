@@ -32,7 +32,7 @@ Multi-value cells use semicolons (`spots`) or the packed yield format (below). B
 
 ## `yield_tables.csv`
 
-One row per entry; rows sharing a `tableId` populate one `YieldTable` — the P2 analogue of P1's `loot_tables.csv`. Referenced from `wilderness_spots.csv` via `commonYieldTable` / `rareYieldTable`; a set table reference **replaces** that spot's inline list. Author a table only when a pool is genuinely shared across owners — inline lists remain right for one-off content.
+One row per entry; rows sharing a `tableId` populate one `YieldTable` — the P2 analogue of P1's `loot_tables.csv`. Referenced from `wilderness_spots.csv` via `rareYieldTable`; a set table reference **replaces** that spot's inline `rareYields` list. Author a table only when a pool is genuinely shared across owners — inline lists remain right for one-off content. There is no `commonYieldTable` — no shared common pool has existed yet; add one only if that changes.
 
 | Column | Type | Notes |
 |--------|------|-------|
@@ -41,7 +41,7 @@ One row per entry; rows sharing a `tableId` populate one `YieldTable` — the P2
 | `weight` | float | Relative weight within the table. |
 | `minQty` / `maxQty` | int | Quantity range when this entry is picked. |
 
-Live example: `old_coin_finds` — shared rare pool for Clay Pit and Field, which previously duplicated identical inline Old Coin rare yields.
+Live example: `old_coin_finds` — shared rare pool for Clay Pit, Field, and Old Road, which previously duplicated identical inline Old Coin rare yields.
 
 ---
 
@@ -58,7 +58,7 @@ One row per `WildernessSpotDefinition` — both the generic/tended pool spots ra
 | `commonYields` | packed yields | Weighted per-tick pool (Generic only). |
 | `rareYields` | packed yields | Weighted **pool** of rare candidates — `rareDropChance` gates whether a rare drops; the pool decides which. A single entry reproduces the old scalar behavior. |
 | `rareDropChance` | float | 0–1 per tick, modified at runtime (twilight ×1.5, tendedness bands). |
-| `commonYieldTable` / `rareYieldTable` | string | Optional `yield_tables.csv` `tableId`; when set, replaces the corresponding inline list. |
+| `rareYieldTable` | string | Optional `yield_tables.csv` `tableId`; when set, replaces the inline `rareYields` list. |
 | `minTickInterval` / `maxTickInterval` | float | Seconds per attention tick (generic pool 1.5–2.0; archetype spots 2.0–2.5 per iteration 26). |
 | `tendVerb`, `harvestYields`, `restsToHarvest`, `maxConcurrentMarked` | | Tended-kind fields. |
 | `knowledgeN_flag` / `knowledgeN_specializationId` / `knowledgeN_item` / `_minQty` / `_maxQty` / `_weight` | | Knowledge yield injections (iterations 28/34): entry activates via WorldState flag **or** realized specialization (flag wins if both set) and injects the item into the common pool per tick. N = 1, 2, 3, … |
@@ -98,8 +98,12 @@ One row per `BuildingStageDef` asset. The `pool` column groups stages in row ord
 | `pool` | string | `BuildingStagePool` asset name. |
 | `tint_r/g/b` | float | Building tint once this stage completes. |
 | `worldStateFlag` | string | Flag set true when this stage completes (iteration 34, seam 3). |
+| `stationName` | string | Iteration 39: name the building takes on when its station opens (empty = name unchanged). Only meaningful on a pool's final stage. |
+| `biasPropertyIds` | string | Iteration 39: semicolon-separated property ids. Non-empty on a pool's **final** stage makes the fully-developed building a conversion station; recipe resolution and property discovery at that station are filtered to these ids. Coverage rule: every `PropertyRegistry` id must appear in ≥2 stations' bias lists. |
 
 The material-availability gate is implicit — `BuildingAttendable` derives it from `material`/`costPerTick`. Extra gates (the old `requiredSpecialization`) are authored rows in `stage_conditions.csv`.
+
+Live stations: `workshop_restoration` (pool `workshop_pool`, scene-placed Workshop), `bog_fen_shrine` (Fen Shrine, bog building's third stage), `sacred_grove_hearth` (Consecrated Hearth). Conversion recipes themselves (`ConversionDef`) are not in the CSV pipeline — authored as `.asset` files under `Assets/Game/Data/Conversions/` and referenced from the scene's `WorkshopUI.recipes`.
 
 ---
 
@@ -146,9 +150,10 @@ Unchanged by the migration — one row per `WanderingThingDefinition` with dynam
 
 ## Authoring checklists
 
-- A new **shared yield pool**: row(s) in `yield_tables.csv`; reference from a spot's `commonYieldTable`/`rareYieldTable`.
+- A new **shared yield pool**: row(s) in `yield_tables.csv`; reference from a spot's `rareYieldTable`.
 - A new **wilderness spot type**: one row in `wilderness_spots.csv`. Give it a `spotId` only if something will reference it. Add it to an archetype's `spots` list and/or the scene `WorldGenerator.spotPool` for random placement.
 - A new **NPC post-spec stage**: a row in `npc_stages.csv` (with `pool`), gate rows in `stage_conditions.csv`. New pool names create pool assets automatically; point an archetype's `npcStagePool` at it.
 - A new **building stage**: a row in `building_stages.csv` in the right pool position (order matters; first = revival), gate rows in `stage_conditions.csv` if it needs more than material.
+- A new **conversion station**: set `stationName` + `biasPropertyIds` on the building pool's **final** stage row in `building_stages.csv`. Audit that every property id still appears in ≥2 stations' bias lists. New recipes are `ConversionDef` assets added to the scene's `WorkshopUI.recipes`.
 - A new **archetype**: create the `.asset` (menu: Mossmark/World/Place Archetype), then a `place_archetypes.csv` row referencing its spots/pools; add it to `RegionData.ArchetypePool` by hand.
 - A **cross-pursuit seam**: wilderness→NPC = `passiveDriftSourceSpotId` on the stage row; NPC→wilderness = `knowledgeN_specializationId` on the spot row; building→anything = `worldStateFlag` on the building stage row + `knowledgeN_flag`/`worldflag` gates on the consumer.

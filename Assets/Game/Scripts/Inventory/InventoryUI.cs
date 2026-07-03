@@ -42,6 +42,8 @@ namespace Mossmark.Inventory
                 InventoryManager.Instance.InventoryChanged += Refresh;
             }
 
+            PropertyKnowledge.PropertyRevealed += Refresh;
+
             Refresh();
         }
 
@@ -51,6 +53,8 @@ namespace Mossmark.Inventory
             {
                 InventoryManager.Instance.InventoryChanged -= Refresh;
             }
+
+            PropertyKnowledge.PropertyRevealed -= Refresh;
         }
 
         private void Update()

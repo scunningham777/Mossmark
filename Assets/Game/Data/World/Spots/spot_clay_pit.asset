@@ -28,7 +28,6 @@ MonoBehaviour:
     Weight: 0.3
   rareYields: []
   rareDropChance: 0.08
-  commonYieldTable: {fileID: 0}
   rareYieldTable: {fileID: 11400000, guid: 19de3c0383ac120498470c0f5720d0a4, type: 2}
   minTickInterval: 1.5
   maxTickInterval: 2

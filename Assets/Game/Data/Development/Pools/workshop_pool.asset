@@ -10,9 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 089b5443f3691ab4b9f4ec45039fec89, type: 3}
-  m_Name: bog_building_pool
+  m_Name: workshop_pool
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Development.BuildingStagePool
   stages:
-  - {fileID: 11400000, guid: 5c18069e537686145805cc8d790213a8, type: 2}
-  - {fileID: 11400000, guid: c61da51c45331704d99bada493f51218, type: 2}
-  - {fileID: 11400000, guid: ab518226d0e1cad488b70d01e80432dc, type: 2}
+  - {fileID: 11400000, guid: ca952feaf06cc6947990b465d18f2f6d, type: 2}

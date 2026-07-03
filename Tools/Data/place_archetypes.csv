@@ -1,15 +1,4 @@
-# tuned: iteration 26, iteration 33.1
-# Relational-data migration: PlaceArchetype is a thin composition root. Spots live in
-# wilderness_spots.csv (referenced here by assetName, semicolon-separated — an archetype can
-# list any number); NPC/building stages live in npc_stages.csv / building_stages.csv (+
-# stage_conditions.csv), referenced here by pool asset name. npcMaintenanceMaterial is the
-# explicit item the NPC's maintenance path consumes (was CommonYields[0] positionally).
-# poiRareYields is a weighted pool (Item:weight:min:max, comma-separated); poiRareDropChance
-# gates whether a rare drops, the pool decides which.
-# Cross-pursuit seams (iteration 34) are authored across the relational files now:
-#   Seam 1: npc_stages.csv passiveDriftSourceSpotId <- wilderness_spots.csv spotId
-#   Seam 2/3: wilderness_spots.csv knowledgeN gates <- specialization / building worldStateFlag
-assetName,archetypeId,displayName,spots,specializationId,stageDisplayName,npcTitle,npcTint_r,npcTint_g,npcTint_b,poiDisplayName,poiLockedDescription,poiVerb,poiColor_r,poiColor_g,poiColor_b,poiCommonYields,poiRareYields,poiRareDropChance,poiMinTickInterval,poiMaxTickInterval,npcStagePool,buildingStagePool,npcMaintenanceMaterial,buildingColdFlavor,buildingMaintenanceCost,npcColdFlavor,npcMaintenanceCost,buildingDilapidatedName,buildingDilapidatedColor_r,buildingDilapidatedColor_g,buildingDilapidatedColor_b
+﻿assetName,archetypeId,displayName,spots,specializationId,stageDisplayName,npcTitle,npcTint_r,npcTint_g,npcTint_b,poiDisplayName,poiLockedDescription,poiVerb,poiColor_r,poiColor_g,poiColor_b,poiCommonYields,poiRareYields,poiRareDropChance,poiMinTickInterval,poiMaxTickInterval,npcStagePool,buildingStagePool,npcMaintenanceMaterial,buildingColdFlavor,buildingMaintenanceCost,npcColdFlavor,npcMaintenanceCost,buildingDilapidatedName,buildingDilapidatedColor_r,buildingDilapidatedColor_g,buildingDilapidatedColor_b
 archetype_bog,bog,Fen Bog,spot_fen_bog,bog_tender,Take Up Bog-Tending,Bog Keeper,0.3,0.4,0.25,Fen Bog Hollow,"A shape rests beneath the dark water, just out of reach.",dredge,0.16,0.2,0.15,Crow Feather:1:1:2,Sunken Bell:1:1:1,0.05,2,2.5,bog_keeper_pool,bog_building_pool,Bog Iron,,2,,1,Rotting Sluice,0.3,0.28,0.2
 archetype_old_road,old_road,Old Road,spot_old_road,herald,Take Up the Herald's Watch,Herald,0.75,0.7,0.5,Old Road Checkpoint,"A sealed cairn of stones stands beside the road, untouched for generations.",search the ruins,0.62,0.58,0.45,Old Coin:1:1:2,Tally Stick:1:1:1,0.05,2,2.5,herald_pool,old_road_building_pool,Flint,,2,,1,Overgrown Waypost,0.42,0.4,0.32
 archetype_quarry,quarry,Old Quarry,spot_old_quarry,stonemason,Take Up Stonework,Stonemason,0.6,0.62,0.68,Old Quarry Cut,"A collapsed cut leads deeper into the quarry wall, blocked by rubble.",dig through the rubble,0.4,0.4,0.46,Quartz:1:1:2,Carved Sigil Stone:1:1:1,0.05,2,2.5,,quarry_building_pool,Flat Stones,,2,,1,Crumbled Cutting House,0.42,0.42,0.46

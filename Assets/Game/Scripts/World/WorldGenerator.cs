@@ -208,7 +208,7 @@ namespace Mossmark.World
                 var spot = go.AddComponent<GenericWildernessSpotAttendable>();
                 spot.Initialize(
                     def.displayName, def.interactionVerb,
-                    def.EffectiveCommonYields, def.EffectiveRareYields, def.rareDropChance,
+                    def.commonYields, def.EffectiveRareYields, def.rareDropChance,
                     def.minTickInterval, def.maxTickInterval,
                     def.knowledgeYields);
                 if (!string.IsNullOrEmpty(def.spotId))

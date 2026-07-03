@@ -120,6 +120,13 @@ namespace Mossmark.Editor
                 so.FindProperty("progressCost").intValue    = I(row.Get("progressCost", "6"));
                 SetColor(so.FindProperty("tint"), row, "tint");
                 so.FindProperty("worldStateFlag").stringValue = row.Get("worldStateFlag");
+                so.FindProperty("stationName").stringValue = row.Get("stationName");
+                var biasProp = so.FindProperty("biasPropertyIds");
+                var biasIds = row.Get("biasPropertyIds")
+                    .Split(';', StringSplitOptions.RemoveEmptyEntries);
+                biasProp.arraySize = biasIds.Length;
+                for (int i = 0; i < biasIds.Length; i++)
+                    biasProp.GetArrayElementAtIndex(i).stringValue = biasIds[i].Trim();
                 ConditionCsvImporter.AssignConditions(so.FindProperty("conditions"),
                     stageConditions.TryGetValue(id, out var conds) ? conds : null);
                 if (so.ApplyModifiedProperties()) changed++;
@@ -225,8 +232,6 @@ namespace Mossmark.Editor
                 SetYields(so.FindProperty("rareYields"),
                     ParseYields(row.Get("rareYields"), items));
                 so.FindProperty("rareDropChance").floatValue  = F(row.Get("rareDropChance", "0.08"));
-                so.FindProperty("commonYieldTable").objectReferenceValue =
-                    LoadDataAsset<YieldTable>(row.Get("commonYieldTable"), "World/YieldTables");
                 so.FindProperty("rareYieldTable").objectReferenceValue =
                     LoadDataAsset<YieldTable>(row.Get("rareYieldTable"), "World/YieldTables");
                 so.FindProperty("minTickInterval").floatValue = F(row.Get("minTickInterval", "1.5"));
