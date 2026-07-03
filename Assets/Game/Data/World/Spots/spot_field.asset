@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: spot_field
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.World.WildernessSpotDefinition
   kind: 0
+  spotId: 
   displayName: Field
   color: {r: 0.4, g: 0.65, b: 0.25, a: 1}
   interactionVerb: forage
@@ -25,17 +26,14 @@ MonoBehaviour:
     MinQuantity: 1
     MaxQuantity: 2
     Weight: 0.4
-  rareYield:
-    Item: {fileID: 11400000, guid: 1066a13ea81de794aa4f4ff5491bcebc, type: 2}
-    MinQuantity: 1
-    MaxQuantity: 1
-    Weight: 1
+  rareYields: []
   rareDropChance: 0.08
+  commonYieldTable: {fileID: 0}
+  rareYieldTable: {fileID: 11400000, guid: 19de3c0383ac120498470c0f5720d0a4, type: 2}
+  minTickInterval: 1.5
+  maxTickInterval: 2
   tendVerb: tend
-  harvestYield:
-    Item: {fileID: 0}
-    MinQuantity: 1
-    MaxQuantity: 1
-    Weight: 1
+  harvestYields: []
   restsToHarvest: 1
   maxConcurrentMarked: 2
+  knowledgeYields: []

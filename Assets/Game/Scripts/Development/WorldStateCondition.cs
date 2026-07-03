@@ -12,6 +12,9 @@ namespace Mossmark.Development
         [SerializeField] private bool requiredValue;
         [SerializeField] private string needsDescription;
 
+        public string FlagId => flagId;
+        public bool RequiredValue => requiredValue;
+
         public WorldStateCondition(string flagId, bool requiredValue, string needsDescription)
         {
             this.flagId = flagId;

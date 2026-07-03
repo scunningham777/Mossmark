@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8, type: 3}
+  m_Name: spot_reed_marsh
+  m_EditorClassIdentifier: Assembly-CSharp::Mossmark.World.WildernessSpotDefinition
+  kind: 0
+  spotId: reed_marsh
+  displayName: Reed Marsh
+  color: {r: 0.55, g: 0.6, b: 0.32, a: 1}
+  interactionVerb: cut
+  commonYields:
+  - Item: {fileID: 11400000, guid: ed43e92716be4f129cbedee37842f471, type: 2}
+    MinQuantity: 1
+    MaxQuantity: 2
+    Weight: 1
+  rareYields:
+  - Item: {fileID: 11400000, guid: 3f4b7ff5850b4cdf863531d3defbf480, type: 2}
+    MinQuantity: 1
+    MaxQuantity: 1
+    Weight: 1
+  rareDropChance: 0.08
+  commonYieldTable: {fileID: 0}
+  rareYieldTable: {fileID: 0}
+  minTickInterval: 2
+  maxTickInterval: 2.5
+  tendVerb: tend
+  harvestYields: []
+  restsToHarvest: 1
+  maxConcurrentMarked: 2
+  knowledgeYields: []

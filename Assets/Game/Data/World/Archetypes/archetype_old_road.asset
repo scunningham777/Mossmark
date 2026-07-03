@@ -14,28 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.World.PlaceArchetype
   archetypeId: old_road
   displayName: Old Road
-  spotDisplayName: Old Road
-  spotVerb: search
-  spotColor: {r: 0.5, g: 0.47, b: 0.4, a: 1}
-  commonYields:
-  - Item: {fileID: 11400000, guid: 961a0538cbaf46f9a43f9aea11b18552, type: 2}
-    MinQuantity: 1
-    MaxQuantity: 2
-    Weight: 1
-  rareYield:
-    Item: {fileID: 11400000, guid: 1066a13ea81de794aa4f4ff5491bcebc, type: 2}
-    MinQuantity: 1
-    MaxQuantity: 1
-    Weight: 1
-  rareDropChance: 0.08
-  archetypeSpotMinTickInterval: 2
-  archetypeSpotMaxTickInterval: 2.5
-  spotKnowledgeYields:
-  - requiredFlag: herald_trail_markers
-    item: {fileID: 11400000, guid: 1066a13ea81de794aa4f4ff5491bcebc, type: 2}
-    minQty: 1
-    maxQty: 2
-    injectedWeight: 0.2
+  spots:
+  - {fileID: 11400000, guid: 9c793258f3dd4e348b1d0764900af98d, type: 2}
   specializationId: herald
   stageDisplayName: Take Up the Herald's Watch
   npcTitle: Herald
@@ -50,28 +30,15 @@ MonoBehaviour:
     MinQuantity: 1
     MaxQuantity: 2
     Weight: 1
-  poiRareYield:
-    Item: {fileID: 11400000, guid: db27dc7b4b884947baa040377bc5d03c, type: 2}
+  poiRareYields:
+  - Item: {fileID: 11400000, guid: db27dc7b4b884947baa040377bc5d03c, type: 2}
     MinQuantity: 1
     MaxQuantity: 1
     Weight: 1
   poiRareDropChance: 0.05
-  npcPostSpecStages:
-  - stageId: herald_trail_markers
-    displayName: Trail Markers
-    progressCost: 6
-    useRareItem: 0
-    itemCount: 3
-    flavorText: marks key paths and crossroads - travelers find the road safer.
-    worldStateFlag: herald_trail_markers
-  - stageId: herald_toll_records
-    displayName: Toll Records
-    progressCost: 8
-    useRareItem: 1
-    itemCount: 2
-    flavorText: establishes toll records - the settlement's standing on the road
-      grows.
-    worldStateFlag: herald_toll_records
+  poiMinTickInterval: 2
+  poiMaxTickInterval: 2.5
+  npcStagePool: {fileID: 11400000, guid: fb69f44211c9e154e86a32d149afd677, type: 2}
   npcExchangeChance: 0.2
   npcExchangeGifts:
   - Item: {fileID: 11400000, guid: 4f53be0c9d7940a6b8213bb827ef3635, type: 2}
@@ -87,25 +54,17 @@ MonoBehaviour:
   - names three towns past the ridge and says what each is worth visiting.
   - traces something in the dirt that might be a map, then scuffs it out.
   npcExchangeFlavors:
-  - tucks a fistful of berries into your kit. Road food. Don't make a ceremony of it.
+  - tucks a fistful of berries into your kit. Road food. Don't make a ceremony of
+    it.
   - hands you a tally stick, carved with distances you don't quite recognize.
+  buildingColdFlavor: 
+  buildingMaintenanceCost: 2
+  npcColdFlavor: 
+  npcMaintenanceCost: 1
+  npcMaintenanceMaterial: {fileID: 11400000, guid: 961a0538cbaf46f9a43f9aea11b18552, type: 2}
   buildingDilapidatedName: Overgrown Waypost
   buildingDilapidatedColor: {r: 0.42, g: 0.4, b: 0.32, a: 1}
-  buildingStages:
-  - displayName: Waypost
-    verb: clear
-    material: {fileID: 11400000, guid: 961a0538cbaf46f9a43f9aea11b18552, type: 2}
-    costPerTick: 2
-    progressCost: 4
-    requiredSpecialization: 
-    tint: {r: 0.65, g: 0.62, b: 0.5, a: 1}
-  - displayName: Mark the Route
-    verb: mark
-    material: {fileID: 11400000, guid: 1066a13ea81de794aa4f4ff5491bcebc, type: 2}
-    costPerTick: 2
-    progressCost: 4
-    requiredSpecialization: herald
-    tint: {r: 0.75, g: 0.72, b: 0.58, a: 1}
+  buildingStagePool: {fileID: 11400000, guid: cf5a445a17f0429428588c81e7d21054, type: 2}
   buildingRestoredFlavors:
   - stands as a quiet waypoint, recognized by those who know to look.
   - hums with a traveler's kind of life, never quite settled, never quite gone.

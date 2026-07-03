@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: spot_hollow_log
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.World.WildernessSpotDefinition
   kind: 0
+  spotId: 
   displayName: Hollow Log
   color: {r: 0.32, g: 0.2, b: 0.12, a: 1}
   interactionVerb: search
@@ -21,17 +22,18 @@ MonoBehaviour:
     MinQuantity: 1
     MaxQuantity: 3
     Weight: 1
-  rareYield:
-    Item: {fileID: 11400000, guid: e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6, type: 2}
+  rareYields:
+  - Item: {fileID: 11400000, guid: e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6, type: 2}
     MinQuantity: 1
     MaxQuantity: 1
     Weight: 1
   rareDropChance: 0.08
+  commonYieldTable: {fileID: 0}
+  rareYieldTable: {fileID: 0}
+  minTickInterval: 1.5
+  maxTickInterval: 2
   tendVerb: tend
-  harvestYield:
-    Item: {fileID: 0}
-    MinQuantity: 1
-    MaxQuantity: 1
-    Weight: 1
+  harvestYields: []
   restsToHarvest: 1
   maxConcurrentMarked: 2
+  knowledgeYields: []

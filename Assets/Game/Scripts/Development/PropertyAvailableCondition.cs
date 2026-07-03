@@ -1,4 +1,6 @@
+using System;
 using Mossmark.Inventory;
+using UnityEngine;
 
 namespace Mossmark.Development
 {
@@ -8,10 +10,16 @@ namespace Mossmark.Development
     //
     // Unlike ItemAvailableCondition, this checks carry only (not chest + carry)
     // because the matched item is consumed from the player's pack when the stage fires.
+    // [Serializable] + serialized (non-readonly) fields enable [SerializeReference]
+    // storage so this gate can be authored in data via the CSV condition importer.
+    [Serializable]
     public class PropertyAvailableCondition : IDependencyCondition
     {
-        private readonly string propertyId;
-        private readonly string wantDescription;
+        [SerializeField] private string propertyId;
+        [SerializeField] private string wantDescription;
+
+        public string PropertyId => propertyId;
+        public string WantDescription => wantDescription;
 
         public PropertyAvailableCondition(string propertyId, string wantDescription)
         {

@@ -1,12 +1,20 @@
+using System;
+using UnityEngine;
+
 namespace Mossmark.Development
 {
     // A specialization that has actually been realized by some entity (RealizedSpecializations) -
     // the mirror of SpecializationNeededCondition, used to gate Iteration 13's POIs until
     // their corresponding NPC specialization exists in town.
+    // [Serializable] + serialized (non-readonly) fields enable [SerializeReference]
+    // storage so this gate can be authored in data via the CSV condition importer.
+    [Serializable]
     public class SpecializationRealizedCondition : IDependencyCondition
     {
-        private readonly string specializationId;
-        private readonly string needsDescription;
+        [SerializeField] private string specializationId;
+        [SerializeField] private string needsDescription;
+
+        public string SpecializationId => specializationId;
 
         public SpecializationRealizedCondition(string specializationId, string needsDescription)
         {

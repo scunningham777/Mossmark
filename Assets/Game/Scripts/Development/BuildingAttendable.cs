@@ -88,13 +88,16 @@ namespace Mossmark.Development
             for (int i = 0; i < stages.Length; i++)
             {
                 var def = stages[i];
-                var deps = new List<IDependencyCondition>
-                {
-                    new ItemAvailableCondition(def.material, def.costPerTick)
-                };
-                if (!string.IsNullOrEmpty(def.requiredSpecialization))
-                    deps.Insert(0, new SpecializationRealizedCondition(def.requiredSpecialization,
-                        $"needs a {def.requiredSpecialization} in town to develop further"));
+
+                // The material gate is structural (material is consumed per tick), so it
+                // is derived here; all other gates come from the def's authored condition
+                // list — e.g. the old requiredSpecialization is now an authored
+                // SpecializationRealizedCondition in stage_conditions.csv.
+                var deps = new List<IDependencyCondition>();
+                if (def.conditions != null)
+                    foreach (var condition in def.conditions)
+                        if (condition != null) deps.Add(condition);
+                deps.Add(new ItemAvailableCondition(def.material, def.costPerTick));
 
                 // Stage 0's DevelopmentStage name uses "Revive the X" phrasing; later stages
                 // use the stage def's displayName directly (which is the action/development name).
@@ -102,7 +105,8 @@ namespace Mossmark.Development
                     ? $"Revive the {def.displayName}"
                     : def.displayName;
 
-                devStages.Add(new DevelopmentStage($"stage_{i}", stageName, def.progressCost, deps.ToArray()));
+                string stageId = !string.IsNullOrEmpty(def.stageId) ? def.stageId : $"stage_{i}";
+                devStages.Add(new DevelopmentStage(stageId, stageName, def.progressCost, deps.ToArray()));
             }
 
             track = new DevelopmentTrack(devStages.ToArray());

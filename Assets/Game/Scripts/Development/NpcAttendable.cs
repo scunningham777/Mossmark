@@ -16,9 +16,9 @@ namespace Mossmark.Development
     // Iteration 17: post-spec development stages gated by item availability; pool-sealing
     // lets GetNextStage() reach those stages after the spec draws.
     //
-    // Iteration 22 (G3): BuildPostSpecStages is now a generic loop over
-    // archetype.NpcPostSpecStages — the hardcoded per-archetype switch is gone.
-    // New post-spec content requires only editing the PlaceArchetype asset.
+    // Iteration 22 (G3), reworked in the relational-data migration: BuildPostSpecStages
+    // is a generic loop over archetype.NpcStagePool.Stages (standalone NpcStageDef assets
+    // with authored condition lists) — new post-spec content is new data rows, no code.
     //
     // Iteration 28.5: fully-developed NPCs (GetNextStage() == null) remain attendable.
     // Universal specs (forager/caretaker/tinkerer) give flavor-only visits. Archetype
@@ -48,7 +48,7 @@ namespace Mossmark.Development
         private List<string> poolStageIds;
         private Dictionary<string, List<string>> postSpecStageIdsBySpecId;
         private Dictionary<string, (string Title, Color Tint)> specializationInfo;
-        private Dictionary<string, NpcPostSpecStageDef> postSpecStageDefs;
+        private Dictionary<string, NpcStageDef> postSpecStageDefs;
         private float currentTickInterval;
 
         // Maintenance fields set when specialization fires.
@@ -169,7 +169,7 @@ namespace Mossmark.Development
             // Post-spec stages appended after all pool stages so GetNextStage() still
             // resolves to "forager" pre-specialization (ticks 1–(progressCost-1) unaffected).
             postSpecStageIdsBySpecId = new Dictionary<string, List<string>>();
-            postSpecStageDefs = new Dictionary<string, NpcPostSpecStageDef>();
+            postSpecStageDefs = new Dictionary<string, NpcStageDef>();
             foreach (var archetype in WorldGenerator.SelectedArchetypes)
             {
                 var postStages = BuildPostSpecStages(archetype);
@@ -178,10 +178,10 @@ namespace Mossmark.Development
                 stages.AddRange(postStages);
                 postSpecStageIdsBySpecId[archetype.SpecializationId] = postStages.ConvertAll(s => s.Id);
 
-                // Build the stageId → def lookup for HandleDeveloped.
-                if (archetype.NpcPostSpecStages != null)
-                    foreach (var def in archetype.NpcPostSpecStages)
-                        postSpecStageDefs[def.stageId] = def;
+                // Build the stageId → def lookup for HandleDeveloped. Indexer assignment
+                // (not Add) so two archetypes sharing one pool don't collide.
+                foreach (var def in archetype.NpcStagePool.Stages)
+                    if (def != null) postSpecStageDefs[def.StageId] = def;
             }
 
             track = new DevelopmentTrack(stages.ToArray());
@@ -211,10 +211,10 @@ namespace Mossmark.Development
 
         // Iteration 34: generalised from the Iteration 31 single-stage pilot.
         // Loops over the post-spec stage defs for this NPC's drawn specialization and
-        // finds the currently active stage. If it declares a passiveDriftSourceArchetypeId,
-        // the matching archetype spot's tendedness drives a small passive progress increment
-        // each rest — no attention required. Bandscaled: >0.7 tendedness gives +2, ≥0.3 gives
-        // +1, below that gives nothing (depleted spot offers no passive benefit).
+        // finds the currently active stage. If it declares a passiveDriftSourceSpotId,
+        // the matching wilderness spot's tendedness drives a small passive progress
+        // increment each rest — no attention required. Bandscaled: >0.7 tendedness gives
+        // +2, ≥0.3 gives +1, below that gives nothing (depleted spot offers no passive benefit).
         private void OnDayAdvanced()
         {
             if (drawnSpecializationId == null) return;
@@ -223,9 +223,9 @@ namespace Mossmark.Development
             if (nextStage == null) return;
 
             if (!postSpecStageDefs.TryGetValue(nextStage.Id, out var stageDef)) return;
-            if (string.IsNullOrEmpty(stageDef.passiveDriftSourceArchetypeId)) return;
+            if (string.IsNullOrEmpty(stageDef.PassiveDriftSourceSpotId)) return;
 
-            var sourceSpot = WorldGenerator.GetArchetypeSpot(stageDef.passiveDriftSourceArchetypeId);
+            var sourceSpot = WorldGenerator.GetSpot(stageDef.PassiveDriftSourceSpotId);
             if (sourceSpot == null) return;
 
             int passive = sourceSpot.Tendedness > 0.7f ? 2 : sourceSpot.Tendedness >= 0.3f ? 1 : 0;
@@ -233,7 +233,7 @@ namespace Mossmark.Development
 
             AddProgress(passive);
             Debug.Log($"{DisplayName}: {nextStage.DisplayName} edges forward on its own " +
-                $"(+{passive} passive progress, {stageDef.passiveDriftSourceArchetypeId} " +
+                $"(+{passive} passive progress, {stageDef.PassiveDriftSourceSpotId} " +
                 $"tenderness {sourceSpot.Tendedness:F2}).", this);
 
             bool stageApplied = TryApplyStage();
@@ -279,18 +279,15 @@ namespace Mossmark.Development
             if (GetNextStage() == null)
                 return $"Hold E to visit with {specializedName}";
 
-            // Property-gated stage: always show the want text so the player sees what
+            // Property-want stage: always show the want text so the player sees what
             // the NPC needs whether or not a matching item is already carried.
             var nextStage = GetNextStage();
-            if (postSpecStageDefs.TryGetValue(nextStage.Id, out var stageDef)
-                && !string.IsNullOrEmpty(stageDef.requiredPropertyId))
+            var wantCondition = FindPropertyWant(nextStage);
+            if (wantCondition != null)
             {
                 var unsatisfied = nextStage.GetUnsatisfiedNeedsDescription(this);
                 if (unsatisfied != null) return $"{DisplayName} {unsatisfied}";
-                var want = stageDef.wantDescription;
-                return !string.IsNullOrEmpty(want)
-                    ? $"Hold E — {want}"
-                    : $"Hold E to help {specializedName} develop their craft further";
+                return $"Hold E — {wantCondition.GetNeedsDescription(this)}";
             }
 
             return GetNeedsOrDefault($"Hold E to help {specializedName} develop their craft further");
@@ -411,12 +408,12 @@ namespace Mossmark.Development
                 if (spriteRenderer != null) spriteRenderer.color = info.Tint;
                 RealizedSpecializations.Declare(stage.Id);
 
-                // Set maintenance material from this archetype's common yield.
+                // Maintenance material is an explicit archetype reference now — it was
+                // previously the positional CommonYields[0].Item of the archetype's spot.
                 foreach (var archetype in WorldGenerator.SelectedArchetypes)
                 {
                     if (archetype.SpecializationId != stage.Id) continue;
-                    maintenanceMaterial = archetype.CommonYields?.Length > 0
-                        ? archetype.CommonYields[0].Item : null;
+                    maintenanceMaterial = archetype.NpcMaintenanceMaterial;
                     maintenanceCostPerReset = archetype.NpcMaintenanceCost;
                     coldFlavor = archetype.NpcColdFlavor;
                     break;
@@ -448,17 +445,20 @@ namespace Mossmark.Development
             // --- Post-specialization stage ---
             if (postSpecStageDefs.TryGetValue(stage.Id, out var stageDef))
             {
-                // Property-gated stages consume one matching item from carry at the
-                // moment the stage fires (Iteration 37).
-                if (!string.IsNullOrEmpty(stageDef.requiredPropertyId))
-                    ConsumePropertyMatchedItem(stageDef.requiredPropertyId);
+                // Property-want gates consume one matching item from carry at the moment
+                // the stage fires (Iteration 37). The want is the condition itself now,
+                // so the applied stage's dependency list is scanned rather than a
+                // dedicated field on the stage def.
+                foreach (var condition in stage.Dependencies)
+                    if (condition is PropertyAvailableCondition want)
+                        ConsumePropertyMatchedItem(want.PropertyId);
 
-                if (!string.IsNullOrEmpty(stageDef.worldStateFlag))
+                if (!string.IsNullOrEmpty(stageDef.WorldStateFlag))
                 {
-                    WorldState.SetFlag(stageDef.worldStateFlag, true);
-                    setWorldStateFlags.Add(stageDef.worldStateFlag);
+                    WorldState.SetFlag(stageDef.WorldStateFlag, true);
+                    setWorldStateFlags.Add(stageDef.WorldStateFlag);
                 }
-                Debug.Log($"{specializedName}: {stageDef.flavorText}", this);
+                Debug.Log($"{specializedName}: {stageDef.FlavorText}", this);
             }
             else
             {
@@ -493,36 +493,42 @@ namespace Mossmark.Development
         private List<DevelopmentStage> BuildPostSpecStages(PlaceArchetype archetype)
         {
             var stages = new List<DevelopmentStage>();
-            if (archetype.NpcPostSpecStages == null || archetype.NpcPostSpecStages.Length == 0)
-                return stages;
+            var pool = archetype.NpcStagePool;
+            if (pool == null || pool.Stages == null) return stages;
 
-            var item1 = archetype.CommonYields?.Length > 0 ? archetype.CommonYields[0].Item : null;
-            var item2 = archetype.RareYield?.Item;
-
-            foreach (var def in archetype.NpcPostSpecStages)
+            foreach (var def in pool.Stages)
             {
-                var specCondition = new SpecializationRealizedCondition(archetype.SpecializationId,
-                    $"needs a {archetype.NpcTitle} in town");
+                if (def == null) continue;
 
-                if (!string.IsNullOrEmpty(def.requiredPropertyId))
+                // The spec-realized gate is structural — post-spec stages presuppose the
+                // archetype's specialization — and derived from the archetype context, so
+                // it is prepended here rather than authored on every stage def. All other
+                // gates (item, property want, world flag, ...) come from the def's
+                // authored condition list.
+                var conditions = new List<IDependencyCondition>
                 {
-                    // Property-gated: any carried item with the required property satisfies
-                    // the gate; the matched item is consumed from carry when the stage fires.
-                    stages.Add(new DevelopmentStage(def.stageId, def.displayName, def.progressCost,
-                        specCondition,
-                        new PropertyAvailableCondition(def.requiredPropertyId, def.wantDescription)));
-                }
-                else
-                {
-                    var item = def.useRareItem ? item2 : item1;
-                    if (item == null) continue;
-                    stages.Add(new DevelopmentStage(def.stageId, def.displayName, def.progressCost,
-                        specCondition,
-                        new ItemAvailableCondition(item, def.itemCount)));
-                }
+                    new SpecializationRealizedCondition(archetype.SpecializationId,
+                        $"needs a {archetype.NpcTitle} in town")
+                };
+                foreach (var condition in def.Conditions)
+                    if (condition != null) conditions.Add(condition);
+
+                stages.Add(new DevelopmentStage(def.StageId, def.DisplayName, def.ProgressCost,
+                    conditions.ToArray()));
             }
 
             return stages;
+        }
+
+        // First property-want condition on the stage, or null. Drives both the always-
+        // visible want line in the overlay and nothing else — consumption scans the
+        // applied stage's dependencies directly in HandleDeveloped.
+        private PropertyAvailableCondition FindPropertyWant(DevelopmentStage stage)
+        {
+            if (stage == null) return null;
+            foreach (var condition in stage.Dependencies)
+                if (condition is PropertyAvailableCondition want) return want;
+            return null;
         }
 
         // Iteration 37: consume the highest-quantity carried item that has the given

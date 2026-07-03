@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d885ea15ea3c1a54daf1e3164ebd15fb, type: 3}
+  m_Name: herald_trail_markers
+  m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Development.NpcStageDef
+  stageId: herald_trail_markers
+  displayName: Trail Markers
+  progressCost: 6
+  conditions:
+  - rid: 478763229186883709
+  flavorText: marks key paths and crossroads - travelers find the road safer.
+  worldStateFlag: herald_trail_markers
+  passiveDriftSourceSpotId: 
+  references:
+    version: 2
+    RefIds:
+    - rid: 478763229186883709
+      type: {class: ItemAvailableCondition, ns: Mossmark.Development, asm: Assembly-CSharp}
+      data:
+        item: {fileID: 11400000, guid: 961a0538cbaf46f9a43f9aea11b18552, type: 2}
+        quantity: 3

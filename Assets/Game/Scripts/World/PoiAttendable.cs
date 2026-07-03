@@ -13,10 +13,10 @@ namespace Mossmark.World
         private IDependencyCondition gate;
 
         public void Initialize(string displayName, string lockedDescription, string interactionVerb,
-            ItemYield[] commonYields, ItemYield rareYield, float rareDropChance,
+            ItemYield[] commonYields, ItemYield[] rareYields, float rareDropChance,
             float minTickInterval, float maxTickInterval, IDependencyCondition gate)
         {
-            InitializeBase(displayName, interactionVerb, commonYields, rareYield, rareDropChance,
+            InitializeBase(displayName, interactionVerb, commonYields, rareYields, rareDropChance,
                 minTickInterval, maxTickInterval);
             this.lockedDescription = lockedDescription;
             this.gate = gate;

@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: spot_stone_outcrop
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.World.WildernessSpotDefinition
   kind: 0
+  spotId: 
   displayName: Stone Outcrop
   color: {r: 0.55, g: 0.55, b: 0.58, a: 1}
   interactionVerb: chip
@@ -21,17 +22,18 @@ MonoBehaviour:
     MinQuantity: 2
     MaxQuantity: 4
     Weight: 1
-  rareYield:
-    Item: {fileID: 11400000, guid: 961a0538cbaf46f9a43f9aea11b18552, type: 2}
+  rareYields:
+  - Item: {fileID: 11400000, guid: 961a0538cbaf46f9a43f9aea11b18552, type: 2}
     MinQuantity: 1
     MaxQuantity: 2
     Weight: 1
   rareDropChance: 0.08
+  commonYieldTable: {fileID: 0}
+  rareYieldTable: {fileID: 0}
+  minTickInterval: 1.5
+  maxTickInterval: 2
   tendVerb: tend
-  harvestYield:
-    Item: {fileID: 0}
-    MinQuantity: 1
-    MaxQuantity: 1
-    Weight: 1
+  harvestYields: []
   restsToHarvest: 1
   maxConcurrentMarked: 2
+  knowledgeYields: []

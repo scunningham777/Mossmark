@@ -10,6 +10,8 @@ namespace Mossmark.Development
 
         private readonly List<IDependencyCondition> dependencies;
 
+        public IReadOnlyList<IDependencyCondition> Dependencies => dependencies;
+
         public DevelopmentStage(string id, string displayName, int progressCost, params IDependencyCondition[] dependencies)
         {
             Id = id;

@@ -24,7 +24,7 @@ namespace Mossmark.World
         [SerializeField] protected string displayName = "Spot";
         [SerializeField] protected string interactionVerb = "forage";
         [SerializeField] protected ItemYield[] commonYields;
-        [SerializeField] protected ItemYield rareYield;
+        [SerializeField] protected ItemYield[] rareYields;
         [SerializeField, Range(0f, 1f)] protected float rareDropChance = 0.08f;
 
         [SerializeField, Min(0.1f)] protected float minTickInterval = 1.5f;
@@ -49,14 +49,14 @@ namespace Mossmark.World
         private KnowledgeYieldEntry[] knowledgeYields;
 
         protected void InitializeBase(string displayName, string interactionVerb,
-            ItemYield[] commonYields, ItemYield rareYield, float rareDropChance,
+            ItemYield[] commonYields, ItemYield[] rareYields, float rareDropChance,
             float minTickInterval, float maxTickInterval,
             KnowledgeYieldEntry[] knowledgeYields = null)
         {
             this.displayName = displayName;
             this.interactionVerb = interactionVerb;
             this.commonYields = commonYields;
-            this.rareYield = rareYield;
+            this.rareYields = rareYields;
             this.rareDropChance = rareDropChance;
             this.minTickInterval = minTickInterval;
             this.maxTickInterval = maxTickInterval;
@@ -100,7 +100,7 @@ namespace Mossmark.World
             continueAttending = true;
             tendedness = Mathf.Clamp01(tendedness + 0.04f);
             attendedThisDay = true;
-            ItemYieldRoller.Roll(displayName, foundVerb, commonYields, rareYield,
+            ItemYieldRoller.Roll(displayName, foundVerb, commonYields, rareYields,
                 GetEffectiveRareChance(), tendedness, BuildKnowledgeInjectedYields());
             RollTickInterval();
             OnProgressMade?.Invoke();

@@ -36,13 +36,14 @@ namespace Mossmark.World
 
         public static IReadOnlyList<PlaceArchetype> SelectedArchetypes { get; private set; } = Array.Empty<PlaceArchetype>();
 
-        // Iteration 31 pilot: the one wilderness spot spawned per selected archetype,
-        // keyed by archetypeId — lets an archetype's NPC look up its "own" spot's
-        // tendedness as a passive-progress signal (e.g. Bog Keeper / Fen Bog).
-        private static readonly Dictionary<string, GenericWildernessSpotAttendable> archetypeSpots = new();
+        // Iteration 31 pilot, re-keyed in the relational-data migration: spawned Generic
+        // spots with a non-empty WildernessSpotDefinition.spotId register here, so other
+        // systems (NpcStageDef.passiveDriftSourceSpotId) can read a specific spot's
+        // tendedness without positional coupling to "the archetype's spot".
+        private static readonly Dictionary<string, GenericWildernessSpotAttendable> spotsById = new();
 
-        public static GenericWildernessSpotAttendable GetArchetypeSpot(string archetypeId) =>
-            archetypeSpots.TryGetValue(archetypeId, out var spot) ? spot : null;
+        public static GenericWildernessSpotAttendable GetSpot(string spotId) =>
+            spotsById.TryGetValue(spotId, out var spot) ? spot : null;
 
         // Tracks every position placed so far; used by FindValidPosition to enforce
         // the minimum separation between all wilderness objects.
@@ -50,7 +51,7 @@ namespace Mossmark.World
 
         private void Awake()
         {
-            archetypeSpots.Clear();
+            spotsById.Clear();
 
             if (regionData == null || regionData.ArchetypePool == null || regionData.ArchetypePool.Length == 0)
             {
@@ -94,34 +95,14 @@ namespace Mossmark.World
 
         // --- Archetype-driven spawns (positions randomized) ---
 
+        // Each archetype brings a list of spot definitions (relational-data migration) —
+        // one instance of each is spawned through the same path as pool spots. Listing a
+        // definition twice spawns two instances.
         private void SpawnWildernessSpots()
         {
             foreach (var archetype in SelectedArchetypes)
-                SpawnWildernessSpot(archetype, FindValidPosition());
-        }
-
-        private void SpawnWildernessSpot(PlaceArchetype archetype, Vector2 position)
-        {
-            var go = new GameObject(archetype.SpotDisplayName);
-            go.SetActive(false);
-            go.transform.position = position;
-
-            go.AddComponent<SpriteRenderer>();
-            go.AddComponent<TriangleSpriteGenerator>().Initialize(archetype.SpotColor);
-            go.AddComponent<CircleCollider2D>().radius = colliderRadius;
-
-            var spot = go.AddComponent<GenericWildernessSpotAttendable>();
-            spot.Initialize(
-                archetype.SpotDisplayName, archetype.SpotVerb,
-                archetype.CommonYields, archetype.RareYield, archetype.RareDropChance,
-                archetype.ArchetypeSpotMinTickInterval, archetype.ArchetypeSpotMaxTickInterval,
-                archetype.SpotKnowledgeYields);
-            archetypeSpots[archetype.ArchetypeId] = spot;
-
-            go.AddComponent<AttendableZone>();
-            go.AddComponent<EntityFeedback>();
-
-            go.SetActive(true);
+                foreach (var def in archetype.Spots)
+                    if (def != null) SpawnSpotFromDefinition(def, FindValidPosition());
         }
 
         // One building per selected archetype — still fixed in town so the settlement
@@ -146,7 +127,9 @@ namespace Mossmark.World
 
             go.AddComponent<BuildingAttendable>().Initialize(
                 archetype.BuildingDilapidatedName,
-                archetype.BuildingStages,
+                archetype.BuildingStagePool != null
+                    ? archetype.BuildingStagePool.Stages
+                    : System.Array.Empty<BuildingStageDef>(),
                 archetype.SpecializationId,
                 2f, 3f,
                 archetype.BuildingRestoredFlavors,
@@ -180,8 +163,8 @@ namespace Mossmark.World
 
             go.AddComponent<PoiAttendable>().Initialize(
                 archetype.PoiDisplayName, archetype.PoiLockedDescription, archetype.PoiVerb,
-                archetype.PoiCommonYields, archetype.PoiRareYield, archetype.PoiRareDropChance,
-                archetype.ArchetypeSpotMinTickInterval, archetype.ArchetypeSpotMaxTickInterval, gate);
+                archetype.PoiCommonYields, archetype.PoiRareYields, archetype.PoiRareDropChance,
+                archetype.PoiMinTickInterval, archetype.PoiMaxTickInterval, gate);
 
             go.AddComponent<AttendableZone>();
             go.AddComponent<EntityFeedback>();
@@ -222,11 +205,14 @@ namespace Mossmark.World
 
             if (def.kind == WildernessSpotDefinition.SpotKind.Generic)
             {
-                go.AddComponent<GenericWildernessSpotAttendable>().Initialize(
+                var spot = go.AddComponent<GenericWildernessSpotAttendable>();
+                spot.Initialize(
                     def.displayName, def.interactionVerb,
-                    def.commonYields, def.rareYield, def.rareDropChance,
+                    def.EffectiveCommonYields, def.EffectiveRareYields, def.rareDropChance,
                     def.minTickInterval, def.maxTickInterval,
                     def.knowledgeYields);
+                if (!string.IsNullOrEmpty(def.spotId))
+                    spotsById[def.spotId] = spot;
             }
             else
             {

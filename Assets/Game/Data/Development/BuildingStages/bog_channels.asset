@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a55dbd8dcd052e54c9f3340b6e738249, type: 3}
+  m_Name: bog_channels
+  m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Development.BuildingStageDef
+  stageId: bog_channels
+  displayName: Shore Up the Channels
+  verb: shore up
+  material: {fileID: 11400000, guid: 5c848dfe76124c76b3010becc8cf85fc, type: 2}
+  costPerTick: 2
+  progressCost: 4
+  conditions:
+  - rid: 478763229186883713
+  tint: {r: 0.55, g: 0.62, b: 0.42, a: 1}
+  worldStateFlag: 
+  references:
+    version: 2
+    RefIds:
+    - rid: 478763229186883713
+      type: {class: SpecializationRealizedCondition, ns: Mossmark.Development, asm: Assembly-CSharp}
+      data:
+        specializationId: bog_tender
+        needsDescription: needs a bog_tender in town to develop further

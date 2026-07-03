@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: spot_mushroom_patch
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.World.WildernessSpotDefinition
   kind: 0
+  spotId: 
   displayName: Mushroom Patch
   color: {r: 0.55, g: 0.35, b: 0.2, a: 1}
   interactionVerb: gather
@@ -21,17 +22,18 @@ MonoBehaviour:
     MinQuantity: 1
     MaxQuantity: 3
     Weight: 1
-  rareYield:
-    Item: {fileID: 11400000, guid: b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6, type: 2}
+  rareYields:
+  - Item: {fileID: 11400000, guid: b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6, type: 2}
     MinQuantity: 1
     MaxQuantity: 1
     Weight: 1
   rareDropChance: 0.06
+  commonYieldTable: {fileID: 0}
+  rareYieldTable: {fileID: 0}
+  minTickInterval: 1.5
+  maxTickInterval: 2
   tendVerb: tend
-  harvestYield:
-    Item: {fileID: 0}
-    MinQuantity: 1
-    MaxQuantity: 1
-    Weight: 1
+  harvestYields: []
   restsToHarvest: 1
   maxConcurrentMarked: 2
+  knowledgeYields: []

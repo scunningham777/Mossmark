@@ -1,12 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
-using System.Text;
 using Mossmark.Inventory;
 using Mossmark.World;
 using UnityEditor;
 using UnityEngine;
+using static Mossmark.Editor.CsvUtil;
 
 namespace Mossmark.Editor
 {
@@ -19,13 +18,184 @@ namespace Mossmark.Editor
         public static void ImportAll()
         {
             var items = BuildItemDb();
+
+            // stage_conditions.csv is shared by NPC and building stages — one row per
+            // condition, keyed by stageId (P1's upgrade_dependencies.csv pattern).
+            var stageConditions = ConditionCsvImporter.ReadByStage(
+                Path.Combine(DataDir, "stage_conditions.csv"), items);
+
             int changed = 0;
+            changed += ImportYieldTables(items);
             changed += ImportSpots(items);
+            changed += ImportNpcStages(items, stageConditions);
+            changed += ImportBuildingStages(items, stageConditions);
             changed += ImportArchetypes(items);
             changed += ImportWandering(items);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             Debug.Log($"[ImportGameData] Done — {changed} asset(s) updated.");
+        }
+
+        // ------------------------------------------------------------------ //
+        // NPC Stages + Pools
+        // ------------------------------------------------------------------ //
+
+        // One row per NpcStageDef; the `pool` column groups stages into NpcStagePool
+        // assets (P1's upgrades.csv `pool` pattern). Stage and pool assets are created
+        // on demand — new content is new rows, never Editor clicks.
+        static int ImportNpcStages(Dictionary<string, ItemDefinition> items,
+            Dictionary<string, List<Development.IDependencyCondition>> stageConditions)
+        {
+            var rows = ReadCsv(Path.Combine(DataDir, "npc_stages.csv"));
+            if (rows == null) return 0;
+            int changed = 0;
+
+            var poolMembers = new Dictionary<string, List<Development.NpcStageDef>>(StringComparer.Ordinal);
+            var poolOrder = new List<string>();
+
+            foreach (var row in rows)
+            {
+                string id = row.Get("stageId");
+                if (string.IsNullOrEmpty(id)) continue;
+
+                var asset = LoadOrCreate<Development.NpcStageDef>(
+                    $"Assets/Game/Data/Development/NpcStages/{id}.asset");
+                var so = new SerializedObject(asset);
+                so.FindProperty("stageId").stringValue      = id;
+                so.FindProperty("displayName").stringValue  = row.Get("displayName");
+                so.FindProperty("progressCost").intValue    = I(row.Get("progressCost", "6"));
+                so.FindProperty("flavorText").stringValue   = row.Get("flavorText");
+                so.FindProperty("worldStateFlag").stringValue = row.Get("worldStateFlag");
+                so.FindProperty("passiveDriftSourceSpotId").stringValue =
+                    row.Get("passiveDriftSourceSpotId");
+                ConditionCsvImporter.AssignConditions(so.FindProperty("conditions"),
+                    stageConditions.TryGetValue(id, out var conds) ? conds : null);
+                if (so.ApplyModifiedProperties()) changed++;
+
+                string pool = row.Get("pool");
+                if (!string.IsNullOrEmpty(pool))
+                {
+                    if (!poolMembers.TryGetValue(pool, out var list))
+                    { poolMembers[pool] = list = new List<Development.NpcStageDef>(); poolOrder.Add(pool); }
+                    list.Add(asset);
+                }
+            }
+
+            foreach (var pool in poolOrder)
+                if (UpdatePool<Development.NpcStagePool, Development.NpcStageDef>(pool, poolMembers[pool]))
+                    changed++;
+
+            Debug.Log($"  NPC stages: {rows.Count} rows, {poolOrder.Count} pools");
+            return changed;
+        }
+
+        // ------------------------------------------------------------------ //
+        // Building Stages + Pools
+        // ------------------------------------------------------------------ //
+
+        static int ImportBuildingStages(Dictionary<string, ItemDefinition> items,
+            Dictionary<string, List<Development.IDependencyCondition>> stageConditions)
+        {
+            var rows = ReadCsv(Path.Combine(DataDir, "building_stages.csv"));
+            if (rows == null) return 0;
+            int changed = 0;
+
+            var poolMembers = new Dictionary<string, List<Development.BuildingStageDef>>(StringComparer.Ordinal);
+            var poolOrder = new List<string>();
+
+            foreach (var row in rows)
+            {
+                string id = row.Get("stageId");
+                if (string.IsNullOrEmpty(id)) continue;
+
+                var asset = LoadOrCreate<Development.BuildingStageDef>(
+                    $"Assets/Game/Data/Development/BuildingStages/{id}.asset");
+                var so = new SerializedObject(asset);
+                items.TryGetValue(row.Get("material"), out var mat);
+                so.FindProperty("stageId").stringValue      = id;
+                so.FindProperty("displayName").stringValue  = row.Get("displayName");
+                so.FindProperty("verb").stringValue         = row.Get("verb");
+                so.FindProperty("material").objectReferenceValue = mat;
+                so.FindProperty("costPerTick").intValue     = I(row.Get("costPerTick", "2"));
+                so.FindProperty("progressCost").intValue    = I(row.Get("progressCost", "6"));
+                SetColor(so.FindProperty("tint"), row, "tint");
+                so.FindProperty("worldStateFlag").stringValue = row.Get("worldStateFlag");
+                ConditionCsvImporter.AssignConditions(so.FindProperty("conditions"),
+                    stageConditions.TryGetValue(id, out var conds) ? conds : null);
+                if (so.ApplyModifiedProperties()) changed++;
+
+                string pool = row.Get("pool");
+                if (!string.IsNullOrEmpty(pool))
+                {
+                    if (!poolMembers.TryGetValue(pool, out var list))
+                    { poolMembers[pool] = list = new List<Development.BuildingStageDef>(); poolOrder.Add(pool); }
+                    list.Add(asset);
+                }
+            }
+
+            foreach (var pool in poolOrder)
+                if (UpdatePool<Development.BuildingStagePool, Development.BuildingStageDef>(pool, poolMembers[pool]))
+                    changed++;
+
+            Debug.Log($"  Building stages: {rows.Count} rows, {poolOrder.Count} pools");
+            return changed;
+        }
+
+        // Creates/updates a pool asset (its `stages` array of SO references) under
+        // Assets/Game/Data/Development/Pools/. Returns true if the asset changed.
+        static bool UpdatePool<TPool, TStage>(string poolName, List<TStage> members)
+            where TPool : ScriptableObject where TStage : ScriptableObject
+        {
+            var asset = LoadOrCreate<TPool>($"Assets/Game/Data/Development/Pools/{poolName}.asset");
+            var so = new SerializedObject(asset);
+            var prop = so.FindProperty("stages");
+            prop.arraySize = members.Count;
+            for (int i = 0; i < members.Count; i++)
+                prop.GetArrayElementAtIndex(i).objectReferenceValue = members[i];
+            return so.ApplyModifiedProperties();
+        }
+
+        // ------------------------------------------------------------------ //
+        // Yield Tables
+        // ------------------------------------------------------------------ //
+
+        // One row per entry, grouped by tableId (P1 loot_tables.csv pattern). Table assets
+        // are created on demand — a new pool is a new CSV row, never an Editor click.
+        static int ImportYieldTables(Dictionary<string, ItemDefinition> items)
+        {
+            var rows = ReadCsv(Path.Combine(DataDir, "yield_tables.csv"));
+            if (rows == null) return 0;
+
+            var byTable = new Dictionary<string, List<ItemYield>>(StringComparer.Ordinal);
+            var order = new List<string>();
+            foreach (var row in rows)
+            {
+                string id = row.Get("tableId");
+                if (string.IsNullOrEmpty(id)) continue;
+                if (!items.TryGetValue(row.Get("item"), out var item))
+                { Debug.LogWarning($"[Import] yield_tables: unknown item '{row.Get("item")}'"); continue; }
+                if (!byTable.TryGetValue(id, out var list))
+                { byTable[id] = list = new List<ItemYield>(); order.Add(id); }
+                list.Add(new ItemYield
+                {
+                    Item = item,
+                    Weight = F(row.Get("weight", "1")),
+                    MinQuantity = I(row.Get("minQty", "1")),
+                    MaxQuantity = I(row.Get("maxQty", "1"))
+                });
+            }
+
+            int changed = 0;
+            foreach (var id in order)
+            {
+                var asset = LoadOrCreate<YieldTable>($"Assets/Game/Data/World/YieldTables/{id}.asset");
+                var so = new SerializedObject(asset);
+                SetYields(so.FindProperty("entries"), byTable[id].ToArray());
+                if (so.ApplyModifiedProperties()) changed++;
+            }
+
+            Debug.Log($"  Yield tables: {changed}/{order.Count} updated");
+            return changed;
         }
 
         // ------------------------------------------------------------------ //
@@ -40,21 +210,25 @@ namespace Mossmark.Editor
 
             foreach (var row in rows)
             {
-                var path = $"Assets/Game/Data/World/Spots/{row.Get("assetName")}.asset";
-                var asset = AssetDatabase.LoadAssetAtPath<WildernessSpotDefinition>(path);
-                if (asset == null) { Debug.LogWarning($"[Import] Not found: {path}"); continue; }
+                var asset = LoadOrCreate<WildernessSpotDefinition>(
+                    $"Assets/Game/Data/World/Spots/{row.Get("assetName")}.asset");
 
                 var so = new SerializedObject(asset);
                 so.FindProperty("kind").intValue =
                     row.Get("kind") == "Tended" ? 1 : 0;
+                so.FindProperty("spotId").stringValue        = row.Get("spotId");
                 so.FindProperty("displayName").stringValue   = row.Get("displayName");
                 SetColor(so.FindProperty("color"), row, "color");
                 so.FindProperty("interactionVerb").stringValue = row.Get("interactionVerb", "forage");
                 SetYields(so.FindProperty("commonYields"),
                     ParseYields(row.Get("commonYields"), items));
-                SetRare(so.FindProperty("rareYield"),
-                    ParseRare(row.Get("rareYield"), items));
+                SetYields(so.FindProperty("rareYields"),
+                    ParseYields(row.Get("rareYields"), items));
                 so.FindProperty("rareDropChance").floatValue  = F(row.Get("rareDropChance", "0.08"));
+                so.FindProperty("commonYieldTable").objectReferenceValue =
+                    LoadDataAsset<YieldTable>(row.Get("commonYieldTable"), "World/YieldTables");
+                so.FindProperty("rareYieldTable").objectReferenceValue =
+                    LoadDataAsset<YieldTable>(row.Get("rareYieldTable"), "World/YieldTables");
                 so.FindProperty("minTickInterval").floatValue = F(row.Get("minTickInterval", "1.5"));
                 so.FindProperty("maxTickInterval").floatValue = F(row.Get("maxTickInterval", "2"));
                 so.FindProperty("tendVerb").stringValue        = row.Get("tendVerb", "tend");
@@ -119,18 +293,16 @@ namespace Mossmark.Editor
 
                 so.FindProperty("archetypeId").stringValue   = row.Get("archetypeId");
                 so.FindProperty("displayName").stringValue   = row.Get("displayName");
-                so.FindProperty("spotDisplayName").stringValue = row.Get("spotDisplayName");
-                so.FindProperty("spotVerb").stringValue      = row.Get("spotVerb", "forage");
-                SetColor(so.FindProperty("spotColor"), row, "spotColor");
-                SetYields(so.FindProperty("commonYields"),
-                    ParseYields(row.Get("commonYields"), items));
-                SetRare(so.FindProperty("rareYield"),
-                    ParseRare(row.Get("rareYield"), items));
-                so.FindProperty("rareDropChance").floatValue = F(row.Get("spotRareDropChance", "0.08"));
-                so.FindProperty("archetypeSpotMinTickInterval").floatValue =
-                    F(row.Get("spotMinTickInterval", "1.5"));
-                so.FindProperty("archetypeSpotMaxTickInterval").floatValue =
-                    F(row.Get("spotMaxTickInterval", "2"));
+
+                // Spot data is relational — spots live in wilderness_spots.csv; the
+                // archetype row references them by asset name (semicolon-separated list).
+                var spotsProp = so.FindProperty("spots");
+                var spotNames = row.Get("spots").Split(';', StringSplitOptions.RemoveEmptyEntries);
+                spotsProp.arraySize = spotNames.Length;
+                for (int i = 0; i < spotNames.Length; i++)
+                    spotsProp.GetArrayElementAtIndex(i).objectReferenceValue =
+                        LoadDataAsset<WildernessSpotDefinition>(spotNames[i].Trim(), "World/Spots");
+
                 so.FindProperty("specializationId").stringValue  = row.Get("specializationId");
                 so.FindProperty("stageDisplayName").stringValue  = row.Get("stageDisplayName");
                 so.FindProperty("npcTitle").stringValue          = row.Get("npcTitle");
@@ -141,118 +313,30 @@ namespace Mossmark.Editor
                 SetColor(so.FindProperty("poiColor"), row, "poiColor");
                 SetYields(so.FindProperty("poiCommonYields"),
                     ParseYields(row.Get("poiCommonYields"), items));
-                SetRare(so.FindProperty("poiRareYield"),
-                    ParseRare(row.Get("poiRareYield"), items));
+                SetYields(so.FindProperty("poiRareYields"),
+                    ParseYields(row.Get("poiRareYields"), items));
                 so.FindProperty("poiRareDropChance").floatValue = F(row.Get("poiRareDropChance", "0.05"));
+                so.FindProperty("poiMinTickInterval").floatValue = F(row.Get("poiMinTickInterval", "2"));
+                so.FindProperty("poiMaxTickInterval").floatValue = F(row.Get("poiMaxTickInterval", "2.5"));
 
-                // Spot knowledge yields (Iteration 28; requiredSpecializationId added Iteration 34)
-                var kSpotEntries = new List<(string flag, string specId, ItemDefinition item, int minQ, int maxQ, float weight)>();
-                for (int i = 1; ; i++)
-                {
-                    string kFlag   = row.Get($"spotKnowledge{i}_flag");
-                    string kSpecId = row.Get($"spotKnowledge{i}_specializationId");
-                    if (string.IsNullOrEmpty(kFlag) && string.IsNullOrEmpty(kSpecId)) break;
-                    items.TryGetValue(row.Get($"spotKnowledge{i}_item"), out var kItem);
-                    kSpotEntries.Add((
-                        kFlag, kSpecId, kItem,
-                        I(row.Get($"spotKnowledge{i}_minQty", "1")),
-                        I(row.Get($"spotKnowledge{i}_maxQty", "2")),
-                        F(row.Get($"spotKnowledge{i}_weight", "0.15"))
-                    ));
-                }
-                var kSpotProp = so.FindProperty("spotKnowledgeYields");
-                kSpotProp.arraySize = kSpotEntries.Count;
-                for (int i = 0; i < kSpotEntries.Count; i++)
-                {
-                    var e = kSpotProp.GetArrayElementAtIndex(i);
-                    var (kFlag, kSpecId, kItem, kMinQ, kMaxQ, kWeight) = kSpotEntries[i];
-                    e.FindPropertyRelative("requiredFlag").stringValue             = kFlag;
-                    e.FindPropertyRelative("requiredSpecializationId").stringValue = kSpecId;
-                    e.FindPropertyRelative("item").objectReferenceValue            = kItem;
-                    e.FindPropertyRelative("minQty").intValue                      = kMinQ;
-                    e.FindPropertyRelative("maxQty").intValue                      = kMaxQ;
-                    e.FindPropertyRelative("injectedWeight").floatValue            = kWeight;
-                }
+                // Stage pools are relational now — stages live in npc_stages.csv /
+                // building_stages.csv; the archetype row just references pools by name.
+                so.FindProperty("npcStagePool").objectReferenceValue =
+                    LoadDataAsset<Development.NpcStagePool>(row.Get("npcStagePool"), "Development/Pools");
 
-                // NPC post-spec stages (passiveDriftSourceArchetypeId added Iteration 34)
-                var npcStages = new List<(string id, string name, int cost,
-                    bool useRare, int count, string flavor, string flag, string passiveSrc)>();
-                for (int i = 1; ; i++)
-                {
-                    string id = row.Get($"stage{i}_id");
-                    if (string.IsNullOrEmpty(id)) break;
-                    npcStages.Add((
-                        id,
-                        row.Get($"stage{i}_displayName"),
-                        I(row.Get($"stage{i}_progressCost", "3")),
-                        B(row.Get($"stage{i}_useRareItem")),
-                        I(row.Get($"stage{i}_itemCount", "2")),
-                        row.Get($"stage{i}_flavorText"),
-                        row.Get($"stage{i}_worldStateFlag"),
-                        row.Get($"stage{i}_passiveDriftSourceArchetypeId")
-                    ));
-                }
-                var npcProp = so.FindProperty("npcPostSpecStages");
-                npcProp.arraySize = npcStages.Count;
-                for (int i = 0; i < npcStages.Count; i++)
-                {
-                    var e = npcProp.GetArrayElementAtIndex(i);
-                    var (id, name, cost, useRare, count, flavor, flag, passiveSrc) = npcStages[i];
-                    e.FindPropertyRelative("stageId").stringValue                        = id;
-                    e.FindPropertyRelative("displayName").stringValue                    = name;
-                    e.FindPropertyRelative("progressCost").intValue                      = cost;
-                    e.FindPropertyRelative("useRareItem").boolValue                      = useRare;
-                    e.FindPropertyRelative("itemCount").intValue                         = count;
-                    e.FindPropertyRelative("flavorText").stringValue                     = flavor;
-                    e.FindPropertyRelative("worldStateFlag").stringValue                 = flag;
-                    e.FindPropertyRelative("passiveDriftSourceArchetypeId").stringValue  = passiveSrc;
-                }
-
-                // Maintenance fields (Iteration 29)
+                // Maintenance fields (Iteration 29; explicit material ref added in the
+                // relational-data migration, replacing the CommonYields[0] positional lookup)
                 so.FindProperty("buildingColdFlavor").stringValue   = row.Get("buildingColdFlavor");
                 so.FindProperty("buildingMaintenanceCost").intValue = I(row.Get("buildingMaintenanceCost", "2"));
                 so.FindProperty("npcColdFlavor").stringValue        = row.Get("npcColdFlavor");
                 so.FindProperty("npcMaintenanceCost").intValue      = I(row.Get("npcMaintenanceCost", "1"));
+                items.TryGetValue(row.Get("npcMaintenanceMaterial"), out var maintMat);
+                so.FindProperty("npcMaintenanceMaterial").objectReferenceValue = maintMat;
 
-                // Building stages (worldStateFlag added Iteration 34)
                 so.FindProperty("buildingDilapidatedName").stringValue = row.Get("buildingDilapidatedName");
                 SetColor(so.FindProperty("buildingDilapidatedColor"), row, "buildingDilapidatedColor");
-                var bStages = new List<(string name, string verb, ItemDefinition mat,
-                    int cost, int prog, string spec, Color tint, string wFlag)>();
-                for (int i = 1; ; i++)
-                {
-                    string name = row.Get($"bStage{i}_displayName");
-                    if (string.IsNullOrEmpty(name)) break;
-                    items.TryGetValue(row.Get($"bStage{i}_material"), out var mat);
-                    bStages.Add((
-                        name,
-                        row.Get($"bStage{i}_verb"),
-                        mat,
-                        I(row.Get($"bStage{i}_costPerTick", "2")),
-                        I(row.Get($"bStage{i}_progressCost", "6")),
-                        row.Get($"bStage{i}_requiredSpecialization"),
-                        new Color(
-                            F(row.Get($"bStage{i}_tint_r", "0.5")),
-                            F(row.Get($"bStage{i}_tint_g", "0.5")),
-                            F(row.Get($"bStage{i}_tint_b", "0.45")), 1f),
-                        row.Get($"bStage{i}_worldStateFlag")
-                    ));
-                }
-                var bProp = so.FindProperty("buildingStages");
-                bProp.arraySize = bStages.Count;
-                for (int i = 0; i < bStages.Count; i++)
-                {
-                    var e = bProp.GetArrayElementAtIndex(i);
-                    var (name, verb, mat, cost, prog, spec, tint, wFlag) = bStages[i];
-                    e.FindPropertyRelative("displayName").stringValue            = name;
-                    e.FindPropertyRelative("verb").stringValue                   = verb;
-                    e.FindPropertyRelative("material").objectReferenceValue      = mat;
-                    e.FindPropertyRelative("costPerTick").intValue               = cost;
-                    e.FindPropertyRelative("progressCost").intValue              = prog;
-                    e.FindPropertyRelative("requiredSpecialization").stringValue  = spec;
-                    e.FindPropertyRelative("tint").colorValue                    = tint;
-                    e.FindPropertyRelative("worldStateFlag").stringValue         = wFlag;
-                }
+                so.FindProperty("buildingStagePool").objectReferenceValue =
+                    LoadDataAsset<Development.BuildingStagePool>(row.Get("buildingStagePool"), "Development/Pools");
 
                 if (so.ApplyModifiedProperties()) changed++;
             }
@@ -317,17 +401,39 @@ namespace Mossmark.Editor
         // Shared helpers
         // ------------------------------------------------------------------ //
 
-        static Dictionary<string, ItemDefinition> BuildItemDb()
+        // Resolves an asset-name cell to an asset reference under Assets/Game/Data/{folder}/.
+        // Empty cell = null (a legitimate "no reference"); a non-empty cell that doesn't
+        // resolve warns loudly, since silently nulling a reference is how data quietly breaks.
+        static T LoadDataAsset<T>(string assetName, string folder) where T : UnityEngine.Object
         {
-            var db = new Dictionary<string, ItemDefinition>(StringComparer.OrdinalIgnoreCase);
-            foreach (var guid in AssetDatabase.FindAssets("t:ItemDefinition"))
-            {
-                var item = AssetDatabase.LoadAssetAtPath<ItemDefinition>(
-                    AssetDatabase.GUIDToAssetPath(guid));
-                if (item != null && !db.ContainsKey(item.DisplayName))
-                    db[item.DisplayName] = item;
-            }
-            return db;
+            if (string.IsNullOrEmpty(assetName)) return null;
+            var asset = AssetDatabase.LoadAssetAtPath<T>($"Assets/Game/Data/{folder}/{assetName}.asset");
+            if (asset == null)
+                Debug.LogWarning($"[Import] Missing {typeof(T).Name}: {folder}/{assetName}");
+            return asset;
+        }
+
+        // Creates the asset (and any missing folders) when it doesn't exist yet — the
+        // P1 importer's "one SO per row / per unique id" behavior. Existing assets are
+        // loaded and updated in place so GUIDs (and every reference to them) are stable.
+        static T LoadOrCreate<T>(string path) where T : ScriptableObject
+        {
+            var asset = AssetDatabase.LoadAssetAtPath<T>(path);
+            if (asset != null) return asset;
+
+            EnsureFolder(Path.GetDirectoryName(path)!.Replace('\\', '/'));
+            asset = ScriptableObject.CreateInstance<T>();
+            AssetDatabase.CreateAsset(asset, path);
+            Debug.Log($"  Created {path}");
+            return asset;
+        }
+
+        static void EnsureFolder(string folder)
+        {
+            if (AssetDatabase.IsValidFolder(folder)) return;
+            string parent = Path.GetDirectoryName(folder)!.Replace('\\', '/');
+            EnsureFolder(parent);
+            AssetDatabase.CreateFolder(parent, Path.GetFileName(folder));
         }
 
         static void SetYields(SerializedProperty prop, ItemYield[] yields)
@@ -341,14 +447,6 @@ namespace Mossmark.Editor
                 e.FindPropertyRelative("MaxQuantity").intValue      = yields[i].MaxQuantity;
                 e.FindPropertyRelative("Weight").floatValue         = yields[i].Weight;
             }
-        }
-
-        static void SetRare(SerializedProperty prop, ItemYield rare)
-        {
-            prop.FindPropertyRelative("Item").objectReferenceValue = rare?.Item;
-            prop.FindPropertyRelative("MinQuantity").intValue      = rare?.MinQuantity ?? 1;
-            prop.FindPropertyRelative("MaxQuantity").intValue      = rare?.MaxQuantity ?? 1;
-            prop.FindPropertyRelative("Weight").floatValue         = 1f;
         }
 
         static void SetColor(SerializedProperty prop, Dictionary<string, string> row, string prefix)
@@ -381,85 +479,5 @@ namespace Mossmark.Editor
             return result.ToArray();
         }
 
-        static ItemYield ParseRare(string compact, Dictionary<string, ItemDefinition> items)
-        {
-            if (string.IsNullOrWhiteSpace(compact)) return null;
-            var p = compact.Trim().Split(':');
-            if (p.Length < 4) return null;
-            if (!items.TryGetValue(p[0].Trim(), out var item))
-            { Debug.LogWarning($"[Import] Unknown item: '{p[0]}'"); return null; }
-            return new ItemYield { Item = item, Weight = 1f, MinQuantity = I(p[2]), MaxQuantity = I(p[3]) };
-        }
-
-        static float F(string s) => float.TryParse(s,
-            NumberStyles.Float, CultureInfo.InvariantCulture, out float v) ? v : 0f;
-        static int I(string s) => int.TryParse(s, out int v) ? v : 0;
-        static bool B(string s) =>
-            string.Equals(s?.Trim(), "true", StringComparison.OrdinalIgnoreCase);
-
-        static List<Dictionary<string, string>> ReadCsv(string path)
-        {
-            if (!File.Exists(path))
-            { Debug.LogWarning($"[Import] CSV not found: {path}\n  Run Mossmark/Data/Export All first."); return null; }
-
-            var lines = File.ReadAllLines(path, Encoding.UTF8);
-
-            // Find the header: first non-blank, non-comment line.
-            int headerLine = -1;
-            for (int i = 0; i < lines.Length; i++)
-            {
-                if (string.IsNullOrWhiteSpace(lines[i])) continue;
-                if (lines[i].TrimStart().StartsWith("#")) continue;
-                headerLine = i;
-                break;
-            }
-            if (headerLine < 0) return new List<Dictionary<string, string>>();
-
-            var headers = ParseCsvLine(lines[headerLine]);
-            var result = new List<Dictionary<string, string>>();
-            for (int i = headerLine + 1; i < lines.Length; i++)
-            {
-                if (string.IsNullOrWhiteSpace(lines[i])) continue;
-                if (lines[i].TrimStart().StartsWith("#")) continue;
-                var vals = ParseCsvLine(lines[i]);
-                var row = new Dictionary<string, string>(StringComparer.Ordinal);
-                for (int j = 0; j < headers.Count && j < vals.Count; j++)
-                    row[headers[j]] = vals[j];
-                result.Add(row);
-            }
-            return result;
-        }
-
-        static List<string> ParseCsvLine(string line)
-        {
-            var fields = new List<string>();
-            var sb = new StringBuilder();
-            bool inQuotes = false;
-            for (int i = 0; i < line.Length; i++)
-            {
-                char c = line[i];
-                if (inQuotes)
-                {
-                    if (c == '"')
-                    {
-                        if (i + 1 < line.Length && line[i + 1] == '"')
-                        { sb.Append('"'); i++; }   // escaped ""
-                        else inQuotes = false;
-                    }
-                    else sb.Append(c);
-                }
-                else if (c == '"') inQuotes = true;
-                else if (c == ',') { fields.Add(sb.ToString()); sb.Clear(); }
-                else sb.Append(c);
-            }
-            fields.Add(sb.ToString());
-            return fields;
-        }
-    }
-
-    static class CsvRowExt
-    {
-        public static string Get(this Dictionary<string, string> d, string key, string def = "") =>
-            d.TryGetValue(key, out var v) ? v : def;
     }
 }

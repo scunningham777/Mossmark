@@ -14,22 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.World.PlaceArchetype
   archetypeId: reed_marsh
   displayName: Reed Marsh
-  spotDisplayName: Reed Marsh
-  spotVerb: cut
-  spotColor: {r: 0.55, g: 0.6, b: 0.32, a: 1}
-  commonYields:
-  - Item: {fileID: 11400000, guid: ed43e92716be4f129cbedee37842f471, type: 2}
-    MinQuantity: 1
-    MaxQuantity: 2
-    Weight: 1
-  rareYield:
-    Item: {fileID: 11400000, guid: 3f4b7ff5850b4cdf863531d3defbf480, type: 2}
-    MinQuantity: 1
-    MaxQuantity: 1
-    Weight: 1
-  rareDropChance: 0.08
-  archetypeSpotMinTickInterval: 2
-  archetypeSpotMaxTickInterval: 2.5
+  spots:
+  - {fileID: 11400000, guid: bdfe31dbb98fb9d46a576907305d05c9, type: 2}
   specializationId: weaver
   stageDisplayName: Take Up Weaving
   npcTitle: Weaver
@@ -44,13 +30,15 @@ MonoBehaviour:
     MinQuantity: 1
     MaxQuantity: 2
     Weight: 1
-  poiRareYield:
-    Item: {fileID: 11400000, guid: e00cc95e3157484a979e04c011a6ef0a, type: 2}
+  poiRareYields:
+  - Item: {fileID: 11400000, guid: e00cc95e3157484a979e04c011a6ef0a, type: 2}
     MinQuantity: 1
     MaxQuantity: 1
     Weight: 1
   poiRareDropChance: 0.05
-  npcPostSpecStages: []
+  poiMinTickInterval: 2
+  poiMaxTickInterval: 2.5
+  npcStagePool: {fileID: 0}
   npcExchangeChance: 0.2
   npcExchangeGifts:
   - Item: {fileID: 11400000, guid: f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6, type: 2}
@@ -67,24 +55,16 @@ MonoBehaviour:
   - is more talkative than usual, the work going well.
   npcExchangeFlavors:
   - wraps a piece of honeycomb in a reed leaf and tucks it in your pack.
-  - presses a small woven charm into your hands — more care in it than it looks like.
+  - "presses a small woven charm into your hands \u2014 more care in it than it looks
+    like."
+  buildingColdFlavor: 
+  buildingMaintenanceCost: 2
+  npcColdFlavor: 
+  npcMaintenanceCost: 1
+  npcMaintenanceMaterial: {fileID: 11400000, guid: ed43e92716be4f129cbedee37842f471, type: 2}
   buildingDilapidatedName: Sagging Drying House
   buildingDilapidatedColor: {r: 0.45, g: 0.5, b: 0.32, a: 1}
-  buildingStages:
-  - displayName: Drying House
-    verb: reinforce
-    material: {fileID: 11400000, guid: ed43e92716be4f129cbedee37842f471, type: 2}
-    costPerTick: 2
-    progressCost: 4
-    requiredSpecialization: 
-    tint: {r: 0.6, g: 0.65, b: 0.42, a: 1}
-  - displayName: Hang the Loom
-    verb: hang
-    material: {fileID: 11400000, guid: 3f4b7ff5850b4cdf863531d3defbf480, type: 2}
-    costPerTick: 2
-    progressCost: 4
-    requiredSpecialization: weaver
-    tint: {r: 0.7, g: 0.75, b: 0.52, a: 1}
+  buildingStagePool: {fileID: 11400000, guid: 1421202658cc98e448f41bf547fae41e, type: 2}
   buildingRestoredFlavors:
   - fills with the smell of cut reeds and the quiet industry of craft.
   - is already in use, its work spreading gently through the settlement.

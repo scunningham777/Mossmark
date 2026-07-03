@@ -27,8 +27,11 @@ namespace Mossmark.World
         // tendedness is null for callers that have no tendedness state (e.g. POI pre-unlock
         // checks, or future call sites that don't participate in the system).
         // injectedYields (Iteration 28) are merged with commonYields for this tick only.
+        // rareYields (relational-data migration) is a weighted pool: rareDropChance still
+        // gates whether a rare drops at all; the pool decides which — a single-entry pool
+        // behaves exactly like the old scalar rareYield.
         public static bool Roll(string sourceName, string foundVerb, ItemYield[] commonYields,
-            ItemYield rareYield, float rareDropChance, float? tendedness = null,
+            ItemYield[] rareYields, float rareDropChance, float? tendedness = null,
             ItemYield[] injectedYields = null)
         {
             var inventory = InventoryManager.Instance;
@@ -74,15 +77,19 @@ namespace Mossmark.World
             }
 
             float effectiveRareChance = rareDropChance * chanceMultiplier;
-            if (rareYield != null && rareYield.Item != null && Random.value < effectiveRareChance)
+            if (rareYields != null && rareYields.Length > 0 && Random.value < effectiveRareChance)
             {
-                int qty = Random.Range(rareYield.MinQuantity, rareYield.MaxQuantity + 1);
-                int added = inventory.AddItem(rareYield.Item, qty);
-                if (added > 0)
+                var rare = PickWeighted(rareYields);
+                if (rare?.Item != null)
                 {
-                    Debug.Log($"{sourceName}: found a rare {added}x {rareYield.Item.DisplayName}!");
-                    NotificationManager.Post($"Rare find: {added}x {rareYield.Item.DisplayName}");
-                    return true;
+                    int qty = Random.Range(rare.MinQuantity, rare.MaxQuantity + 1);
+                    int added = inventory.AddItem(rare.Item, qty);
+                    if (added > 0)
+                    {
+                        Debug.Log($"{sourceName}: found a rare {added}x {rare.Item.DisplayName}!");
+                        NotificationManager.Post($"Rare find: {added}x {rare.Item.DisplayName}");
+                        return true;
+                    }
                 }
             }
 

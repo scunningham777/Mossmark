@@ -12,6 +12,9 @@ namespace Mossmark.Development
         [SerializeField] private ItemDefinition item;
         [SerializeField] private int quantity = 1;
 
+        public ItemDefinition Item => item;
+        public int Quantity => quantity;
+
         public ItemAvailableCondition(ItemDefinition item, int quantity = 1)
         {
             this.item = item;

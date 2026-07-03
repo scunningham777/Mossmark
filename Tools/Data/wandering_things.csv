@@ -1,6 +1,2 @@
-# tuned: iteration 26
-# baseGoodChance kept at 0.5: 50% base / 80% with favorable specialization is a meaningful but not guaranteed swing
-# badDaylightCost kept at 1: loses a full attention's worth of extra daylight on a bad outcome — punishing but not day-ending
-# goodYields unchanged: Old Coin + Berries provide light reward consistent with a risky wilderness encounter
-assetName,displayName,approachDescription,attendVerb,color_r,color_g,color_b,colliderRadius,goodYields,goodFlavor,badFlavor,badDaylightCost,baseGoodChance,mod1_flagId,mod1_multiplier,mod2_flagId,mod2_multiplier
+﻿assetName,displayName,approachDescription,attendVerb,color_r,color_g,color_b,colliderRadius,goodYields,goodFlavor,badFlavor,badDaylightCost,baseGoodChance,mod1_flagId,mod1_multiplier,mod2_flagId,mod2_multiplier
 traveler,Wary Traveler,"A traveler lingers at the path's edge, watching you with wary eyes.",approach,0.5,0.45,0.55,0.5,"Old Coin:1:1:2,Berries:1:1:3","decides you mean no harm, and presses something into your hand before moving on.","bolts, snatching everything from your pack as they go.",1,0.5,herald_trail_markers,1.3,herald_toll_records,1.2

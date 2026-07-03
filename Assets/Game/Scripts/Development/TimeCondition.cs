@@ -16,6 +16,8 @@ namespace Mossmark.Development
     {
         [SerializeField] private int requiredProgress;
 
+        public int RequiredProgress => requiredProgress;
+
         public TimeCondition(int requiredProgress)
         {
             this.requiredProgress = requiredProgress;

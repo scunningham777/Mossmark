@@ -1,0 +1,57 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8, type: 3}
+  m_Name: spot_deep_wood_shrine
+  m_EditorClassIdentifier: Assembly-CSharp::Mossmark.World.WildernessSpotDefinition
+  kind: 0
+  spotId: sacred_grove
+  displayName: Deep Wood Shrine
+  color: {r: 0.32, g: 0.22, b: 0.42, a: 1}
+  interactionVerb: gather
+  commonYields:
+  - Item: {fileID: 11400000, guid: 29a23783858c4e4dae17e837841a7ad7, type: 2}
+    MinQuantity: 1
+    MaxQuantity: 2
+    Weight: 1
+  rareYields:
+  - Item: {fileID: 11400000, guid: 71fa745212e8453ab3779c7a6a7cfc84, type: 2}
+    MinQuantity: 1
+    MaxQuantity: 1
+    Weight: 1
+  rareDropChance: 0.08
+  commonYieldTable: {fileID: 0}
+  rareYieldTable: {fileID: 0}
+  minTickInterval: 2
+  maxTickInterval: 2.5
+  tendVerb: tend
+  harvestYields: []
+  restsToHarvest: 1
+  maxConcurrentMarked: 2
+  knowledgeYields:
+  - requiredFlag: hedge_witch_ravens_eye
+    requiredSpecializationId: 
+    item: {fileID: 11400000, guid: 71fa745212e8453ab3779c7a6a7cfc84, type: 2}
+    minQty: 1
+    maxQty: 1
+    injectedWeight: 0.15
+  - requiredFlag: 
+    requiredSpecializationId: hedge_witch
+    item: {fileID: 11400000, guid: d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6, type: 2}
+    minQty: 1
+    maxQty: 2
+    injectedWeight: 0.13
+  - requiredFlag: shrine_tended
+    requiredSpecializationId: 
+    item: {fileID: 11400000, guid: 201486684836449b8f900b7942899034, type: 2}
+    minQty: 1
+    maxQty: 1
+    injectedWeight: 0.08

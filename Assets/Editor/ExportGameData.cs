@@ -19,10 +19,48 @@ namespace Mossmark.Editor
         public static void ExportAll()
         {
             Directory.CreateDirectory(OutDir);
+            ExportYieldTables();
             ExportSpots();
+            ExportNpcStages();
+            ExportBuildingStages();
+            ExportStageConditions();
             ExportArchetypes();
             ExportWandering();
             Debug.Log($"[ExportGameData] CSVs written to {OutDir}");
+        }
+
+        // ------------------------------------------------------------------ //
+        // Yield Tables
+        // ------------------------------------------------------------------ //
+
+        static void ExportYieldTables()
+        {
+            // Folder is created lazily by import — absent until the first table is authored.
+            var guids = AssetDatabase.IsValidFolder("Assets/Game/Data/World/YieldTables")
+                ? AssetDatabase.FindAssets("t:YieldTable",
+                    new[] { "Assets/Game/Data/World/YieldTables" })
+                : System.Array.Empty<string>();
+
+            var assets = guids
+                .Select(g => AssetDatabase.LoadAssetAtPath<YieldTable>(
+                    AssetDatabase.GUIDToAssetPath(g)))
+                .Where(a => a != null).ToList();
+
+            var headers = new[] { "tableId", "item", "weight", "minQty", "maxQty" };
+            var rows = new List<string[]>();
+            foreach (var a in assets)
+                foreach (var e in a.Entries ?? System.Array.Empty<ItemYield>())
+                {
+                    if (e?.Item == null) continue;
+                    rows.Add(new[]
+                    {
+                        a.name, e.Item.DisplayName, Fmt(e.Weight),
+                        e.MinQuantity.ToString(), e.MaxQuantity.ToString()
+                    });
+                }
+
+            WriteCsv(Path.Combine(OutDir, "yield_tables.csv"), headers, rows);
+            Debug.Log($"  Yield tables: {rows.Count} rows");
         }
 
         // ------------------------------------------------------------------ //
@@ -44,9 +82,10 @@ namespace Mossmark.Editor
 
             var headers = new List<string>
             {
-                "assetName", "kind", "displayName",
+                "assetName", "spotId", "kind", "displayName",
                 "color_r", "color_g", "color_b",
-                "interactionVerb", "commonYields", "rareYield", "rareDropChance",
+                "interactionVerb", "commonYields", "rareYields", "rareDropChance",
+                "commonYieldTable", "rareYieldTable",
                 "minTickInterval", "maxTickInterval",
                 "tendVerb", "harvestYields", "restsToHarvest", "maxConcurrentMarked"
             };
@@ -62,13 +101,16 @@ namespace Mossmark.Editor
                 var row = new List<string>
                 {
                     a.name,
+                    a.spotId,
                     a.kind == WildernessSpotDefinition.SpotKind.Tended ? "Tended" : "Generic",
                     a.displayName,
                     Fmt(a.color.r), Fmt(a.color.g), Fmt(a.color.b),
                     a.interactionVerb,
                     YieldsToCompact(a.commonYields),
-                    RareToCompact(a.rareYield),
+                    YieldsToCompact(a.rareYields),
                     Fmt(a.rareDropChance),
+                    a.commonYieldTable != null ? a.commonYieldTable.name : "",
+                    a.rareYieldTable != null ? a.rareYieldTable.name : "",
                     Fmt(a.minTickInterval), Fmt(a.maxTickInterval),
                     a.tendVerb,
                     YieldsToCompact(a.harvestYields),
@@ -98,6 +140,165 @@ namespace Mossmark.Editor
         }
 
         // ------------------------------------------------------------------ //
+        // NPC / Building Stages + shared conditions
+        // ------------------------------------------------------------------ //
+
+        // Pool membership is recovered by walking pools rather than stages, so the
+        // exported `pool` column round-trips exactly what import consumes. A stage in
+        // no pool exports with an empty pool cell.
+        //
+        // Row order is pool order, NOT alphabetical: import rebuilds each pool's stages
+        // array from row order, and pool order is semantic (development/track order;
+        // building index 0 is the revival stage). Unpooled stages follow at the end.
+        static void ExportNpcStages()
+        {
+            var pools = LoadAll<Development.NpcStagePool>("Assets/Game/Data/Development/Pools");
+            var stages = OrderByPools(
+                LoadAll<Development.NpcStageDef>("Assets/Game/Data/Development/NpcStages"),
+                pools.Select(p => (IEnumerable<Development.NpcStageDef>)p.Stages));
+
+            var poolOf = new Dictionary<Development.NpcStageDef, string>();
+            foreach (var pool in pools)
+                foreach (var s in pool.Stages ?? System.Array.Empty<Development.NpcStageDef>())
+                    if (s != null && !poolOf.ContainsKey(s)) poolOf[s] = pool.name;
+
+            var headers = new[]
+            {
+                "stageId", "displayName", "progressCost", "pool",
+                "flavorText", "worldStateFlag", "passiveDriftSourceSpotId"
+            };
+            var rows = new List<string[]>();
+            foreach (var s in stages)
+                rows.Add(new[]
+                {
+                    s.StageId, s.DisplayName, s.ProgressCost.ToString(),
+                    poolOf.TryGetValue(s, out var pool) ? pool : "",
+                    s.FlavorText, s.WorldStateFlag, s.PassiveDriftSourceSpotId
+                });
+
+            WriteCsv(Path.Combine(OutDir, "npc_stages.csv"), headers, rows);
+            Debug.Log($"  NPC stages: {rows.Count} rows");
+        }
+
+        static void ExportBuildingStages()
+        {
+            var pools = LoadAll<Development.BuildingStagePool>("Assets/Game/Data/Development/Pools");
+            var stages = OrderByPools(
+                LoadAll<Development.BuildingStageDef>("Assets/Game/Data/Development/BuildingStages"),
+                pools.Select(p => (IEnumerable<Development.BuildingStageDef>)p.Stages));
+
+            var poolOf = new Dictionary<Development.BuildingStageDef, string>();
+            foreach (var pool in pools)
+                foreach (var s in pool.Stages ?? System.Array.Empty<Development.BuildingStageDef>())
+                    if (s != null && !poolOf.ContainsKey(s)) poolOf[s] = pool.name;
+
+            var headers = new[]
+            {
+                "stageId", "displayName", "verb", "material", "costPerTick", "progressCost",
+                "pool", "tint_r", "tint_g", "tint_b", "worldStateFlag"
+            };
+            var rows = new List<string[]>();
+            foreach (var s in stages)
+                rows.Add(new[]
+                {
+                    s.stageId, s.displayName, s.verb,
+                    s.material != null ? s.material.DisplayName : "",
+                    s.costPerTick.ToString(), s.progressCost.ToString(),
+                    poolOf.TryGetValue(s, out var pool) ? pool : "",
+                    Fmt(s.tint.r), Fmt(s.tint.g), Fmt(s.tint.b),
+                    s.worldStateFlag
+                });
+
+            WriteCsv(Path.Combine(OutDir, "building_stages.csv"), headers, rows);
+            Debug.Log($"  Building stages: {rows.Count} rows");
+        }
+
+        // One row per condition across all NPC and building stages — the P2 analogue of
+        // P1's upgrade_dependencies.csv. Only the columns relevant to each row's
+        // conditionType are populated; the mapping mirrors ConditionCsvImporter.BuildCondition.
+        static void ExportStageConditions()
+        {
+            var headers = new[]
+            {
+                "stageId", "conditionType", "item", "quantity", "propertyId", "wantDescription",
+                "flagId", "requiredValue", "needsDescription", "specializationId"
+            };
+            var rows = new List<string[]>();
+
+            foreach (var s in LoadAll<Development.NpcStageDef>("Assets/Game/Data/Development/NpcStages"))
+                AppendConditionRows(rows, s.StageId, s.Conditions);
+            foreach (var s in LoadAll<Development.BuildingStageDef>("Assets/Game/Data/Development/BuildingStages"))
+                AppendConditionRows(rows, s.stageId, s.conditions);
+
+            WriteCsv(Path.Combine(OutDir, "stage_conditions.csv"), headers, rows);
+            Debug.Log($"  Stage conditions: {rows.Count} rows");
+        }
+
+        static void AppendConditionRows(List<string[]> rows, string stageId,
+            Development.IDependencyCondition[] conditions)
+        {
+            if (conditions == null) return;
+            foreach (var c in conditions)
+            {
+                switch (c)
+                {
+                    case Development.ItemAvailableCondition item:
+                        rows.Add(new[] { stageId, "item",
+                            item.Item != null ? item.Item.DisplayName : "", item.Quantity.ToString(),
+                            "", "", "", "", "", "" });
+                        break;
+                    case Development.PropertyAvailableCondition prop:
+                        rows.Add(new[] { stageId, "property", "", "",
+                            prop.PropertyId, prop.WantDescription, "", "", "", "" });
+                        break;
+                    case Development.WorldStateCondition flag:
+                        rows.Add(new[] { stageId, "worldflag", "", "", "", "",
+                            flag.FlagId, flag.RequiredValue ? "true" : "false",
+                            flag.GetNeedsDescription(null), "" });
+                        break;
+                    case Development.SpecializationRealizedCondition spec:
+                        rows.Add(new[] { stageId, "spec", "", "", "", "", "", "",
+                            spec.GetNeedsDescription(null), spec.SpecializationId });
+                        break;
+                    case Development.TimeCondition time:
+                        rows.Add(new[] { stageId, "time", "", time.RequiredProgress.ToString(),
+                            "", "", "", "", "", "" });
+                        break;
+                    case null:
+                        break;
+                    default:
+                        Debug.LogWarning($"[Export] stage '{stageId}': condition type " +
+                            $"{c.GetType().Name} has no CSV mapping — row skipped.");
+                        break;
+                }
+            }
+        }
+
+        static List<T> LoadAll<T>(string folder) where T : ScriptableObject
+        {
+            if (!AssetDatabase.IsValidFolder(folder)) return new List<T>();
+            return AssetDatabase.FindAssets($"t:{typeof(T).Name}", new[] { folder })
+                .Select(g => AssetDatabase.LoadAssetAtPath<T>(AssetDatabase.GUIDToAssetPath(g)))
+                .Where(a => a != null).ToList();
+        }
+
+        // Re-orders an alphabetical asset list so pooled members appear in pool order
+        // (which import consumes as the pool's stages array), followed by any assets in
+        // no pool.
+        static List<T> OrderByPools<T>(List<T> all, IEnumerable<IEnumerable<T>> poolMemberships)
+            where T : ScriptableObject
+        {
+            var ordered = new List<T>();
+            var seen = new HashSet<T>();
+            foreach (var members in poolMemberships)
+                foreach (var s in members ?? Enumerable.Empty<T>())
+                    if (s != null && seen.Add(s)) ordered.Add(s);
+            foreach (var s in all)
+                if (seen.Add(s)) ordered.Add(s);
+            return ordered;
+        }
+
+        // ------------------------------------------------------------------ //
         // Place Archetypes
         // ------------------------------------------------------------------ //
 
@@ -111,58 +312,21 @@ namespace Mossmark.Editor
                     AssetDatabase.GUIDToAssetPath(g)))
                 .Where(a => a != null).ToList();
 
-            int maxNpc = assets.Count > 0
-                ? assets.Max(a => a.NpcPostSpecStages?.Length ?? 0) : 0;
-            int maxB = assets.Count > 0
-                ? assets.Max(a => a.BuildingStages?.Length ?? 0) : 0;
-            int maxK = assets.Count > 0
-                ? assets.Max(a => a.SpotKnowledgeYields?.Length ?? 0) : 0;
-
             var headers = new List<string>
             {
-                "assetName", "archetypeId", "displayName",
-                "spotDisplayName", "spotVerb",
-                "spotColor_r", "spotColor_g", "spotColor_b",
-                "commonYields", "rareYield", "spotRareDropChance",
-                "spotMinTickInterval", "spotMaxTickInterval",
+                "assetName", "archetypeId", "displayName", "spots",
                 "specializationId", "stageDisplayName", "npcTitle",
                 "npcTint_r", "npcTint_g", "npcTint_b",
                 "poiDisplayName", "poiLockedDescription", "poiVerb",
                 "poiColor_r", "poiColor_g", "poiColor_b",
-                "poiCommonYields", "poiRareYield", "poiRareDropChance"
-            };
-            for (int i = 1; i <= maxK; i++)
-                headers.AddRange(new[]
-                {
-                    $"spotKnowledge{i}_flag", $"spotKnowledge{i}_specializationId",
-                    $"spotKnowledge{i}_item",
-                    $"spotKnowledge{i}_minQty", $"spotKnowledge{i}_maxQty",
-                    $"spotKnowledge{i}_weight"
-                });
-            for (int i = 1; i <= maxNpc; i++)
-                headers.AddRange(new[]
-                {
-                    $"stage{i}_id", $"stage{i}_displayName", $"stage{i}_progressCost",
-                    $"stage{i}_useRareItem", $"stage{i}_itemCount",
-                    $"stage{i}_flavorText", $"stage{i}_worldStateFlag",
-                    $"stage{i}_passiveDriftSourceArchetypeId"
-                });
-            headers.AddRange(new[]
-            {
+                "poiCommonYields", "poiRareYields", "poiRareDropChance",
+                "poiMinTickInterval", "poiMaxTickInterval",
+                "npcStagePool", "buildingStagePool", "npcMaintenanceMaterial",
                 "buildingColdFlavor", "buildingMaintenanceCost",
                 "npcColdFlavor", "npcMaintenanceCost",
                 "buildingDilapidatedName",
                 "buildingDilapidatedColor_r", "buildingDilapidatedColor_g", "buildingDilapidatedColor_b"
-            });
-            for (int i = 1; i <= maxB; i++)
-                headers.AddRange(new[]
-                {
-                    $"bStage{i}_displayName", $"bStage{i}_verb", $"bStage{i}_material",
-                    $"bStage{i}_costPerTick", $"bStage{i}_progressCost",
-                    $"bStage{i}_requiredSpecialization",
-                    $"bStage{i}_tint_r", $"bStage{i}_tint_g", $"bStage{i}_tint_b",
-                    $"bStage{i}_worldStateFlag"
-                });
+            };
 
             var rows = new List<string[]>();
             foreach (var a in assets)
@@ -170,76 +334,28 @@ namespace Mossmark.Editor
                 var row = new List<string>
                 {
                     a.name, a.ArchetypeId, a.DisplayName,
-                    a.SpotDisplayName, a.SpotVerb,
-                    Fmt(a.SpotColor.r), Fmt(a.SpotColor.g), Fmt(a.SpotColor.b),
-                    YieldsToCompact(a.CommonYields), RareToCompact(a.RareYield),
-                    Fmt(a.RareDropChance),
-                    Fmt(a.ArchetypeSpotMinTickInterval), Fmt(a.ArchetypeSpotMaxTickInterval),
+                    string.Join(";", (a.Spots ?? System.Array.Empty<WildernessSpotDefinition>())
+                        .Where(s => s != null).Select(s => s.name)),
                     a.SpecializationId, a.StageDisplayName, a.NpcTitle,
                     Fmt(a.NpcTint.r), Fmt(a.NpcTint.g), Fmt(a.NpcTint.b),
                     a.PoiDisplayName, a.PoiLockedDescription, a.PoiVerb,
                     Fmt(a.PoiColor.r), Fmt(a.PoiColor.g), Fmt(a.PoiColor.b),
-                    YieldsToCompact(a.PoiCommonYields), RareToCompact(a.PoiRareYield),
-                    Fmt(a.PoiRareDropChance)
+                    YieldsToCompact(a.PoiCommonYields), YieldsToCompact(a.PoiRareYields),
+                    Fmt(a.PoiRareDropChance),
+                    Fmt(a.PoiMinTickInterval), Fmt(a.PoiMaxTickInterval)
                 };
-
-                for (int i = 0; i < maxK; i++)
-                {
-                    if (i < (a.SpotKnowledgeYields?.Length ?? 0))
-                    {
-                        var e = a.SpotKnowledgeYields[i];
-                        row.AddRange(new[]
-                        {
-                            e.requiredFlag, e.requiredSpecializationId,
-                            e.item != null ? e.item.DisplayName : "",
-                            e.minQty.ToString(), e.maxQty.ToString(),
-                            Fmt(e.injectedWeight)
-                        });
-                    }
-                    else row.AddRange(new[] { "", "", "", "", "", "" });
-                }
-
-                for (int i = 0; i < maxNpc; i++)
-                {
-                    if (i < (a.NpcPostSpecStages?.Length ?? 0))
-                    {
-                        var s = a.NpcPostSpecStages[i];
-                        row.AddRange(new[]
-                        {
-                            s.stageId, s.displayName, s.progressCost.ToString(),
-                            s.useRareItem ? "true" : "false", s.itemCount.ToString(),
-                            s.flavorText, s.worldStateFlag, s.passiveDriftSourceArchetypeId
-                        });
-                    }
-                    else row.AddRange(new[] { "", "", "", "", "", "", "", "" });
-                }
 
                 row.AddRange(new[]
                 {
+                    a.NpcStagePool != null ? a.NpcStagePool.name : "",
+                    a.BuildingStagePool != null ? a.BuildingStagePool.name : "",
+                    a.NpcMaintenanceMaterial != null ? a.NpcMaintenanceMaterial.DisplayName : "",
                     a.BuildingColdFlavor, a.BuildingMaintenanceCost.ToString(),
                     a.NpcColdFlavor, a.NpcMaintenanceCost.ToString()
                 });
 
                 var bc = a.BuildingDilapidatedColor;
                 row.AddRange(new[] { a.BuildingDilapidatedName, Fmt(bc.r), Fmt(bc.g), Fmt(bc.b) });
-
-                for (int i = 0; i < maxB; i++)
-                {
-                    if (i < (a.BuildingStages?.Length ?? 0))
-                    {
-                        var s = a.BuildingStages[i];
-                        row.AddRange(new[]
-                        {
-                            s.displayName, s.verb,
-                            s.material != null ? s.material.DisplayName : "",
-                            s.costPerTick.ToString(), s.progressCost.ToString(),
-                            s.requiredSpecialization,
-                            Fmt(s.tint.r), Fmt(s.tint.g), Fmt(s.tint.b),
-                            s.worldStateFlag
-                        });
-                    }
-                    else row.AddRange(new[] { "", "", "", "", "", "", "", "", "", "" });
-                }
 
                 rows.Add(row.ToArray());
             }
@@ -311,12 +427,6 @@ namespace Mossmark.Editor
             return string.Join(",", yields
                 .Where(y => y?.Item != null)
                 .Select(y => $"{y.Item.DisplayName}:{Fmt(y.Weight)}:{y.MinQuantity}:{y.MaxQuantity}"));
-        }
-
-        static string RareToCompact(ItemYield rare)
-        {
-            if (rare?.Item == null) return "";
-            return $"{rare.Item.DisplayName}:1:{rare.MinQuantity}:{rare.MaxQuantity}";
         }
 
         static string Fmt(float f) =>

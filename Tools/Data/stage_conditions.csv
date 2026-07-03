@@ -1,0 +1,21 @@
+﻿# Stage gate conditions: one row per IDependencyCondition, keyed by owning stageId (NPC or
+# building stage — the file is shared) — P2's analogue of P1's upgrade_dependencies.csv.
+# Only the columns relevant to a row's conditionType are populated:
+#   item      -> ItemAvailableCondition(item, quantity)              carry+chest availability
+#   property  -> PropertyAvailableCondition(propertyId, want)        carry-only; matched item consumed on stage fire
+#   worldflag -> WorldStateCondition(flagId, requiredValue, needs)
+#   spec      -> SpecializationRealizedCondition(specId, needs)
+#   time      -> TimeCondition(quantity as progress; always satisfied)
+# Export drops these comments.
+stageId,conditionType,item,quantity,propertyId,wantDescription,flagId,requiredValue,needsDescription,specializationId
+bog_keeper_drainage,property,,,turns_water,needs something that turns water for the drainage channels,,,,
+bog_keeper_iron_sense,item,Crow Feather,2,,,,,,
+hedge_witch_ravens_eye,item,Raven's Eye,2,,,,,,
+hedge_witch_wound_lore,item,Mistletoe,2,,,,,,
+herald_toll_records,item,Old Coin,2,,,,,,
+herald_trail_markers,item,Flint,3,,,,,,
+bog_channels,spec,,,,,,,needs a bog_tender in town to develop further,bog_tender
+old_road_route,spec,,,,,,,needs a herald in town to develop further,herald
+quarry_tools,spec,,,,,,,needs a stonemason in town to develop further,stonemason
+reed_marsh_loom,spec,,,,,,,needs a weaver in town to develop further,weaver
+sacred_grove_hearth,spec,,,,,,,needs a hedge_witch in town to develop further,hedge_witch

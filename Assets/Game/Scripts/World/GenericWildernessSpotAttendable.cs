@@ -17,7 +17,8 @@ namespace Mossmark.World
     // Per-entry authored knowledge yield: gates an extra item injection into the spot's
     // common pool for a single tick. Either requiredFlag (WorldState flag) or
     // requiredSpecializationId (specialization realized) activates the entry — flag takes
-    // priority if both are set. Authored on PlaceArchetype and WildernessSpotDefinition.
+    // priority if both are set. Authored on WildernessSpotDefinition (archetype spots
+    // included, since the relational-data migration made those real spot assets).
     [Serializable]
     public class KnowledgeYieldEntry
     {
@@ -34,10 +35,10 @@ namespace Mossmark.World
     public class GenericWildernessSpotAttendable : WildernessYieldAttendable
     {
         public void Initialize(string displayName, string interactionVerb, ItemYield[] commonYields,
-            ItemYield rareYield, float rareDropChance, float minTickInterval, float maxTickInterval,
+            ItemYield[] rareYields, float rareDropChance, float minTickInterval, float maxTickInterval,
             KnowledgeYieldEntry[] knowledgeYields = null)
         {
-            InitializeBase(displayName, interactionVerb, commonYields, rareYield, rareDropChance,
+            InitializeBase(displayName, interactionVerb, commonYields, rareYields, rareDropChance,
                 minTickInterval, maxTickInterval, knowledgeYields);
         }
 

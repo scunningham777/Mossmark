@@ -1,0 +1,11 @@
+# Phase-1 fixture for ConditionCsvImporter self-test (Mossmark/Data/Validate Condition Import).
+# Not production data — exercises every day-one conditionType. Item names must exist as
+# ItemDefinition assets (Bog Iron); property/spec/flag ids are plain strings, no asset needed.
+# Column set is the shared stage-conditions schema: only the columns relevant to a row's
+# conditionType are populated, the rest are left blank (mirrors P1 upgrade_dependencies.csv).
+stageId,conditionType,item,quantity,propertyId,wantDescription,flagId,requiredValue,needsDescription,specializationId
+test_stage_a,spec,,,,,,,needs a Hedge Witch in town,hedge_witch
+test_stage_a,item,Bog Iron,3,,,,,,
+test_stage_b,property,,,turns_water,needs something that turns water for the channels,,,,
+test_stage_b,worldflag,,,,,shrine_tended,true,needs the shrine tended,
+test_stage_b,time,,4,,,,,,

@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a55dbd8dcd052e54c9f3340b6e738249, type: 3}
+  m_Name: sacred_grove_shrine
+  m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Development.BuildingStageDef
+  stageId: sacred_grove_shrine
+  displayName: Woodland Shrine
+  verb: tend
+  material: {fileID: 11400000, guid: 29a23783858c4e4dae17e837841a7ad7, type: 2}
+  costPerTick: 2
+  progressCost: 4
+  conditions: []
+  tint: {r: 0.52, g: 0.38, b: 0.62, a: 1}
+  worldStateFlag: shrine_tended
+  references:
+    version: 2
+    RefIds: []
