@@ -22,5 +22,8 @@ namespace Mossmark.Development
             RealizedSpecializations.Contains(id);
 
         public static bool GetFlag(string id) => WorldState.GetFlag(id);
+
+        public static bool IsPropertyKnown(string itemId, string propertyId) =>
+            PropertyKnowledge.IsKnown(itemId, propertyId);
     }
 }

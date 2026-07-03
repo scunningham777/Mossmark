@@ -10,11 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 303c2f015de77714facc7e3f0dc30557, type: 3}
-  m_Name: ravens_eye
+  m_Name: plaited_cord
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Inventory.ItemDefinition
-  itemId: ravens_eye
-  displayName: Raven's Eye
-  color: {r: 0.25, g: 0.1, b: 0.3, a: 1}
-  stackCap: 5
+  itemId: plaited_cord
+  displayName: Plaited Cord
+  color: {r: 0.7, g: 0.62, b: 0.45, a: 1}
+  stackCap: 4
   propertyIds:
-  - draws_the_eye
+  - binds_fast
+  - keeps_well

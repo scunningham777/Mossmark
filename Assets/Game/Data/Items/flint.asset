@@ -16,3 +16,6 @@ MonoBehaviour:
   displayName: Flint
   color: {r: 0.45, g: 0.45, b: 0.5, a: 1}
   stackCap: 10
+  propertyIds:
+  - burns_slow
+  - split_prone

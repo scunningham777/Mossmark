@@ -16,3 +16,6 @@ MonoBehaviour:
   displayName: Bog Iron
   color: {r: 0.35, g: 0.25, b: 0.2, a: 1}
   stackCap: 8
+  propertyIds:
+  - heavy_true
+  - holds_the_cold

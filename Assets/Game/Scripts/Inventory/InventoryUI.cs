@@ -1,4 +1,6 @@
+using Mossmark.Development;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
 
 namespace Mossmark.Inventory
@@ -51,6 +53,22 @@ namespace Mossmark.Inventory
             }
         }
 
+        private void Update()
+        {
+            // Debug: backtick reveals all item properties (for testing without grinding discovery)
+            if (Keyboard.current.backquoteKey.wasPressedThisFrame)
+            {
+                PropertyKnowledge.RevealAll();
+                Refresh();
+            }
+            // Debug: F2 toggles mechanical tag display vs. folk phrases
+            if (Keyboard.current.f2Key.wasPressedThisFrame)
+            {
+                PropertyKnowledge.ToggleShowTags();
+                Refresh();
+            }
+        }
+
         private void BuildLayout(VisualElement root)
         {
             root.style.position = Position.Absolute;
@@ -93,7 +111,7 @@ namespace Mossmark.Inventory
                 style =
                 {
                     flexDirection = FlexDirection.Row,
-                    alignItems = Align.Center,
+                    alignItems = Align.FlexStart,
                     marginBottom = 2,
                     paddingLeft = 4,
                     paddingRight = 8,
@@ -110,11 +128,18 @@ namespace Mossmark.Inventory
                     width = SlotSize,
                     height = SlotSize,
                     marginRight = 6,
+                    marginTop = 2,
+                    flexShrink = 0,
                     backgroundColor = stack != null ? stack.Item.Color : new Color(1f, 1f, 1f, 0.15f)
                 }
             };
 
-            var label = new Label(stack != null ? $"{stack.Item.DisplayName} x{stack.Quantity}/{stack.Item.StackCap}" : "--")
+            var textColumn = new VisualElement
+            {
+                style = { flexDirection = FlexDirection.Column }
+            };
+
+            var nameLabel = new Label(stack != null ? $"{stack.Item.DisplayName} x{stack.Quantity}/{stack.Item.StackCap}" : "--")
             {
                 style =
                 {
@@ -123,10 +148,56 @@ namespace Mossmark.Inventory
                     unityFontDefinition = fallbackFont
                 }
             };
+            textColumn.Add(nameLabel);
+
+            if (stack != null)
+                AppendPropertyLines(textColumn, stack);
 
             row.Add(swatch);
-            row.Add(label);
+            row.Add(textColumn);
             return row;
         }
+
+        private void AppendPropertyLines(VisualElement container, InventoryStack stack)
+        {
+            var ids = stack.Item.PropertyIds;
+            if (ids == null || ids.Length == 0) return;
+
+            bool anyUnknown = false;
+            foreach (var pid in ids)
+            {
+                if (PropertyKnowledge.IsKnown(stack.Item.ItemId, pid))
+                {
+                    string text;
+                    if (PropertyKnowledge.ShowDebugTags)
+                        text = $"[{pid}]";
+                    else
+                    {
+                        var def = PropertyRegistry.GetById(pid);
+                        text = def != null ? def.Phrase : pid;
+                    }
+                    container.Add(MakePropertyLabel(text));
+                }
+                else
+                {
+                    anyUnknown = true;
+                }
+            }
+
+            if (anyUnknown)
+                container.Add(MakePropertyLabel("There's more to it."));
+        }
+
+        private Label MakePropertyLabel(string text) => new Label(text)
+        {
+            style =
+            {
+                color = new Color(0.7f, 0.82f, 0.7f, 0.85f),
+                fontSize = 10,
+                unityFontDefinition = fallbackFont,
+                marginTop = 1,
+                marginLeft = 2,
+            }
+        };
     }
 }

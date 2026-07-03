@@ -24,5 +24,12 @@ namespace Mossmark.Development
         // ArchetypeId of the wilderness spot whose tendedness drives passive progress
         // each rest. Empty = no passive drift for this stage (attention-only).
         public string passiveDriftSourceArchetypeId;
+        // When non-empty, the stage gate accepts any carried item with this property
+        // instead of the archetype's exact item. The matched item is consumed from carry
+        // when the stage fires. useRareItem/itemCount are ignored when this is set.
+        public string requiredPropertyId;
+        // Diegetic want text shown in the overlay when the property gate is unsatisfied.
+        // Falls back to "needs something that {phrase}" if empty.
+        public string wantDescription;
     }
 }

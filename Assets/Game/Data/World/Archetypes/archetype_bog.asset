@@ -64,6 +64,8 @@ MonoBehaviour:
     flavorText: clears Drainage Channels - the fen's margins grow more passable.
     worldStateFlag: bog_keeper_drainage
     passiveDriftSourceArchetypeId: bog
+    requiredPropertyId: turns_water
+    wantDescription: needs something that turns water for the drainage channels
   - stageId: bog_keeper_iron_sense
     displayName: Iron-Sense
     progressCost: 8

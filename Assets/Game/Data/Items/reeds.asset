@@ -16,3 +16,6 @@ MonoBehaviour:
   displayName: Reeds
   color: {r: 0.6, g: 0.65, b: 0.35, a: 1}
   stackCap: 10
+  propertyIds:
+  - split_prone
+  - binds_fast

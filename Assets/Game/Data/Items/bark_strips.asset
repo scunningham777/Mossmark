@@ -16,3 +16,6 @@ MonoBehaviour:
   displayName: Bark Strips
   color: {r: 0.52, g: 0.32, b: 0.18, a: 1}
   stackCap: 10
+  propertyIds:
+  - binds_fast
+  - keeps_well

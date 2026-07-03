@@ -146,6 +146,16 @@ namespace Mossmark.Visuals
             if (haloGo != null) haloGo.SetActive(false);
         }
 
+        // Called externally (e.g. WorkshopUI on successful conversion) to fire the
+        // stage-cross tier signal without going through DevelopableEntity.OnDeveloped.
+        public void TriggerPop()
+        {
+            suppressNextPulse = true;
+            if (activePulse != null) StopCoroutine(activePulse);
+            if (activePop != null) StopCoroutine(activePop);
+            activePop = StartCoroutine(ScalePulse(StagePopScale, StagePopDuration));
+        }
+
         private IEnumerator ScalePulse(float peak, float duration)
         {
             float half = duration * 0.5f;

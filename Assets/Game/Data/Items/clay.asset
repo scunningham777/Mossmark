@@ -16,3 +16,6 @@ MonoBehaviour:
   displayName: Clay
   color: {r: 0.7, g: 0.4, b: 0.2, a: 1}
   stackCap: 8
+  propertyIds:
+  - holds_the_cold
+  - turns_water

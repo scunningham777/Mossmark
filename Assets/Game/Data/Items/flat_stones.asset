@@ -16,3 +16,5 @@ MonoBehaviour:
   displayName: Flat Stones
   color: {r: 0.6, g: 0.6, b: 0.6, a: 1}
   stackCap: 8
+  propertyIds:
+  - heavy_true

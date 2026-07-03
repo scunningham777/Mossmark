@@ -16,3 +16,6 @@ MonoBehaviour:
   displayName: Mistletoe
   color: {r: 0.35, g: 0.55, b: 0.35, a: 1}
   stackCap: 8
+  propertyIds:
+  - keeps_well
+  - turns_water

@@ -16,3 +16,5 @@ MonoBehaviour:
   displayName: Sticks
   color: {r: 0.55, g: 0.35, b: 0.15, a: 1}
   stackCap: 10
+  propertyIds:
+  - burns_slow

@@ -279,6 +279,20 @@ namespace Mossmark.Development
             if (GetNextStage() == null)
                 return $"Hold E to visit with {specializedName}";
 
+            // Property-gated stage: always show the want text so the player sees what
+            // the NPC needs whether or not a matching item is already carried.
+            var nextStage = GetNextStage();
+            if (postSpecStageDefs.TryGetValue(nextStage.Id, out var stageDef)
+                && !string.IsNullOrEmpty(stageDef.requiredPropertyId))
+            {
+                var unsatisfied = nextStage.GetUnsatisfiedNeedsDescription(this);
+                if (unsatisfied != null) return $"{DisplayName} {unsatisfied}";
+                var want = stageDef.wantDescription;
+                return !string.IsNullOrEmpty(want)
+                    ? $"Hold E — {want}"
+                    : $"Hold E to help {specializedName} develop their craft further";
+            }
+
             return GetNeedsOrDefault($"Hold E to help {specializedName} develop their craft further");
         }
 
@@ -434,6 +448,11 @@ namespace Mossmark.Development
             // --- Post-specialization stage ---
             if (postSpecStageDefs.TryGetValue(stage.Id, out var stageDef))
             {
+                // Property-gated stages consume one matching item from carry at the
+                // moment the stage fires (Iteration 37).
+                if (!string.IsNullOrEmpty(stageDef.requiredPropertyId))
+                    ConsumePropertyMatchedItem(stageDef.requiredPropertyId);
+
                 if (!string.IsNullOrEmpty(stageDef.worldStateFlag))
                 {
                     WorldState.SetFlag(stageDef.worldStateFlag, true);
@@ -482,16 +501,52 @@ namespace Mossmark.Development
 
             foreach (var def in archetype.NpcPostSpecStages)
             {
-                var item = def.useRareItem ? item2 : item1;
-                if (item == null) continue;
+                var specCondition = new SpecializationRealizedCondition(archetype.SpecializationId,
+                    $"needs a {archetype.NpcTitle} in town");
 
-                stages.Add(new DevelopmentStage(def.stageId, def.displayName, def.progressCost,
-                    new SpecializationRealizedCondition(archetype.SpecializationId,
-                        $"needs a {archetype.NpcTitle} in town"),
-                    new ItemAvailableCondition(item, def.itemCount)));
+                if (!string.IsNullOrEmpty(def.requiredPropertyId))
+                {
+                    // Property-gated: any carried item with the required property satisfies
+                    // the gate; the matched item is consumed from carry when the stage fires.
+                    stages.Add(new DevelopmentStage(def.stageId, def.displayName, def.progressCost,
+                        specCondition,
+                        new PropertyAvailableCondition(def.requiredPropertyId, def.wantDescription)));
+                }
+                else
+                {
+                    var item = def.useRareItem ? item2 : item1;
+                    if (item == null) continue;
+                    stages.Add(new DevelopmentStage(def.stageId, def.displayName, def.progressCost,
+                        specCondition,
+                        new ItemAvailableCondition(item, def.itemCount)));
+                }
             }
 
             return stages;
+        }
+
+        // Iteration 37: consume the highest-quantity carried item that has the given
+        // property, so property-gated stage completion feels like a real contribution.
+        private void ConsumePropertyMatchedItem(string propertyId)
+        {
+            if (InventoryManager.Instance == null) return;
+            ItemDefinition best = null;
+            int bestQty = 0;
+            foreach (var stack in InventoryManager.Instance.Stacks)
+            {
+                if (stack.Item == null || stack.Item.PropertyIds == null) continue;
+                foreach (var pid in stack.Item.PropertyIds)
+                {
+                    if (pid == propertyId && stack.Quantity > bestQty)
+                    {
+                        best = stack.Item;
+                        bestQty = stack.Quantity;
+                        break;
+                    }
+                }
+            }
+            if (best != null)
+                InventoryManager.Instance.RemoveItem(best, 1);
         }
 
         private static int PickWeightedGiftIndex(ItemYield[] gifts)

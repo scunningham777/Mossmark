@@ -75,6 +75,13 @@ namespace Mossmark.Player
                 return;
             }
 
+            // The workshop menu (WorkshopUI) owns input while open.
+            if (WorkshopUI.Instance != null && WorkshopUI.Instance.IsOpen)
+            {
+                movement = Vector2.zero;
+                return;
+            }
+
             // The Horizon panel (HorizonUI) owns input while open.
             if (HorizonUI.Instance != null && HorizonUI.Instance.IsOpen)
             {

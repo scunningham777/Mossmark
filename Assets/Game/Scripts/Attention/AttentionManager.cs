@@ -84,6 +84,9 @@ namespace Mossmark.Attention
             // underneath it.
             if (ChestUI.Instance != null && ChestUI.Instance.IsOpen) return;
 
+            // The workshop menu (WorkshopUI) owns input while open.
+            if (WorkshopUI.Instance != null && WorkshopUI.Instance.IsOpen) return;
+
             // The Horizon panel (HorizonUI) covers the screen while open; same reasoning.
             if (HorizonUI.Instance != null && HorizonUI.Instance.IsOpen) return;
 
