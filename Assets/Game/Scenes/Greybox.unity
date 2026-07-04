@@ -2365,16 +2365,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d5e807800cdac3c499b7e9fe1fef3409, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Development.BuildingAttendable
   dilapidatedName: Derelict Workshop
-  declaredSpecialization:
+  declaredSpecialization: 
   minTickInterval: 2
   maxTickInterval: 3
+  minInteractInterval: 0.5
+  maxInteractInterval: 1
   stages:
   - {fileID: 11400000, guid: ca952feaf06cc6947990b465d18f2f6d, type: 2}
   restoredFlavors: []
-  coldFlavor:
+  coldFlavor: 
   maintenanceCostPerReset: 2
 --- !u!114 &902000003
 MonoBehaviour:
