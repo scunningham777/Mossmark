@@ -20,6 +20,7 @@ namespace Mossmark.Editor
         {
             Directory.CreateDirectory(OutDir);
             ExportYieldTables();
+            ExportSpotStages();
             ExportSpots();
             ExportNpcStages();
             ExportBuildingStages();
@@ -64,6 +65,41 @@ namespace Mossmark.Editor
         }
 
         // ------------------------------------------------------------------ //
+        // Spot Stages + Pools (Iteration 44 — generalized from Iteration 43's Fen Bog pilot)
+        // ------------------------------------------------------------------ //
+
+        static void ExportSpotStages()
+        {
+            var pools = LoadAll<SpotStagePool>("Assets/Game/Data/Development/Pools");
+            var stages = OrderByPools(
+                LoadAll<SpotStageDef>("Assets/Game/Data/Development/SpotStages"),
+                pools.Select(p => (IEnumerable<SpotStageDef>)p.Stages));
+
+            var poolOf = new Dictionary<SpotStageDef, string>();
+            foreach (var pool in pools)
+                foreach (var s in pool.Stages ?? System.Array.Empty<SpotStageDef>())
+                    if (s != null && !poolOf.ContainsKey(s)) poolOf[s] = pool.name;
+
+            var headers = new[]
+            {
+                "stageId", "displayName", "progressCost", "pool",
+                "flavorText", "rareChanceMultiplier", "tint_r", "tint_g", "tint_b"
+            };
+            var rows = new List<string[]>();
+            foreach (var s in stages)
+                rows.Add(new[]
+                {
+                    s.StageId, s.DisplayName, s.ProgressCost.ToString(),
+                    poolOf.TryGetValue(s, out var pool) ? pool : "",
+                    s.FlavorText, Fmt(s.RareChanceMultiplier),
+                    Fmt(s.Tint.r), Fmt(s.Tint.g), Fmt(s.Tint.b)
+                });
+
+            WriteCsv(Path.Combine(OutDir, "spot_stages.csv"), headers, rows);
+            Debug.Log($"  Spot stages: {rows.Count} rows");
+        }
+
+        // ------------------------------------------------------------------ //
         // Wilderness Spots
         // ------------------------------------------------------------------ //
 
@@ -87,7 +123,8 @@ namespace Mossmark.Editor
                 "interactionVerb", "commonYields", "rareYields", "rareDropChance",
                 "rareYieldTable",
                 "minTickInterval", "maxTickInterval",
-                "tendVerb", "harvestYields", "restsToHarvest", "maxConcurrentMarked"
+                "tendVerb", "harvestYields", "restsToHarvest", "maxConcurrentMarked",
+                "spotStagePool"
             };
             for (int i = 1; i <= maxKnowledge; i++)
                 headers.AddRange(new[]
@@ -114,7 +151,8 @@ namespace Mossmark.Editor
                     a.tendVerb,
                     YieldsToCompact(a.harvestYields),
                     a.restsToHarvest.ToString(),
-                    a.maxConcurrentMarked.ToString()
+                    a.maxConcurrentMarked.ToString(),
+                    a.spotStagePool != null ? a.spotStagePool.name : ""
                 };
                 for (int i = 0; i < maxKnowledge; i++)
                 {
@@ -231,6 +269,8 @@ namespace Mossmark.Editor
                 AppendConditionRows(rows, s.StageId, s.Conditions);
             foreach (var s in LoadAll<Development.BuildingStageDef>("Assets/Game/Data/Development/BuildingStages"))
                 AppendConditionRows(rows, s.stageId, s.conditions);
+            foreach (var s in LoadAll<SpotStageDef>("Assets/Game/Data/Development/SpotStages"))
+                AppendConditionRows(rows, s.StageId, s.Conditions);
 
             WriteCsv(Path.Combine(OutDir, "stage_conditions.csv"), headers, rows);
             Debug.Log($"  Stage conditions: {rows.Count} rows");
@@ -264,6 +304,10 @@ namespace Mossmark.Editor
                         break;
                     case Development.TimeCondition time:
                         rows.Add(new[] { stageId, "time", "", time.RequiredProgress.ToString(),
+                            "", "", "", "", "", "" });
+                        break;
+                    case SustainedGoodAttentionCondition sustained:
+                        rows.Add(new[] { stageId, "sustainedattention", "", sustained.MinDays.ToString(),
                             "", "", "", "", "", "" });
                         break;
                     case null:

@@ -26,6 +26,8 @@ namespace Mossmark.Editor
 
             int changed = 0;
             changed += ImportYieldTables(items);
+            // Spot stages import before spots — spots reference pools by name (Iteration 44).
+            changed += ImportSpotStages(items, stageConditions);
             changed += ImportSpots(items);
             changed += ImportNpcStages(items, stageConditions);
             changed += ImportBuildingStages(items, stageConditions);
@@ -206,6 +208,59 @@ namespace Mossmark.Editor
         }
 
         // ------------------------------------------------------------------ //
+        // Spot Stages + Pools (Iteration 44 — generalized from Iteration 43's Fen Bog pilot)
+        // ------------------------------------------------------------------ //
+
+        // One row per SpotStageDef; the `pool` column groups stages into SpotStagePool
+        // assets, same shape as ImportNpcStages/ImportBuildingStages. Every Generic spot
+        // has exactly one stage (Familiar) in its own single-member pool today, but the
+        // pool grouping is generic in case a spot ever earns a second Standing stage.
+        static int ImportSpotStages(Dictionary<string, ItemDefinition> items,
+            Dictionary<string, List<Development.IDependencyCondition>> stageConditions)
+        {
+            var rows = ReadCsv(Path.Combine(DataDir, "spot_stages.csv"));
+            if (rows == null) return 0;
+            int changed = 0;
+
+            var poolMembers = new Dictionary<string, List<SpotStageDef>>(StringComparer.Ordinal);
+            var poolOrder = new List<string>();
+
+            foreach (var row in rows)
+            {
+                string id = row.Get("stageId");
+                if (string.IsNullOrEmpty(id)) continue;
+
+                var asset = LoadOrCreate<SpotStageDef>(
+                    $"Assets/Game/Data/Development/SpotStages/{id}.asset");
+                var so = new SerializedObject(asset);
+                so.FindProperty("stageId").stringValue      = id;
+                so.FindProperty("displayName").stringValue  = row.Get("displayName");
+                so.FindProperty("progressCost").intValue    = I(row.Get("progressCost", "1"));
+                so.FindProperty("flavorText").stringValue   = row.Get("flavorText");
+                so.FindProperty("rareChanceMultiplier").floatValue = F(row.Get("rareChanceMultiplier", "1"));
+                SetColor(so.FindProperty("tint"), row, "tint");
+                ConditionCsvImporter.AssignConditions(so.FindProperty("conditions"),
+                    stageConditions.TryGetValue(id, out var conds) ? conds : null);
+                if (so.ApplyModifiedProperties()) changed++;
+
+                string pool = row.Get("pool");
+                if (!string.IsNullOrEmpty(pool))
+                {
+                    if (!poolMembers.TryGetValue(pool, out var list))
+                    { poolMembers[pool] = list = new List<SpotStageDef>(); poolOrder.Add(pool); }
+                    list.Add(asset);
+                }
+            }
+
+            foreach (var pool in poolOrder)
+                if (UpdatePool<SpotStagePool, SpotStageDef>(pool, poolMembers[pool]))
+                    changed++;
+
+            Debug.Log($"  Spot stages: {rows.Count} rows, {poolOrder.Count} pools");
+            return changed;
+        }
+
+        // ------------------------------------------------------------------ //
         // Wilderness Spots
         // ------------------------------------------------------------------ //
 
@@ -241,6 +296,8 @@ namespace Mossmark.Editor
                     ParseYields(row.Get("harvestYields"), items));
                 so.FindProperty("restsToHarvest").intValue     = I(row.Get("restsToHarvest", "1"));
                 so.FindProperty("maxConcurrentMarked").intValue = I(row.Get("maxConcurrentMarked", "2"));
+                so.FindProperty("spotStagePool").objectReferenceValue =
+                    LoadDataAsset<SpotStagePool>(row.Get("spotStagePool"), "Development/Pools");
 
                 // Knowledge yield entries (Iteration 28; requiredSpecializationId added Iteration 34)
                 var kEntries = new List<(string flag, string specId, ItemDefinition item, int minQ, int maxQ, float weight)>();

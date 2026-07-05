@@ -10,20 +10,20 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c96fd896f48e0e544bc5da04c6ca1fb6, type: 3}
-  m_Name: fen_bog_familiar
+  m_Name: mushroom_patch_familiar
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.World.SpotStageDef
-  stageId: fen_bog_familiar
+  stageId: mushroom_patch_familiar
   displayName: Familiar
   progressCost: 1
   conditions:
-  - rid: 479027100481839622
+  - rid: 478763229186883774
   flavorText: feels like familiar ground now - it knows you're coming back.
   rareChanceMultiplier: 1.75
-  tint: {r: 0.5, g: 0.54, b: 0.47, a: 1}
+  tint: {r: 0.69, g: 0.55, b: 0.44, a: 1}
   references:
     version: 2
     RefIds:
-    - rid: 479027100481839622
+    - rid: 478763229186883774
       type: {class: SustainedGoodAttentionCondition, ns: Mossmark.World, asm: Assembly-CSharp}
       data:
         minDays: 3

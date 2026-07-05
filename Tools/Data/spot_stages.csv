@@ -1,0 +1,11 @@
+stageId,displayName,progressCost,pool,flavorText,rareChanceMultiplier,tint_r,tint_g,tint_b
+fen_bog_familiar,Familiar,1,fen_bog_stage_pool,feels like familiar ground now - it knows you're coming back.,1.75,0.5,0.54,0.47
+clay_pit_familiar,Familiar,1,clay_pit_stage_pool,feels like familiar ground now - it knows you're coming back.,1.75,0.72,0.58,0.48
+deep_wood_shrine_familiar,Familiar,1,deep_wood_shrine_stage_pool,feels like familiar ground now - it knows you're coming back.,1.75,0.52,0.45,0.59
+field_familiar,Familiar,1,field_stage_pool,feels like familiar ground now - it knows you're coming back.,1.75,0.58,0.76,0.48
+hollow_log_familiar,Familiar,1,hollow_log_stage_pool,feels like familiar ground now - it knows you're coming back.,1.75,0.52,0.44,0.38
+mushroom_patch_familiar,Familiar,1,mushroom_patch_stage_pool,feels like familiar ground now - it knows you're coming back.,1.75,0.69,0.55,0.44
+old_quarry_familiar,Familiar,1,old_quarry_stage_pool,feels like familiar ground now - it knows you're coming back.,1.75,0.65,0.65,0.69
+old_road_familiar,Familiar,1,old_road_stage_pool,feels like familiar ground now - it knows you're coming back.,1.75,0.65,0.63,0.58
+reed_marsh_familiar,Familiar,1,reed_marsh_stage_pool,feels like familiar ground now - it knows you're coming back.,1.75,0.69,0.72,0.52
+stone_outcrop_familiar,Familiar,1,stone_outcrop_stage_pool,feels like familiar ground now - it knows you're coming back.,1.75,0.69,0.69,0.71

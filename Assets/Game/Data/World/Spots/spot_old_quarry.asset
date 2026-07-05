@@ -36,3 +36,5 @@ MonoBehaviour:
   restsToHarvest: 1
   maxConcurrentMarked: 2
   knowledgeYields: []
+  hintFlavors: []
+  spotStagePool: {fileID: 11400000, guid: 30f810a039ddaa344af2cea9774c5159, type: 2}

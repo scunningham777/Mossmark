@@ -1,7 +1,46 @@
+using System;
+using Mossmark.Inventory;
 using UnityEngine;
 
 namespace Mossmark.World
 {
+    [Serializable]
+    public class ItemYield
+    {
+        public ItemDefinition Item;
+        public int MinQuantity = 1;
+        public int MaxQuantity = 1;
+        [Min(0f)] public float Weight = 1f;
+    }
+
+    // Per-entry authored knowledge yield: gates an extra item injection into the spot's
+    // common pool for a single tick. Either requiredFlag (WorldState flag) or
+    // requiredSpecializationId (specialization realized) activates the entry — flag takes
+    // priority if both are set. Authored on WildernessSpotDefinition (archetype spots
+    // included, since the relational-data migration made those real spot assets).
+    [Serializable]
+    public class KnowledgeYieldEntry
+    {
+        public string requiredFlag;
+        public string requiredSpecializationId;
+        public ItemDefinition item;
+        public int minQty = 1;
+        public int maxQty = 2;
+        public float injectedWeight = 0.15f;
+    }
+
+    // Iteration 42: analogous to KnowledgeYieldEntry, but delivers a flavor line instead
+    // of an item — an ambient hint rather than a reward. Gated the same way (WorldState
+    // flag), rolled at low weight each tick the flag holds true rather than injected into
+    // the yield pool.
+    [Serializable]
+    public class HintFlavorEntry
+    {
+        public string requiredFlag;
+        [Range(0f, 1f)] public float chance = 0.15f;
+        public string text;
+    }
+
     // Data asset for one type of generic or tended wilderness spot. WorldGenerator
     // draws from a pool of these at session start and places them randomly in the
     // wilderness, so new spot types are added here (as assets) without touching
@@ -51,10 +90,11 @@ namespace Mossmark.World
         // WorldState flag, fired instead of an item injection. Usually empty.
         [SerializeField] public HintFlavorEntry[] hintFlavors = System.Array.Empty<HintFlavorEntry>();
 
-        // Iteration 43 (Fen Bog Pilot): when set, WorldGenerator spawns this Generic spot as
-        // a DevelopingWildernessSpotAttendable (exhaustion + latched Standing stages) instead
-        // of GenericWildernessSpotAttendable (continuous tendedness). Null for every spot but
-        // Fen Bog — not wired into the CSV pipeline, same as PoiDormantByDefault above.
+        // Iteration 43 (Fen Bog pilot), generalized to every Generic spot in Iteration 44:
+        // the exhaustion + latched Standing stage-pool DevelopingWildernessSpotAttendable
+        // uses. Wired into the CSV pipeline (wilderness_spots.csv's spotStagePool column)
+        // as of Iteration 44 — every Generic spot has one; Tended spots and POIs don't use
+        // this field at all.
         [SerializeField] public SpotStagePool spotStagePool;
 
         public ItemYield[] EffectiveRareYields =>

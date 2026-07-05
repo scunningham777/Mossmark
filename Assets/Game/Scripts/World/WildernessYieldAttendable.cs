@@ -6,10 +6,13 @@ using UnityEngine;
 
 namespace Mossmark.World
 {
-    // Shared base class for GenericWildernessSpotAttendable and PoiAttendable (G7). Both
-    // had identical fields, tick logic, and IAttendable plumbing — only their overlay
-    // text and gate logic differ. Subclasses implement the three abstract overlay methods
-    // and may override GetEffectiveRareChance() to bias the drop chance with modifiers.
+    // Base class originally shared by GenericWildernessSpotAttendable and PoiAttendable (G7).
+    // Iteration 44 retired GenericWildernessSpotAttendable (Generic wilderness spots moved to
+    // DevelopingWildernessSpotAttendable's exhaustion/Standing model), so PoiAttendable is the
+    // sole remaining subclass — POIs are distinctive, specialization-gated locations rather
+    // than ambient foraging spots, so they kept the original continuous-tendedness model
+    // rather than rolling into the stage-pool one. Subclasses implement the abstract overlay
+    // methods and may override GetEffectiveRareChance() to bias the drop chance with modifiers.
     //
     // Iteration 27: tendedness (float [0,1], initial 0.5) is per-session runtime state.
     // Each attended tick raises it (+0.04); each rest lowers it if unattended (-0.08) or

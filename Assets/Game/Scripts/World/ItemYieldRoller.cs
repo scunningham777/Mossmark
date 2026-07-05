@@ -7,8 +7,8 @@ using UnityEngine;
 namespace Mossmark.World
 {
     // Shared weighted-yield-roll logic (Iteration 13 extraction): a weighted common
-    // yield plus an independent rare-drop roll, both into the inventory. Used by both
-    // GenericWildernessSpotAttendable and PoiAttendable, which share this exact
+    // yield plus an independent rare-drop roll, both into the inventory. Used by
+    // DevelopingWildernessSpotAttendable and PoiAttendable, which share this exact
     // "one common roll + one rare roll" shape from Iteration 4/8.5.
     //
     // Iteration 27: tendedness parameter (optional, null = current behavior) adjusts

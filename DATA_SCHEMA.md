@@ -1,6 +1,6 @@
 # Mossmark — Data Schema (Prototype 2)
 
-Seven CSV files under `Tools/Data/` define the authored game data. Each maps to a Unity ScriptableObject type or to entries within one. Asset names are the universal key — every cross-file reference uses an asset name (or an item's `DisplayName`), never asset paths or GUIDs.
+Eight CSV files under `Tools/Data/` define the authored game data. Each maps to a Unity ScriptableObject type or to entries within one. Asset names are the universal key — every cross-file reference uses an asset name (or an item's `DisplayName`), never asset paths or GUIDs.
 
 - **Import**: `Mossmark/Data/Import All` — applies CSVs to assets, creating missing assets (and folders) on demand. Re-running on unchanged CSVs is a no-op (0 assets updated), including `[SerializeReference]` condition arrays.
 - **Export**: `Mossmark/Data/Export All` — regenerates all CSVs from assets. **Export drops `#` comment lines**; re-add durable authoring notes after exporting, or keep them in this document.
@@ -15,14 +15,15 @@ This structure deliberately mirrors Prototype 1's relational pipeline (see `DATA
 | File | Maps to | Creates / updates |
 |------|---------|-------------------|
 | `yield_tables.csv` | `YieldTable` | One SO per unique `tableId` in `Assets/Game/Data/World/YieldTables/` |
+| `spot_stages.csv` | `SpotStageDef` + `SpotStagePool` | One stage SO per row in `Assets/Game/Data/Development/SpotStages/`; one pool SO per unique `pool` in `Assets/Game/Data/Development/Pools/` |
 | `wilderness_spots.csv` | `WildernessSpotDefinition` | One SO per row in `Assets/Game/Data/World/Spots/` |
 | `npc_stages.csv` | `NpcStageDef` + `NpcStagePool` | One stage SO per row in `Assets/Game/Data/Development/NpcStages/`; one pool SO per unique `pool` in `Assets/Game/Data/Development/Pools/` |
 | `building_stages.csv` | `BuildingStageDef` + `BuildingStagePool` | One stage SO per row in `Assets/Game/Data/Development/BuildingStages/`; one pool SO per unique `pool` in `Assets/Game/Data/Development/Pools/` |
-| `stage_conditions.csv` | `[SerializeReference] IDependencyCondition[]` on NPC **and** building stage SOs | Updates the `conditions` array on existing stage assets, keyed by `stageId` |
+| `stage_conditions.csv` | `[SerializeReference] IDependencyCondition[]` on NPC, building, **and** spot stage SOs | Updates the `conditions` array on existing stage assets, keyed by `stageId` |
 | `place_archetypes.csv` | `PlaceArchetype` | Updates existing SOs in `Assets/Game/Data/World/Archetypes/` |
 | `wandering_things.csv` | `WanderingThingDefinition` | Updates existing SOs in `Assets/Game/Data/World/WanderingThings/` |
 
-Import order (fixed in `ImportGameData.ImportAll`): yield tables → spots → NPC stages → building stages → archetypes → wandering things. `stage_conditions.csv` is read once up front and applied during both stage imports. Archetypes run last because they reference spot and pool assets by name.
+Import order (fixed in `ImportGameData.ImportAll`): yield tables → spot stages → spots → NPC stages → building stages → archetypes → wandering things. Spot stages import before spots because spots reference spot-stage pools by name (Iteration 44). `stage_conditions.csv` is read once up front and applied during all three stage imports. Archetypes run last because they reference spot and pool assets by name.
 
 Multi-value cells use semicolons (`spots`) or the packed yield format (below). Booleans are `true`/`false`. Colors are per-channel `_r`/`_g`/`_b` float columns.
 
@@ -61,7 +62,28 @@ One row per `WildernessSpotDefinition` — both the generic/tended pool spots ra
 | `rareYieldTable` | string | Optional `yield_tables.csv` `tableId`; when set, replaces the inline `rareYields` list. |
 | `minTickInterval` / `maxTickInterval` | float | Seconds per attention tick (generic pool 1.5–2.0; archetype spots 2.0–2.5 per iteration 26). |
 | `tendVerb`, `harvestYields`, `restsToHarvest`, `maxConcurrentMarked` | | Tended-kind fields. |
+| `spotStagePool` | string | `spot_stages.csv` `pool` asset name (Iteration 44). Generic-kind only — every Generic spot has one; empty for Tended spots. `WorldGenerator` spawns a Generic spot as `DevelopingWildernessSpotAttendable` (exhaustion + latched Standing), reading its stage pool from this reference. |
 | `knowledgeN_flag` / `knowledgeN_specializationId` / `knowledgeN_item` / `_minQty` / `_maxQty` / `_weight` | | Knowledge yield injections (iterations 28/34): entry activates via WorldState flag **or** realized specialization (flag wins if both set) and injects the item into the common pool per tick. N = 1, 2, 3, … |
+
+`hintFlavors` (Iteration 42) is **not** in this CSV — hand-authored per spot directly in the `.asset`, same discipline as `PlaceArchetype.PoiDormantByDefault`.
+
+---
+
+## `spot_stages.csv`
+
+One row per `SpotStageDef` asset — the P2 analogue of `npc_stages.csv`/`building_stages.csv`, generalized in Iteration 44 from Iteration 43's single hand-authored Fen Bog pilot. The `pool` column groups stages into `SpotStagePool` assets, referenced from `wilderness_spots.csv`'s `spotStagePool` column. Every Generic spot has exactly one stage (`Familiar`) in its own single-member pool today — the grouping is generic in case a spot ever earns a second Standing stage.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `stageId` | string | Asset key and the join key into `stage_conditions.csv`. Unique across NPC, building, *and* spot stages. |
+| `displayName` | string | Stage name (`Familiar` for every row today). |
+| `progressCost` | int | Always `1` today — the real gate is the `sustainedattention` condition (see below), not accumulated attention progress; see `DevelopingWildernessSpotAttendable`'s comments for why the stage still needs a nonzero cost. |
+| `pool` | string | `SpotStagePool` asset name. |
+| `flavorText` | string | Posted as `"{spotDisplayName}: {flavorText}"` on apply. Deliberately spot-agnostic phrasing (`"feels like familiar ground now - it knows you're coming back."`) reused verbatim across all 10 spots — the generic-template authoring approach chosen for this rollout, not bespoke per-spot flavor. |
+| `rareChanceMultiplier` | float | Multiplies the spot's rare-drop chance once Familiar has applied. `1.75` for every row today — bigger than the old tendedness well-tended band's implicit ×1.2, so Standing reads as a real step change rather than something ordinary attention could already reach. |
+| `tint_r/g/b` | float | Sprite color applied on crossing (mirrors `building_stages.csv`'s `tint_r/g/b`) — needed because `TriangleSpriteGenerator`/`CircleSpriteGenerator` bake color into the sprite texture rather than reading `SpriteRenderer.color`. Derived per spot via a single formula — lerp the spot's base `color` 30% toward white — rather than hand-picked, again per the generic-template approach. |
+
+The `SustainedGoodAttentionCondition(minDays)` gate is authored in `stage_conditions.csv` via the `sustainedattention` conditionType (see below) — every row uses `minDays = 3` today.
 
 ---
 
@@ -109,7 +131,7 @@ Live stations: `workshop_restoration` (pool `workshop_pool`, scene-placed Worksh
 
 ## `stage_conditions.csv`
 
-One row per `IDependencyCondition`, keyed by the owning `stageId` (shared by NPC and building stages) — the P2 analogue of P1's `upgrade_dependencies.csv`, generalized to P2's polymorphic condition system. Only the columns relevant to a row's `conditionType` are populated.
+One row per `IDependencyCondition`, keyed by the owning `stageId` (shared by NPC, building, and spot stages) — the P2 analogue of P1's `upgrade_dependencies.csv`, generalized to P2's polymorphic condition system. Only the columns relevant to a row's `conditionType` are populated.
 
 | `conditionType` | Constructs | Populated columns |
 |-----------------|-----------|-------------------|
@@ -118,6 +140,7 @@ One row per `IDependencyCondition`, keyed by the owning `stageId` (shared by NPC
 | `worldflag` | `WorldStateCondition(flagId, requiredValue, needs)` | `flagId`, `requiredValue`, `needsDescription` |
 | `spec` | `SpecializationRealizedCondition(specId, needs)` | `specializationId`, `needsDescription` |
 | `time` | `TimeCondition(progress)` — always satisfied ("needs more time") | `quantity` (as progress) |
+| `sustainedattention` | `SustainedGoodAttentionCondition(minDays)` — satisfied once the spot's per-rest good-attention counter reaches `minDays` (Iteration 43/44) | `quantity` (as minDays) |
 
 The importer (`ConditionCsvImporter`) constructs the concrete C# object per row and assigns it via `SerializedProperty.managedReferenceValue` into the stage's `[SerializeReference]` array — the standing pattern for any future condition-bearing data. To support a new condition type: add a case to `ConditionCsvImporter.BuildCondition`, a case to `ExportGameData.AppendConditionRows`, make the condition class `[Serializable]` with `[SerializeField]` (non-readonly) fields, and extend `_sample_conditions.csv` + run the self-test. `EntityStateCondition` (scene-object reference) stays hand-authored in scene YAML.
 

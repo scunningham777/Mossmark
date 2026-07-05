@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using Mossmark.Development;
 using Mossmark.Inventory;
+using Mossmark.World;
 using UnityEditor;
 using UnityEngine;
 using static Mossmark.Editor.CsvUtil;
@@ -30,6 +31,7 @@ namespace Mossmark.Editor
     //   worldflag -> WorldStateCondition(flagId, requiredValue, needs)  cols: flagId, requiredValue, needsDescription
     //   spec      -> SpecializationRealizedCondition(specId, needs)     cols: specializationId, needsDescription
     //   time      -> TimeCondition(requiredProgress)                    cols: quantity (progress; unused at runtime)
+    //   sustainedattention -> SustainedGoodAttentionCondition(minDays)   cols: quantity (minDays) — Iteration 44
     //
     // An unknown conditionType or an unresolvable required reference logs a warning and is
     // skipped, so a bad row never silently produces a null gate.
@@ -96,6 +98,8 @@ namespace Mossmark.Editor
                 }
                 case "time":
                     return new TimeCondition(I(row.Get("quantity", "0")));
+                case "sustainedattention":
+                    return new SustainedGoodAttentionCondition(Math.Max(1, I(row.Get("quantity", "3"))));
                 default:
                     Warn($"unknown conditionType '{type}'");
                     return null;

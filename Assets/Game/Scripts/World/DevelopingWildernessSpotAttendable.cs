@@ -7,11 +7,14 @@ using UnityEngine;
 
 namespace Mossmark.World
 {
-    // Iteration 43 (Fen Bog Pilot): a wilderness spot that gets the same DevelopableEntity
-    // stage-pool treatment NPCs and Buildings already have, replacing the single continuous
-    // `tendedness` float (still used by GenericWildernessSpotAttendable/WildernessYieldAttendable
-    // — every spot but Fen Bog keeps that behavior untouched) with two separate mechanics
-    // that were previously conflated:
+    // Iteration 43 piloted this on Fen Bog alone; Iteration 44 made it every Generic
+    // wilderness spot's class (GenericWildernessSpotAttendable, the old continuous-
+    // `tendedness` implementation, is retired). Tended spots (TendedSpotAttendable) and
+    // POIs (PoiAttendable, which still extends WildernessYieldAttendable and keeps the
+    // continuous-tendedness model) are explicitly out of scope — this class gives
+    // DevelopableEntity's stage-pool treatment (already shared by NPCs and Buildings) to
+    // ongoing forage/dig spots specifically, replacing the single continuous `tendedness`
+    // float with two separate mechanics that were previously conflated:
     //
     //   Exhaustion — session-scoped, resets every rest. Represents same-day fatigue, in two
     //   stacking tiers (Iteration 43.1): past exhaustionPenaltyThreshold, attending costs

@@ -252,31 +252,19 @@ namespace Mossmark.World
 
             if (def.kind == WildernessSpotDefinition.SpotKind.Generic)
             {
-                // Iteration 43 (Fen Bog Pilot): a spot definition with a SpotStagePool opts
-                // into the exhaustion/Standing model instead of continuous tendedness — data-
-                // driven per spot, so every other Generic spot's path below is untouched.
-                if (def.spotStagePool != null)
-                {
-                    var stagedSpot = go.AddComponent<DevelopingWildernessSpotAttendable>();
-                    stagedSpot.Initialize(
-                        def.displayName, def.interactionVerb,
-                        def.commonYields, def.EffectiveRareYields, def.rareDropChance,
-                        def.minTickInterval, def.maxTickInterval, def.spotStagePool,
-                        def.knowledgeYields, def.hintFlavors);
-                    if (!string.IsNullOrEmpty(def.spotId))
-                        spotsById[def.spotId] = stagedSpot;
-                }
-                else
-                {
-                    var spot = go.AddComponent<GenericWildernessSpotAttendable>();
-                    spot.Initialize(
-                        def.displayName, def.interactionVerb,
-                        def.commonYields, def.EffectiveRareYields, def.rareDropChance,
-                        def.minTickInterval, def.maxTickInterval,
-                        def.knowledgeYields, def.hintFlavors);
-                    if (!string.IsNullOrEmpty(def.spotId))
-                        spotsById[def.spotId] = spot;
-                }
+                // Iteration 44: every Generic spot now gets the exhaustion/Standing model
+                // (generalized from Iteration 43's Fen Bog pilot) — GenericWildernessSpotAttendable
+                // (continuous tendedness) is retired for this kind. Tended spots (below) and
+                // POIs (PoiAttendable, which still extends WildernessYieldAttendable) are
+                // explicitly out of scope and keep their existing behavior.
+                var stagedSpot = go.AddComponent<DevelopingWildernessSpotAttendable>();
+                stagedSpot.Initialize(
+                    def.displayName, def.interactionVerb,
+                    def.commonYields, def.EffectiveRareYields, def.rareDropChance,
+                    def.minTickInterval, def.maxTickInterval, def.spotStagePool,
+                    def.knowledgeYields, def.hintFlavors);
+                if (!string.IsNullOrEmpty(def.spotId))
+                    spotsById[def.spotId] = stagedSpot;
             }
             else
             {

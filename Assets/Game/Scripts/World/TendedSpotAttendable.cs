@@ -28,7 +28,7 @@ namespace Mossmark.World
         private SpriteRenderer spriteRenderer;
 
         // Procedural-spawn entry point (Iteration 18's WorldGenerator) - mirrors
-        // GenericWildernessSpotAttendable.Initialize(), called before SetActive(true).
+        // DevelopingWildernessSpotAttendable.Initialize(), called before SetActive(true).
         public void Initialize(string displayName, string tendVerb, ItemYield[] harvestYields,
             int restsToHarvest, int maxConcurrentMarked)
         {

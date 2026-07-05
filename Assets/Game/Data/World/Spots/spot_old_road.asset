@@ -38,3 +38,5 @@ MonoBehaviour:
     minQty: 1
     maxQty: 2
     injectedWeight: 0.2
+  hintFlavors: []
+  spotStagePool: {fileID: 11400000, guid: de06846c12fc0504b85d3c1b753ee825, type: 2}
