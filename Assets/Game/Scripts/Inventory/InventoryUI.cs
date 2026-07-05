@@ -164,44 +164,7 @@ namespace Mossmark.Inventory
 
         private void AppendPropertyLines(VisualElement container, InventoryStack stack)
         {
-            var ids = stack.Item.PropertyIds;
-            if (ids == null || ids.Length == 0) return;
-
-            bool anyUnknown = false;
-            foreach (var pid in ids)
-            {
-                if (PropertyKnowledge.IsKnown(stack.Item.ItemId, pid))
-                {
-                    string text;
-                    if (PropertyKnowledge.ShowDebugTags)
-                        text = $"[{pid}]";
-                    else
-                    {
-                        var def = PropertyRegistry.GetById(pid);
-                        text = def != null ? def.Phrase : pid;
-                    }
-                    container.Add(MakePropertyLabel(text));
-                }
-                else
-                {
-                    anyUnknown = true;
-                }
-            }
-
-            if (anyUnknown)
-                container.Add(MakePropertyLabel("There's more to it."));
+            ItemPropertyDisplay.AppendPropertyLines(container, stack.Item, fallbackFont);
         }
-
-        private Label MakePropertyLabel(string text) => new Label(text)
-        {
-            style =
-            {
-                color = new Color(0.7f, 0.82f, 0.7f, 0.85f),
-                fontSize = 10,
-                unityFontDefinition = fallbackFont,
-                marginTop = 1,
-                marginLeft = 2,
-            }
-        };
     }
 }

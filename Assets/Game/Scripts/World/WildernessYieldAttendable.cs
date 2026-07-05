@@ -1,7 +1,7 @@
-using System.Collections.Generic;
 using Mossmark.Attention;
 using Mossmark.Day;
 using Mossmark.Development;
+using Mossmark.Visuals;
 using UnityEngine;
 
 namespace Mossmark.World
@@ -19,7 +19,18 @@ namespace Mossmark.World
     // Iteration 28: knowledgeYields is an array of KnowledgeYieldEntry — each entry checks
     // a WorldState flag at roll time and, if true, injects an extra ItemYield into the common
     // pool for that tick only (not modifying the asset). Applied in OnAttentionComplete().
-    public abstract class WildernessYieldAttendable : MonoBehaviour, IAttendable
+    //
+    // Iteration 43: exposes the same Tendedness reading that WorldGenerator's spotsById
+    // registry hands out to any cross-influence consumer (NpcStageDef.passiveDriftSourceSpotId
+    // reads it via WorldGenerator.GetSpot()). DevelopingWildernessSpotAttendable (which does
+    // NOT extend this class — it has its own exhaustion/Standing progress model) implements
+    // this too with a synthetic value, so the registry works uniformly for both spot kinds.
+    public interface ITendednessSource
+    {
+        float Tendedness { get; }
+    }
+
+    public abstract class WildernessYieldAttendable : MonoBehaviour, IAttendable, ITendednessSource
     {
         [SerializeField] protected string displayName = "Spot";
         [SerializeField] protected string interactionVerb = "forage";
@@ -48,10 +59,14 @@ namespace Mossmark.World
         // (each subclass's Initialize path copies from its definition source).
         private KnowledgeYieldEntry[] knowledgeYields;
 
+        // Iteration 42: same "set via Initialize(), not serialized on the base class"
+        // shape as knowledgeYields, for ambient hint flavor lines.
+        private HintFlavorEntry[] hintFlavors;
+
         protected void InitializeBase(string displayName, string interactionVerb,
             ItemYield[] commonYields, ItemYield[] rareYields, float rareDropChance,
             float minTickInterval, float maxTickInterval,
-            KnowledgeYieldEntry[] knowledgeYields = null)
+            KnowledgeYieldEntry[] knowledgeYields = null, HintFlavorEntry[] hintFlavors = null)
         {
             this.displayName = displayName;
             this.interactionVerb = interactionVerb;
@@ -61,6 +76,7 @@ namespace Mossmark.World
             this.minTickInterval = minTickInterval;
             this.maxTickInterval = maxTickInterval;
             this.knowledgeYields = knowledgeYields;
+            this.hintFlavors = hintFlavors;
         }
 
         protected virtual void Awake()
@@ -101,37 +117,10 @@ namespace Mossmark.World
             tendedness = Mathf.Clamp01(tendedness + 0.04f);
             attendedThisDay = true;
             ItemYieldRoller.Roll(displayName, foundVerb, commonYields, rareYields,
-                GetEffectiveRareChance(), tendedness, BuildKnowledgeInjectedYields());
+                GetEffectiveRareChance(), tendedness, ItemYieldRoller.BuildKnowledgeInjectedYields(knowledgeYields));
+            ItemYieldRoller.TryFireHintFlavor(displayName, hintFlavors);
             RollTickInterval();
             OnProgressMade?.Invoke();
-        }
-
-        // Checks each knowledge entry and collects items to inject into the common pool for
-        // this tick only. Entries activate via requiredFlag (WorldState flag, checked first)
-        // or requiredSpecializationId (NPC specialization realized) — flag takes priority if
-        // both are set. Returns null when no entries are active (avoids allocation each tick).
-        private ItemYield[] BuildKnowledgeInjectedYields()
-        {
-            if (knowledgeYields == null || knowledgeYields.Length == 0) return null;
-            List<ItemYield> result = null;
-            foreach (var entry in knowledgeYields)
-            {
-                if (entry.item == null) continue;
-                bool conditionMet = !string.IsNullOrEmpty(entry.requiredFlag)
-                    ? WorldContext.GetFlag(entry.requiredFlag)
-                    : !string.IsNullOrEmpty(entry.requiredSpecializationId)
-                        && WorldContext.IsSpecializationRealized(entry.requiredSpecializationId);
-                if (!conditionMet) continue;
-                result ??= new List<ItemYield>();
-                result.Add(new ItemYield
-                {
-                    Item = entry.item,
-                    MinQuantity = entry.minQty,
-                    MaxQuantity = entry.maxQty,
-                    Weight = entry.injectedWeight
-                });
-            }
-            return result?.ToArray();
         }
 
         public void OnAttentionCancelled() { }

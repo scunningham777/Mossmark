@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using Mossmark.Development;
 using Mossmark.Inventory;
 using Mossmark.Visuals;
 using UnityEngine;
@@ -94,6 +96,55 @@ namespace Mossmark.World
             }
 
             return false;
+        }
+
+        // Extracted from WildernessYieldAttendable (Iteration 43) so DevelopingWildernessSpotAttendable
+        // can share the exact same knowledge-injection and hint-flavor behavior without
+        // duplicating it — both classes roll yields for a spot, just with a different
+        // progress model underneath.
+        //
+        // Checks each knowledge entry and collects items to inject into the common pool for
+        // this tick only. Entries activate via requiredFlag (WorldState flag, checked first)
+        // or requiredSpecializationId (NPC specialization realized) — flag takes priority if
+        // both are set. Returns null when no entries are active (avoids allocation each tick).
+        public static ItemYield[] BuildKnowledgeInjectedYields(KnowledgeYieldEntry[] knowledgeYields)
+        {
+            if (knowledgeYields == null || knowledgeYields.Length == 0) return null;
+            List<ItemYield> result = null;
+            foreach (var entry in knowledgeYields)
+            {
+                if (entry.item == null) continue;
+                bool conditionMet = !string.IsNullOrEmpty(entry.requiredFlag)
+                    ? WorldContext.GetFlag(entry.requiredFlag)
+                    : !string.IsNullOrEmpty(entry.requiredSpecializationId)
+                        && WorldContext.IsSpecializationRealized(entry.requiredSpecializationId);
+                if (!conditionMet) continue;
+                result ??= new List<ItemYield>();
+                result.Add(new ItemYield
+                {
+                    Item = entry.item,
+                    MinQuantity = entry.minQty,
+                    MaxQuantity = entry.maxQty,
+                    Weight = entry.injectedWeight
+                });
+            }
+            return result?.ToArray();
+        }
+
+        // Low-weight ambient hint line, gated on a WorldState flag exactly like
+        // KnowledgeYieldEntry's item injection, but delivered as flavor text via
+        // notification rather than added to the yield pool. At most one per tick.
+        public static void TryFireHintFlavor(string sourceName, HintFlavorEntry[] hintFlavors)
+        {
+            if (hintFlavors == null || hintFlavors.Length == 0) return;
+            foreach (var hint in hintFlavors)
+            {
+                if (string.IsNullOrEmpty(hint.requiredFlag) || !WorldContext.GetFlag(hint.requiredFlag)) continue;
+                if (Random.value >= hint.chance) continue;
+                NotificationManager.Post(hint.text);
+                Debug.Log($"{sourceName}: {hint.text}");
+                return;
+            }
         }
 
         private static ItemYield PickWeighted(ItemYield[] yields)

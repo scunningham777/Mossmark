@@ -68,6 +68,18 @@ namespace Mossmark.World
         [SerializeField] private BuildingStagePool buildingStagePool;
         [SerializeField] private string[] buildingRestoredFlavors = System.Array.Empty<string>();
 
+        // Iteration 42 (Site Clustering pilot): when true, this archetype's POI is excluded
+        // from world-gen spawn and instead spawns later, clustered near the archetype's own
+        // anchor point, once poiRevealWorldStateFlag reads true via WorldGenerator's
+        // DayAdvanced check. Not wired into the CSV pipeline (ExportGameData/ImportGameData) —
+        // authored directly on the asset, since only archetype_bog uses it this iteration.
+        [Header("Site Clustering (Iteration 42 pilot)")]
+        [SerializeField] private bool poiDormantByDefault;
+        [SerializeField] private string poiRevealWorldStateFlag;
+
+        public bool PoiDormantByDefault => poiDormantByDefault;
+        public string PoiRevealWorldStateFlag => poiRevealWorldStateFlag;
+
         public string ArchetypeId => archetypeId;
         public string DisplayName => displayName;
 

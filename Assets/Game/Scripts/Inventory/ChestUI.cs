@@ -302,7 +302,7 @@ namespace Mossmark.Inventory
 
             if (stacks.Count == 0)
             {
-                list.Add(BuildRow("(empty)"));
+                list.Add(BuildRow("(empty)", null));
                 return;
             }
 
@@ -312,13 +312,13 @@ namespace Mossmark.Inventory
                     ? $"{stack.Item.DisplayName} x{stack.Quantity}/{stack.Item.StackCap}"
                     : $"{stack.Item.DisplayName} x{stack.Quantity}";
 
-                var row = BuildRow(text);
+                var row = BuildRow(text, stack.Item);
                 rows.Add(row);
                 list.Add(row);
             }
         }
 
-        private VisualElement BuildRow(string text)
+        private VisualElement BuildRow(string text, ItemDefinition item)
         {
             var row = new VisualElement
             {
@@ -342,6 +342,9 @@ namespace Mossmark.Inventory
                     unityFontDefinition = fallbackFont
                 }
             });
+
+            if (item != null)
+                ItemPropertyDisplay.AppendPropertyLines(row, item, fallbackFont);
 
             return row;
         }

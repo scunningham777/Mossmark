@@ -47,10 +47,10 @@ namespace Mossmark.Visuals
                 style =
                 {
                     position = Position.Absolute,
-                    left = 0,
-                    right = 0,
+                    left = 20,
                     bottom = 64,
-                    alignItems = Align.Center,
+                    maxWidth = Length.Percent(50),
+                    alignItems = Align.FlexStart,
                     display = DisplayStyle.None
                 }
             };
@@ -76,7 +76,8 @@ namespace Mossmark.Visuals
                     fontSize = 16,
                     unityFontStyleAndWeight = FontStyle.Bold,
                     unityTextAlign = TextAnchor.MiddleCenter,
-                    unityFontDefinition = font
+                    unityFontDefinition = font,
+                    whiteSpace = WhiteSpace.Normal
                 }
             };
 

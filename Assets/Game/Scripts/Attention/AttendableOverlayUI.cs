@@ -125,7 +125,7 @@ namespace Mossmark.Attention
                     position = Position.Absolute,
                     right = 20,
                     bottom = 20,
-                    maxWidth = 280,
+                    maxWidth = Length.Percent(33),
                     display = DisplayStyle.None,
                 }
             };
@@ -177,6 +177,14 @@ namespace Mossmark.Attention
 
             // The Horizon panel (HorizonUI) covers the screen while open; same reasoning.
             if (HorizonUI.Instance != null && HorizonUI.Instance.IsOpen)
+            {
+                overlayRoot.style.display = DisplayStyle.None;
+                detailRoot.style.display = DisplayStyle.None;
+                return;
+            }
+
+            // The Workshop menu (WorkshopUI) covers the screen while open; same reasoning.
+            if (WorkshopUI.Instance != null && WorkshopUI.Instance.IsOpen)
             {
                 overlayRoot.style.display = DisplayStyle.None;
                 detailRoot.style.display = DisplayStyle.None;

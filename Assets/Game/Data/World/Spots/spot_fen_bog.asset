@@ -37,8 +37,13 @@ MonoBehaviour:
   maxConcurrentMarked: 2
   knowledgeYields:
   - requiredFlag: bog_keeper_iron_sense
-    requiredSpecializationId: 
+    requiredSpecializationId:
     item: {fileID: 11400000, guid: 8f0377fa9b2340f8820829af08466e49, type: 2}
     minQty: 1
     maxQty: 3
     injectedWeight: 0.2
+  hintFlavors:
+  - requiredFlag: bog_keeper_drainage_started
+    chance: 0.15
+    text: something in the deep water shifts, just past where the channels reach.
+  spotStagePool: {fileID: 11400000, guid: 4d22d094d22f4f709b7dbaa6b329e271, type: 2}

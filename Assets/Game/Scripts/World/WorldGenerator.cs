@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Mossmark.Attention;
+using Mossmark.Day;
 using Mossmark.Development;
 using Mossmark.Visuals;
 using UnityEngine;
@@ -34,20 +35,32 @@ namespace Mossmark.World
         // Minimum world-space distance between any two placed wilderness objects.
         [SerializeField, Min(0f)] private float minSeparation = 2f;
 
+        // Iteration 42 (Site Clustering pilot): each archetype's spots + POI jitter around
+        // one shared anchor point instead of scattering independently across the wilderness.
+        [SerializeField, Min(0f)] private float siteJitterRadius = 3f;
+
         public static IReadOnlyList<PlaceArchetype> SelectedArchetypes { get; private set; } = Array.Empty<PlaceArchetype>();
 
         // Iteration 31 pilot, re-keyed in the relational-data migration: spawned Generic
         // spots with a non-empty WildernessSpotDefinition.spotId register here, so other
         // systems (NpcStageDef.passiveDriftSourceSpotId) can read a specific spot's
-        // tendedness without positional coupling to "the archetype's spot".
-        private static readonly Dictionary<string, GenericWildernessSpotAttendable> spotsById = new();
+        // tendedness without positional coupling to "the archetype's spot". Iteration 43:
+        // typed to the ITendednessSource interface (rather than GenericWildernessSpotAttendable
+        // directly) so a spot opted into DevelopingWildernessSpotAttendable's exhaustion/
+        // Standing model still registers and reports a faithful synthetic tendedness reading —
+        // the Bog Keeper's passive-drift seam (Iteration 34) keeps working unchanged.
+        private static readonly Dictionary<string, ITendednessSource> spotsById = new();
 
-        public static GenericWildernessSpotAttendable GetSpot(string spotId) =>
+        public static ITendednessSource GetSpot(string spotId) =>
             spotsById.TryGetValue(spotId, out var spot) ? spot : null;
 
         // Tracks every position placed so far; used by FindValidPosition to enforce
         // the minimum separation between all wilderness objects.
         private readonly List<Vector2> placedPositions = new();
+
+        // Iteration 42: archetypes whose POI was skipped at world gen (PoiDormantByDefault)
+        // wait here, anchor remembered, until PoiRevealWorldStateFlag reads true.
+        private readonly List<(PlaceArchetype archetype, Vector2 anchor)> dormantPois = new();
 
         private void Awake()
         {
@@ -71,10 +84,18 @@ namespace Mossmark.World
 
         private void Start()
         {
-            SpawnWildernessSpots();
+            SpawnArchetypeSites();
             SpawnBuildings();
-            SpawnPois();
             SpawnGenericWildernessSpots();
+
+            if (DayCycleManager.Instance != null)
+                DayCycleManager.Instance.DayAdvanced += CheckDormantSiteReveals;
+        }
+
+        private void OnDestroy()
+        {
+            if (DayCycleManager.Instance != null)
+                DayCycleManager.Instance.DayAdvanced -= CheckDormantSiteReveals;
         }
 
         private static List<PlaceArchetype> SelectArchetypes(RegionData data)
@@ -95,14 +116,46 @@ namespace Mossmark.World
 
         // --- Archetype-driven spawns (positions randomized) ---
 
-        // Each archetype brings a list of spot definitions (relational-data migration) —
-        // one instance of each is spawned through the same path as pool spots. Listing a
-        // definition twice spawns two instances.
-        private void SpawnWildernessSpots()
+        // Iteration 42 (Site Clustering pilot): each archetype gets one anchor point, and
+        // its spot definitions (relational-data migration: an archetype can bring any number)
+        // plus its POI are placed within siteJitterRadius of that anchor instead of scattering
+        // independently — the pieces of one archetype now read as one place. A POI marked
+        // PoiDormantByDefault is held back (its anchor remembered) rather than spawned now.
+        private void SpawnArchetypeSites()
         {
             foreach (var archetype in SelectedArchetypes)
+            {
+                var anchor = FindValidPosition();
+
                 foreach (var def in archetype.Spots)
-                    if (def != null) SpawnSpotFromDefinition(def, FindValidPosition());
+                    if (def != null) SpawnSpotFromDefinition(def, FindValidPositionNear(anchor));
+
+                if (archetype.PoiDormantByDefault)
+                {
+                    dormantPois.Add((archetype, anchor));
+                    continue;
+                }
+
+                SpawnPoi(archetype, FindValidPositionNear(anchor));
+            }
+        }
+
+        // Checked on every rest: spawns a dormant archetype's POI, clustered near its
+        // remembered anchor, the first time its reveal flag reads true. No spawn-moment
+        // fanfare — the player finds it there on return, same as passive drift (Iteration 31).
+        private void CheckDormantSiteReveals()
+        {
+            for (int i = dormantPois.Count - 1; i >= 0; i--)
+            {
+                var (archetype, anchor) = dormantPois[i];
+                if (string.IsNullOrEmpty(archetype.PoiRevealWorldStateFlag)
+                    || !WorldState.GetFlag(archetype.PoiRevealWorldStateFlag))
+                    continue;
+
+                dormantPois.RemoveAt(i);
+                SpawnPoi(archetype, FindValidPositionNear(anchor));
+                Debug.Log($"{archetype.PoiDisplayName}: reveals itself near the {archetype.DisplayName}.", this);
+            }
         }
 
         // One building per selected archetype — still fixed in town so the settlement
@@ -140,12 +193,6 @@ namespace Mossmark.World
             go.AddComponent<EntityFeedback>();
 
             go.SetActive(true);
-        }
-
-        private void SpawnPois()
-        {
-            foreach (var archetype in SelectedArchetypes)
-                SpawnPoi(archetype, FindValidPosition());
         }
 
         private void SpawnPoi(PlaceArchetype archetype, Vector2 position)
@@ -205,14 +252,31 @@ namespace Mossmark.World
 
             if (def.kind == WildernessSpotDefinition.SpotKind.Generic)
             {
-                var spot = go.AddComponent<GenericWildernessSpotAttendable>();
-                spot.Initialize(
-                    def.displayName, def.interactionVerb,
-                    def.commonYields, def.EffectiveRareYields, def.rareDropChance,
-                    def.minTickInterval, def.maxTickInterval,
-                    def.knowledgeYields);
-                if (!string.IsNullOrEmpty(def.spotId))
-                    spotsById[def.spotId] = spot;
+                // Iteration 43 (Fen Bog Pilot): a spot definition with a SpotStagePool opts
+                // into the exhaustion/Standing model instead of continuous tendedness — data-
+                // driven per spot, so every other Generic spot's path below is untouched.
+                if (def.spotStagePool != null)
+                {
+                    var stagedSpot = go.AddComponent<DevelopingWildernessSpotAttendable>();
+                    stagedSpot.Initialize(
+                        def.displayName, def.interactionVerb,
+                        def.commonYields, def.EffectiveRareYields, def.rareDropChance,
+                        def.minTickInterval, def.maxTickInterval, def.spotStagePool,
+                        def.knowledgeYields, def.hintFlavors);
+                    if (!string.IsNullOrEmpty(def.spotId))
+                        spotsById[def.spotId] = stagedSpot;
+                }
+                else
+                {
+                    var spot = go.AddComponent<GenericWildernessSpotAttendable>();
+                    spot.Initialize(
+                        def.displayName, def.interactionVerb,
+                        def.commonYields, def.EffectiveRareYields, def.rareDropChance,
+                        def.minTickInterval, def.maxTickInterval,
+                        def.knowledgeYields, def.hintFlavors);
+                    if (!string.IsNullOrEmpty(def.spotId))
+                        spotsById[def.spotId] = spot;
+                }
             }
             else
             {
@@ -229,26 +293,46 @@ namespace Mossmark.World
 
         // --- Position utilities ---
 
-        // Rejection-sample a random point in the wilderness (outside town bounds)
-        // that is at least minSeparation units from every already-placed position.
-        // Falls back to the best candidate found after maxAttempts if none satisfies
-        // the full constraint — avoids infinite loops on very crowded maps.
+        // Rejection-sample a random point anywhere in the wilderness (outside town bounds)
+        // that is at least minSeparation units from every already-placed position. Used for
+        // generic pool spots and to pick each archetype's site anchor.
         private Vector2 FindValidPosition(int maxAttempts = 200)
+        {
+            var wb = WorldLayoutGenerator.WildernessBounds;
+            return FindValidPositionInternal(
+                () => new Vector2(UnityEngine.Random.Range(wb.xMin, wb.xMax), UnityEngine.Random.Range(wb.yMin, wb.yMax)),
+                maxAttempts);
+        }
+
+        // Iteration 42: same rejection-sampling constraints as FindValidPosition, but
+        // candidates jitter around a given anchor instead of scattering across the whole
+        // wilderness — this is what makes one archetype's pieces read as one place.
+        private Vector2 FindValidPositionNear(Vector2 anchor, int maxAttempts = 200)
+        {
+            return FindValidPositionInternal(
+                () => anchor + UnityEngine.Random.insideUnitCircle * siteJitterRadius,
+                maxAttempts);
+        }
+
+        // Shared rejection-sampling core: draws candidates from candidateGenerator, requires
+        // they land in the wilderness (not the town), and prefers minSeparation from every
+        // already-placed position. Falls back to the best candidate found after maxAttempts
+        // if none satisfies the full constraint — avoids infinite loops on crowded maps.
+        private Vector2 FindValidPositionInternal(Func<Vector2> candidateGenerator, int maxAttempts)
         {
             var wb = WorldLayoutGenerator.WildernessBounds;
             var tb = WorldLayoutGenerator.TownBounds;
 
             Vector2 best = Vector2.zero;
             float bestMinDist = -1f;
+            bool haveCandidate = false;
 
             for (int i = 0; i < maxAttempts; i++)
             {
-                var candidate = new Vector2(
-                    UnityEngine.Random.Range(wb.xMin, wb.xMax),
-                    UnityEngine.Random.Range(wb.yMin, wb.yMax));
+                var candidate = candidateGenerator();
 
                 // Must be in the wilderness, not the town.
-                if (tb.Contains(candidate)) continue;
+                if (!wb.Contains(candidate) || tb.Contains(candidate)) continue;
 
                 float minDist = MinDistToPlaced(candidate);
 
@@ -262,9 +346,11 @@ namespace Mossmark.World
                 {
                     bestMinDist = minDist;
                     best = candidate;
+                    haveCandidate = true;
                 }
             }
 
+            if (!haveCandidate) best = candidateGenerator();
             Debug.LogWarning($"WorldGenerator: couldn't find a fully separated position after {maxAttempts} attempts — using closest valid candidate.", this);
             placedPositions.Add(best);
             return best;

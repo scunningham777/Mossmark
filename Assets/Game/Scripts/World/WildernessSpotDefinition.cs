@@ -47,6 +47,16 @@ namespace Mossmark.World
         // time against WorldState flags to inject extra items into the common pool per tick.
         [SerializeField] public KnowledgeYieldEntry[] knowledgeYields = System.Array.Empty<KnowledgeYieldEntry>();
 
+        // Iteration 42 (Site Clustering pilot): low-weight ambient flavor lines, gated on a
+        // WorldState flag, fired instead of an item injection. Usually empty.
+        [SerializeField] public HintFlavorEntry[] hintFlavors = System.Array.Empty<HintFlavorEntry>();
+
+        // Iteration 43 (Fen Bog Pilot): when set, WorldGenerator spawns this Generic spot as
+        // a DevelopingWildernessSpotAttendable (exhaustion + latched Standing stages) instead
+        // of GenericWildernessSpotAttendable (continuous tendedness). Null for every spot but
+        // Fen Bog — not wired into the CSV pipeline, same as PoiDormantByDefault above.
+        [SerializeField] public SpotStagePool spotStagePool;
+
         public ItemYield[] EffectiveRareYields =>
             rareYieldTable != null ? rareYieldTable.Entries : rareYields;
     }

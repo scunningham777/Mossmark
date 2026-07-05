@@ -86,6 +86,12 @@ namespace Mossmark.Development
 
         public void AddProgress(int amount = 1) => PendingProgress += amount;
 
+        // Lets a subclass raise the progress-tick feedback signal directly when its own
+        // "productive tick" doesn't fit ResolveAttention's dependency-gated model — e.g.
+        // wilderness spots (Iteration 43), where yields happen every attend regardless of
+        // whether a pending stage's own gate is currently satisfied.
+        protected void RaiseProgressMade() => OnProgressMade?.Invoke();
+
         public List<DevelopmentStage> GetAvailableStages()
         {
             var available = new List<DevelopmentStage>();

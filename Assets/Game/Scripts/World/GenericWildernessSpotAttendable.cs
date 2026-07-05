@@ -30,16 +30,28 @@ namespace Mossmark.World
         public float injectedWeight = 0.15f;
     }
 
+    // Iteration 42: analogous to KnowledgeYieldEntry, but delivers a flavor line instead
+    // of an item — an ambient hint rather than a reward. Gated the same way (WorldState
+    // flag), rolled at low weight each tick the flag holds true rather than injected into
+    // the yield pool.
+    [Serializable]
+    public class HintFlavorEntry
+    {
+        public string requiredFlag;
+        [Range(0f, 1f)] public float chance = 0.15f;
+        public string text;
+    }
+
     // Ongoing wilderness spot (foraging, digging, etc.) — thin subclass of
     // WildernessYieldAttendable that adds the TwilightChanceModifier bias on rare drops.
     public class GenericWildernessSpotAttendable : WildernessYieldAttendable
     {
         public void Initialize(string displayName, string interactionVerb, ItemYield[] commonYields,
             ItemYield[] rareYields, float rareDropChance, float minTickInterval, float maxTickInterval,
-            KnowledgeYieldEntry[] knowledgeYields = null)
+            KnowledgeYieldEntry[] knowledgeYields = null, HintFlavorEntry[] hintFlavors = null)
         {
             InitializeBase(displayName, interactionVerb, commonYields, rareYields, rareDropChance,
-                minTickInterval, maxTickInterval, knowledgeYields);
+                minTickInterval, maxTickInterval, knowledgeYields, hintFlavors);
         }
 
         public override bool CanAttend() => true;

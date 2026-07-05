@@ -232,6 +232,13 @@ namespace Mossmark.Development
             if (passive <= 0) return;
 
             AddProgress(passive);
+
+            // Iteration 42: marks that this stage has some progress on it (independent of
+            // whether it goes on to complete this rest) — the generic hook the Site
+            // Clustering pilot's hint line gates on (WorldContext.GetFlag), reusing the
+            // worldStateFlag pattern rather than a new gate type.
+            WorldState.SetFlag($"{nextStage.Id}_started", true);
+
             Debug.Log($"{DisplayName}: {nextStage.DisplayName} edges forward on its own " +
                 $"(+{passive} passive progress, {stageDef.PassiveDriftSourceSpotId} " +
                 $"tenderness {sourceSpot.Tendedness:F2}).", this);

@@ -66,3 +66,5 @@ MonoBehaviour:
   buildingRestoredFlavors:
   - settles into a familiar rhythm, making the most of what the fen provides.
   - is doing the work it was always meant for.
+  poiDormantByDefault: 1
+  poiRevealWorldStateFlag: bog_keeper_drainage
