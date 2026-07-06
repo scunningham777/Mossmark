@@ -20,6 +20,7 @@ MonoBehaviour:
   flavorText: feels like familiar ground now - it knows you're coming back.
   rareChanceMultiplier: 1.75
   tint: {r: 0.65, g: 0.63, b: 0.58, a: 1}
+  worldStateFlag: old_road_familiar
   references:
     version: 2
     RefIds:

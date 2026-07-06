@@ -68,3 +68,20 @@ MonoBehaviour:
   buildingRestoredFlavors:
   - breathes with the wood around it now, not against it.
   - has taken on the quality of a place that has always been.
+  poiStartingTier: 1
+  poiRevealCondition:
+    rid: -2
+  poiUnlockCondition:
+    rid: 478763229186883852
+  references:
+    version: 2
+    RefIds:
+    - rid: -2
+      type: {class: , ns: , asm: }
+    - rid: 478763229186883852
+      type: {class: WorldStateCondition, ns: Mossmark.Development, asm: Assembly-CSharp}
+      data:
+        flagId: hedge_witch_ravens_eye
+        requiredValue: 1
+        needsDescription: needs the Hedge Witch to have learned Raven's Eye Reading
+          before the inner grove opens

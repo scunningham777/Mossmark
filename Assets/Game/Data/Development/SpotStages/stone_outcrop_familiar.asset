@@ -20,6 +20,7 @@ MonoBehaviour:
   flavorText: feels like familiar ground now - it knows you're coming back.
   rareChanceMultiplier: 1.75
   tint: {r: 0.69, g: 0.69, b: 0.71, a: 1}
+  worldStateFlag: stone_outcrop_familiar
   references:
     version: 2
     RefIds:

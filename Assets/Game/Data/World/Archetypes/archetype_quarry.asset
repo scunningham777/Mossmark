@@ -69,3 +69,24 @@ MonoBehaviour:
   buildingRestoredFlavors:
   - grounds the settlement the way a keystone grounds a wall.
   - has found its function, and it is good at it.
+  poiStartingTier: 0
+  poiRevealCondition:
+    rid: 478763229186883853
+  poiUnlockCondition:
+    rid: 478763229186883854
+  references:
+    version: 2
+    RefIds:
+    - rid: 478763229186883853
+      type: {class: WorldStateCondition, ns: Mossmark.Development, asm: Assembly-CSharp}
+      data:
+        flagId: old_quarry_familiar
+        requiredValue: 1
+        needsDescription: the cut stays blocked until the quarry itself feels familiar
+    - rid: 478763229186883854
+      type: {class: WorldStateCondition, ns: Mossmark.Development, asm: Assembly-CSharp}
+      data:
+        flagId: stone_outcrop_familiar
+        requiredValue: 1
+        needsDescription: needs the stone outcrop beyond it to feel like familiar
+          ground too before the rubble gives way

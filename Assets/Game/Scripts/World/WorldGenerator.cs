@@ -58,8 +58,8 @@ namespace Mossmark.World
         // the minimum separation between all wilderness objects.
         private readonly List<Vector2> placedPositions = new();
 
-        // Iteration 42: archetypes whose POI was skipped at world gen (PoiDormantByDefault)
-        // wait here, anchor remembered, until PoiRevealWorldStateFlag reads true.
+        // Iteration 42, tier model generalized in Iteration 45: archetypes whose POI starts
+        // Hidden wait here, anchor remembered, until PoiRevealCondition is satisfied.
         private readonly List<(PlaceArchetype archetype, Vector2 anchor)> dormantPois = new();
 
         private void Awake()
@@ -119,8 +119,9 @@ namespace Mossmark.World
         // Iteration 42 (Site Clustering pilot): each archetype gets one anchor point, and
         // its spot definitions (relational-data migration: an archetype can bring any number)
         // plus its POI are placed within siteJitterRadius of that anchor instead of scattering
-        // independently — the pieces of one archetype now read as one place. A POI marked
-        // PoiDormantByDefault is held back (its anchor remembered) rather than spawned now.
+        // independently — the pieces of one archetype now read as one place. A POI whose
+        // PoiStartingTier is Hidden is held back (its anchor remembered) rather than spawned
+        // now; every other tier value spawns immediately, same as before Iteration 45.
         private void SpawnArchetypeSites()
         {
             foreach (var archetype in SelectedArchetypes)
@@ -130,7 +131,7 @@ namespace Mossmark.World
                 foreach (var def in archetype.Spots)
                     if (def != null) SpawnSpotFromDefinition(def, FindValidPositionNear(anchor));
 
-                if (archetype.PoiDormantByDefault)
+                if (archetype.PoiStartingTier == PoiTier.Hidden)
                 {
                     dormantPois.Add((archetype, anchor));
                     continue;
@@ -141,15 +142,16 @@ namespace Mossmark.World
         }
 
         // Checked on every rest: spawns a dormant archetype's POI, clustered near its
-        // remembered anchor, the first time its reveal flag reads true. No spawn-moment
-        // fanfare — the player finds it there on return, same as passive drift (Iteration 31).
+        // remembered anchor, the first time its PoiRevealCondition is satisfied. No spawn-
+        // moment fanfare — the player finds it there on return, same as passive drift
+        // (Iteration 31). The spawned POI still starts VisibleInert, not Interactable —
+        // reveal (existence) and unlock (interactability) are two separate gates.
         private void CheckDormantSiteReveals()
         {
             for (int i = dormantPois.Count - 1; i >= 0; i--)
             {
                 var (archetype, anchor) = dormantPois[i];
-                if (string.IsNullOrEmpty(archetype.PoiRevealWorldStateFlag)
-                    || !WorldState.GetFlag(archetype.PoiRevealWorldStateFlag))
+                if (archetype.PoiRevealCondition == null || !archetype.PoiRevealCondition.IsSatisfied(null))
                     continue;
 
                 dormantPois.RemoveAt(i);
@@ -205,13 +207,16 @@ namespace Mossmark.World
             go.AddComponent<TriangleSpriteGenerator>().Initialize(archetype.PoiColor);
             go.AddComponent<CircleCollider2D>().radius = colliderRadius;
 
-            var gate = new SpecializationRealizedCondition(archetype.SpecializationId,
-                $"needs a {archetype.NpcTitle} in town");
+            // Iteration 45: an authored PoiUnlockCondition (this iteration's two pilots)
+            // takes over the VisibleInert -> Interactable gate entirely; every other
+            // archetype falls back to the original specialization-realized gate unchanged.
+            var unlockCondition = archetype.PoiUnlockCondition ?? new SpecializationRealizedCondition(
+                archetype.SpecializationId, $"needs a {archetype.NpcTitle} in town");
 
             go.AddComponent<PoiAttendable>().Initialize(
                 archetype.PoiDisplayName, archetype.PoiLockedDescription, archetype.PoiVerb,
                 archetype.PoiCommonYields, archetype.PoiRareYields, archetype.PoiRareDropChance,
-                archetype.PoiMinTickInterval, archetype.PoiMaxTickInterval, gate);
+                archetype.PoiMinTickInterval, archetype.PoiMaxTickInterval, unlockCondition);
 
             go.AddComponent<AttendableZone>();
             go.AddComponent<EntityFeedback>();

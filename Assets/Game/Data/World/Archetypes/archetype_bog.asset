@@ -66,5 +66,25 @@ MonoBehaviour:
   buildingRestoredFlavors:
   - settles into a familiar rhythm, making the most of what the fen provides.
   - is doing the work it was always meant for.
-  poiDormantByDefault: 1
-  poiRevealWorldStateFlag: bog_keeper_drainage
+  poiStartingTier: 0
+  poiRevealCondition:
+    rid: 478763229186883789
+  poiUnlockCondition:
+    rid: 478763229186883790
+  references:
+    version: 2
+    RefIds:
+    - rid: 478763229186883789
+      type: {class: WorldStateCondition, ns: Mossmark.Development, asm: Assembly-CSharp}
+      data:
+        flagId: bog_keeper_drainage
+        requiredValue: 1
+        needsDescription: the fen keeps its secrets until the drainage channels are
+          cleared
+    - rid: 478763229186883790
+      type: {class: WorldStateCondition, ns: Mossmark.Development, asm: Assembly-CSharp}
+      data:
+        flagId: bog_keeper_iron_sense
+        requiredValue: 1
+        needsDescription: needs the Bog Keeper to have grown Iron-Sense before the
+          water gives this up

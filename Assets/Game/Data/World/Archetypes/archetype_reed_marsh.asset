@@ -68,3 +68,20 @@ MonoBehaviour:
   buildingRestoredFlavors:
   - fills with the smell of cut reeds and the quiet industry of craft.
   - is already in use, its work spreading gently through the settlement.
+  poiStartingTier: 1
+  poiRevealCondition:
+    rid: -2
+  poiUnlockCondition:
+    rid: 478763229186883791
+  references:
+    version: 2
+    RefIds:
+    - rid: -2
+      type: {class: , ns: , asm: }
+    - rid: 478763229186883791
+      type: {class: WorldStateCondition, ns: Mossmark.Development, asm: Assembly-CSharp}
+      data:
+        flagId: reed_marsh_familiar
+        requiredValue: 1
+        needsDescription: needs the reed marsh itself to feel like familiar ground
+          first

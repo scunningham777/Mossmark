@@ -68,17 +68,25 @@ namespace Mossmark.World
         [SerializeField] private BuildingStagePool buildingStagePool;
         [SerializeField] private string[] buildingRestoredFlavors = System.Array.Empty<string>();
 
-        // Iteration 42 (Site Clustering pilot): when true, this archetype's POI is excluded
-        // from world-gen spawn and instead spawns later, clustered near the archetype's own
-        // anchor point, once poiRevealWorldStateFlag reads true via WorldGenerator's
-        // DayAdvanced check. Not wired into the CSV pipeline (ExportGameData/ImportGameData) —
-        // authored directly on the asset, since only archetype_bog uses it this iteration.
-        [Header("Site Clustering (Iteration 42 pilot)")]
-        [SerializeField] private bool poiDormantByDefault;
-        [SerializeField] private string poiRevealWorldStateFlag;
+        // Iteration 45 (POI Three-Tier Reveal): generalizes Iteration 42's dormant/spawned
+        // bool + single WorldState-flag reveal into a Hidden/VisibleInert starting tier plus
+        // two authored IDependencyCondition gates. poiStartingTier defaults to VisibleInert
+        // (unchanged spawn timing for every archetype that doesn't opt into Hidden).
+        // poiRevealCondition only matters when starting Hidden (Hidden -> VisibleInert).
+        // poiUnlockCondition governs VisibleInert -> Interactable for every POI, not just
+        // this iteration's two pilots — null falls back to the original archetype-wide
+        // SpecializationRealizedCondition gate WorldGenerator has always used, so any
+        // archetype that doesn't author its own harder/different gate keeps identical unlock
+        // behavior to before this iteration. Not wired into the CSV pipeline — hand-authored,
+        // same discipline as Iteration 42/43's single-pilot fields.
+        [Header("Point of Interest Tiering (Iteration 45)")]
+        [SerializeField] private PoiTier poiStartingTier = PoiTier.VisibleInert;
+        [SerializeReference] private IDependencyCondition poiRevealCondition;
+        [SerializeReference] private IDependencyCondition poiUnlockCondition;
 
-        public bool PoiDormantByDefault => poiDormantByDefault;
-        public string PoiRevealWorldStateFlag => poiRevealWorldStateFlag;
+        public PoiTier PoiStartingTier => poiStartingTier;
+        public IDependencyCondition PoiRevealCondition => poiRevealCondition;
+        public IDependencyCondition PoiUnlockCondition => poiUnlockCondition;
 
         public string ArchetypeId => archetypeId;
         public string DisplayName => displayName;

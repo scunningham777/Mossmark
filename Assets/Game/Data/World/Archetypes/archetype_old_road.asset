@@ -68,3 +68,24 @@ MonoBehaviour:
   buildingRestoredFlavors:
   - stands as a quiet waypoint, recognized by those who know to look.
   - hums with a traveler's kind of life, never quite settled, never quite gone.
+  poiStartingTier: 0
+  poiRevealCondition:
+    rid: 478763229186883850
+  poiUnlockCondition:
+    rid: 478763229186883851
+  references:
+    version: 2
+    RefIds:
+    - rid: 478763229186883850
+      type: {class: WorldStateCondition, ns: Mossmark.Development, asm: Assembly-CSharp}
+      data:
+        flagId: old_road_familiar
+        requiredValue: 1
+        needsDescription: the cairn stays sealed until the road itself feels familiar
+    - rid: 478763229186883851
+      type: {class: WorldStateCondition, ns: Mossmark.Development, asm: Assembly-CSharp}
+      data:
+        flagId: herald_toll_records
+        requiredValue: 1
+        needsDescription: needs the Herald's toll records kept before the cairn
+          gives up what's sealed inside

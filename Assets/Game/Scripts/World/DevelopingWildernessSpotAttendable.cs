@@ -267,6 +267,12 @@ namespace Mossmark.World
                 : $"{stage.DisplayName}.";
             NotificationManager.Post($"{displayName}: {flavor}");
             Debug.Log($"{displayName}: {flavor}", this);
+
+            // Iteration 45: same flag-bridge Buildings already use (Iteration 34 Seam 3) —
+            // lets a spot's Standing crossing gate something elsewhere (e.g. a POI's
+            // unlockCondition) without a direct reference to this spot.
+            if (def != null && !string.IsNullOrEmpty(def.WorldStateFlag))
+                WorldState.SetFlag(def.WorldStateFlag, true);
         }
     }
 }

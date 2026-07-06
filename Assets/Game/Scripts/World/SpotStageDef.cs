@@ -36,6 +36,10 @@ namespace Mossmark.World
         // EntityFeedback's stage-cross shape swap (which bakes its circle sprite from
         // SpriteRenderer.color) would read Unity's untouched default white.
         [SerializeField] private Color tint = new(0.5f, 0.5f, 0.45f, 1f);
+        // Iteration 45: mirrors NpcStageDef.WorldStateFlag / BuildingStageDef.worldStateFlag —
+        // lets a spot reaching Standing bridge into any other WorldState-gated system (e.g. a
+        // POI's unlockCondition) without a direct object reference. Empty = no flag set.
+        [SerializeField] private string worldStateFlag;
 
         public string StageId => stageId;
         public string DisplayName => displayName;
@@ -44,5 +48,6 @@ namespace Mossmark.World
         public string FlavorText => flavorText;
         public float RareChanceMultiplier => rareChanceMultiplier;
         public Color Tint => tint;
+        public string WorldStateFlag => worldStateFlag;
     }
 }
