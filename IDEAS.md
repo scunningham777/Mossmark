@@ -203,4 +203,114 @@ Ideas developed during and after P2's main prototype arc that are deliberately o
 **Localized tech and the value of difference.** Two adjacent regions with different place archetypes should develop into genuinely different places, and the difference should have game-world consequences: a region with deep shrine/ritual development can do something that a region with deep smithing cannot, and vice versa. The player choosing which region to develop, and how, is indirectly choosing which futures become reachable. This is the long-term expression of "differentiation over advancement" — at regional scale, it means the world has genuine variety, not tier-progression in different skins.
 
 #### 7-1-26
-I'm not sure how much story-telling will be present in the game yet, but if there is any, there should be characters who saught the benefits of "the old ways", and characters who saught the benefits of imperial order. There should even be those who feel the loss of direction that imperial order brought, but are equally unable to find their way back to the "old path". Some will learn to forge a new way forward, while others will sink beneath the weight of loss. 
+I'm not sure how much story-telling will be present in the game yet, but if there is any, there should be characters who saught the benefits of "the old ways", and characters who saught the benefits of imperial order. There should even be those who feel the loss of direction that imperial order brought, but are equally unable to find their way back to the "old path". Some will learn to forge a new way forward, while others will sink beneath the weight of loss.
+
+---
+
+### Druid Framing, Memory, and the Seasonal Cycle
+
+Emerged from design discussion after Iteration 46. A premise-level shift, not yet scoped as any iteration — captured here as three threads to prioritize before drilling into one.
+
+**The druid reframe.** The player is an ancient druid gathering and preserving knowledge of the land as Roman order recedes — straddling pre-Roman and Roman threads directly, rather than referencing them only through world dressing. This gives CLAUDE.md's writing/runescript note (the settlement's ability to preserve and communicate knowledge as a precondition for transfer) a concrete first-person frame instead of an abstract settlement property. It also names an explicit exception to the no-PC-development stance held elsewhere: a meta-skill like writing/runecraft — a capacity that changes *what persists*, not a direct-power stat like attack or enchanting — is compatible with the existing values. This is a deliberate carve-out, not a reversal of the broader stance.
+
+**1. Memory — witnessed vs. recorded, and the forgetting problem.**
+Splits property knowledge (Iteration 35) into two tiers: *Witnessed* (personally learned — today's `PropertyKnowledge`, ephemeral) and *Recorded* (transcribed by a rune-carver/scribe NPC, persists, populates a physical artifact in the world — a wall of rune-stones, a growing shelf — not a menu screen).
+
+The open design problem is how witnessed knowledge fades without it reading as punishment. The target analog is spot exhaustion (Iteration 43): abundant and instant at first, then requiring progressively more effort to "recall," dwindling but never a hard cliff — framed as a conscious tradeoff, not a thing being taken away. This needs its own decay-cost curve, not a binary forgotten flag, and isn't resolved yet. A color-coded/mnemonic UI hint once text fades was considered and shelved — it shifts the burden onto the player's own memory, which doesn't fit the intended feel.
+
+Design principle carried over from exhaustion: the unrecorded/oral cycle should read as a legitimate stripped-down default, not a lesser tier waiting to be obsoleted. Recording should be a net gain with a real cost (material, an NPC dependency, a trip) so oral memory keeps a niche — the "magic missile is weak, but it always hits" shape, not a strict upgrade path.
+
+Also open: what triggers recording, given the game's single verb. Three candidate shapes, none chosen yet:
+  - *Ambient* — right items plus the right town-side upgrades present → a discovery at a workstation auto-carves as a bonus outcome (`IOutcomeModifier`/`OutcomeRequest`), no separate trip.
+  - *NPC-transformation-style* — carry the witnessed-but-unrecorded item to the rune-carver and attend them holding it; recording happens as a development tick. Reuses the "item transformation without crafting" pattern above directly.
+  - *Hybrid* — ambient conditions gate whether recording is possible at all, but the actual verb stays attend-the-NPC.
+  The latter two preserve the NPC-interleaving and settlement-development tie-in that the ambient-only version risks flattening away.
+
+**2. Lore/Memory as a content type.**
+Generalizes the "Reading the past" pursuit raised in an earlier brainstorm: attention over *meaning* rather than material. Fragments — an inscription, a story an elder tells, a barrow's shape — assembled into a picture of what the land was before the player arrived. No item output; the payoff is understanding itself, a literal expression of "The World Was Here Before You" rather than just a design principle behind the scenes.
+
+Once Witnessed/Recorded exists, the same two-tier structure generalizes past item properties — a Wandering Thing's behavior, an NPC's story, a barrow's meaning could all use it, giving the "bestiary/library" impulse a diegetic home (physical artifacts you built) instead of a bare menu.
+
+Two sibling pursuit-axes from the same brainstorm are relevant background, not elaborated yet: **Kinship/Trust** (a second axis of NPC relationship distinct from specialization — how they regard you, not what they've become) and **Continuity/Inheritance** (knowledge passing to a trusted NPC, or lost when an NPC's arc ends — needs Kinship first, and would be the one place permanent loss might belong, kept deliberately separate from the memory-fade mechanic above, which is trying hard not to punish).
+
+Risk to watch: lore content is an easy place to violate "No Preaching." Keep entries as fragments and physical artifacts, not exposition paragraphs.
+
+**3. Seasonal cycle — ambient influence and festivals.**
+Ambient half: season/weather as another `WorldContext` read — the slot was deliberately left open (PROTOTYPE2.md's `WorldContext` note) rather than stubbed in early. Would shift item availability, yield tables, and Standing/exhaustion rates. Cheap architecturally; the open question is thematic meaning, not implementation.
+
+Festival half: a fixed-cadence calendar event (not a full lunar/seasonal simulation at prototype scope), signaled diegetically a few days out — same low-weight injection style as a Site's hint line, no countdown UI. What's available at a given festival is assembled from whatever state already exists — a Site at Standing, a surplus of a property-tagged item, high Kinship/trust if that axis exists — never pre-flagged as "the thing the festival wants." Outcomes ripple forward as a season-long ambient condition (softer exhaustion decay, a passive-drift boost) rather than a direct reward, keeping festivals in the same tried-not-chosen register as everything else. No log, no "next year, do X" — if the player wasn't ready, that's simply what happened this cycle.
+
+**Prioritization note:** Memory (#1) is the most self-contained starting point — it only touches the existing property system and doesn't require the druid reframe, Kinship, or the seasonal system to exist first. Lore (#2) and Seasonal Cycle (#3) both lean on pieces that don't exist yet (a broader knowledge-content type; `WorldContext` weather/season) and are better sequenced after Memory proves out.
+
+---
+
+### Historical Everyday Life as a Core Pillar (Not the RPG Triad)
+
+Raised as a core-pillar question, not a tweak: most RPG/farm-sim games run on combat power, wealth accumulation, and gear progression. This game's premise (knowledge-gatherer helping settlements gain access to land, history, and people) calls for historically real replacements for that triad, not just new activities layered onto the existing loop.
+
+**The triad, replaced:**
+- Combat power → **resilience against want.** Success in this period was the kin-group surviving a bad winter, a raid, a disease year — not personal strength. The maintenance economy already does this; it just isn't named this way yet.
+- Wealth accumulation → **reputation through redistribution.** Status came from *giving away* well — a chieftain's worth was measured by generosity at the mead-hall, not a stockpile. Inverts the usual "acquire more" instinct.
+- Gear/itemization progression → **craft mastery and preserved knowledge.** The properties/recording system already built *is* the historically-correct replacement for loot progression — worth recognizing as the deliberate answer to this, not a side system that happens to exist alongside it.
+
+**Four real pursuits with no analog yet:**
+- **Boundary-walking / land-right.** Anglo-Saxon charters describe land grants by walking the perimeter and naming what's there — a tree, a stone, a stream bend. A different relationship to wilderness than foraging: not "what does this place give me" but "what does this place mean, and to whom." Maps directly onto the druid-as-knowledge-keeper premise.
+- **Hospitality and gift-giving as politics.** Not surplus triggering a merchant (the existing Trade/surplus idea above) — actual hosting and giving as the primary way standing grows. Reframes wealth from a resource sink into a redistribution act with social payoff.
+- **Propitiation.** Giving something back to maintain a place's favor — ritual-register, distinct from attending-to-extract. The historically real version of the Ritual Manipulation View already captured above: maintaining a relationship with the land, not a mechanic for extracting more from it.
+- **Lawspeaking / genealogy.** A lawspeaker held precedent and lineage in memory since writing was rare — a real oral profession, and a different knowledge-type than craft knowledge: who has right to what, and why. Likely the deepest, hardest-to-record tier the Memory mechanic (above) could have, and a natural home for the Continuity/Inheritance axis already flagged there.
+
+Propitiation and Lawspeaking connect directly to threads already queued for the next session (Ritual Manipulation, Memory/Continuity). Boundary-walking and Hospitality are new territory, not yet connected to anything built.
+
+---
+
+### Everyday-Life Activities (Supporting Material, Not Yet Prioritized)
+
+Raised alongside the above as raw material for content richness — grouped by how directly each connects to what's already built, not by importance.
+
+**Content — sits next to existing archetypes with no new geography needed:**
+- **Peat/turf cutting** — the primary fenland fuel source. At home in Fen Bog specifically.
+- **Eel/fish weirs** — well-documented Anglo-Saxon wetland economy. Fits next to Reed Marsh/Fen Bog.
+- **Charcoal-burning** — iron-smelting needs charcoal, not raw wood. A collier's clamp burns slow over several unattended days — a near-perfect fit for existing Standing/multi-day pacing. Pairs with Bog Iron and the Bog Keeper's existing thread.
+
+**Mechanics — ties directly into the Memory thread above:**
+- **Beekeeping** (Bee Skep already floated once) — honey for mead, and **wax for tablets**, the real physical medium for pre-parchment writing. Candidate as the actual material the rune-carver/scribe mechanic consumes, not just flavor.
+- **Herbal medicine / a leechbook** — Bald's Leechbook is a real Anglo-Saxon text. A player-assembled leechbook gives Witnessed/Recorded knowledge an already-historical container instead of an invented one.
+
+**Larger theme-inspired systems — genuinely new activity categories, not yet touched:**
+- **Textile work** — wool processing (shearing, carding, spinning, weaving) and plant-dyeing (woad, madder, weld). The single biggest untouched everyday-life category. Dye-plants map onto the property system almost for free — a plant's dye result *is* a property.
+- **Tanning/leatherworking** — an NPC role from the earliest brainstorm in this document, never built. A smelly, multi-step transformation process — a good fit for a station distinct from the Workshop.
+- **Brewing/mead-making** — ties into mead-hall political culture (a stated research interest) and into the Festival thread above — feast hospitality as a real activity, not flavor text at the festival.
+
+Strongest three to pull on first given what's already built: peat-cutting (nearly free, fits Fen Bog today), beekeeping/wax (gives Memory its historical container), and textiles (biggest untouched category, cleanest link to properties).
+
+---
+
+### Synthesis: Provenance, Reciprocity, and Kinship (emerged from Druid Framing follow-up, 7-8-26)
+
+Reached by stress-testing concrete scenarios against theme and design values, rather than starting from mechanics — a deliberate reversal of the usual order, done because the moment-to-moment gameplay vision (see gameplay/aesthetics discussion, same session) was still too abstract to build from directly.
+
+**The test case.** Bottom-up question: how would a post-imperial village actually fix a dilapidated building, per theme alone? The honest answer — reused/spolia material with known provenance, not raw extraction; collective or reciprocal labor, not solitary work; a real skill bottleneck, not a quantity threshold — exposed that the current wilderness-gather → settlement-build loop fails on three specific counts, not just mood: material is anonymous and ownerless, extraction and construction are solitary, and there's no knowledge gate. This is the same diagnosis as the standing field-grind complaint (Site attendance for rare drops), generalized: **the wilderness currently behaves like a vending machine and the settlement like a crafting bench**, when the theme wants materials to carry provenance and construction to carry social and skill cost.
+
+**The resulting spine, four pieces that turned out to be one integrated thread:**
+
+- **Memory generalizes into currency.** Witnessed/Recorded knowledge (design discussion, Iteration 46 follow-up) isn't just item-property knowledge with a decay curve — it's the thing a knowledge-keeper has to give when they lack surplus goods or spare hands. A story, a name, a piece of preserved knowledge becomes tradeable the same way a material good is. This is a strong thematic fit for the druid frame specifically: the player's contribution to the social economy is memory and connection, not stockpiled goods.
+
+- **Provenance attaches to Sites, not a new system.** The existing Site architecture (named locations, VisibleInert/Interactable states, Standing) already gives places identity. Provenance is an attribute layer on what's already there: a claim-state per source (ownerless ruin — free but limited; a living farmstead's wall — asking required; a boundary cairn — taking from it means something). Fixes the vending-machine problem without waiting on boundary-walking or Kinship to exist first; both can extend it later.
+
+- **Facilitated Reciprocity — player as outside-facilitator, not participant.** A druid/knowledge-keeper is historically liminal — valued by communities without being fully of them. Resolving a real tension flagged in this session (gift-giving reciprocity vs. the Midlake narrator's remove/loneliness): the player doesn't build a personal web of obligations, they enable reciprocity *between* NPCs — carrying word, discharging a debt on someone's behalf, making a hosting or a repair possible. Keeps the social fabric moving because of the player without making the player its center.
+
+- **Kinship/Trust as NPC↔NPC relational state, same shape as exhaustion/Standing.** Explicitly *not* a player↔NPC friendship meter (rejected during this session as in direct conflict with the Midlake mood — the original Stardew-style framing doesn't fit). Instead: a range-valued state between NPCs (or aggregated at settlement level), perceivable and nudgeable via the Ritual Manipulation View, that shifts through facilitation and time rather than a single trigger — "tried not chosen," ambient over triggered, same as everything else. Reads into multiple systems the way WorldState flags already do: some activities get cost/duration modifiers, others get outcome-probability modifiers. Gates **collective settlement-scale outcomes** (a multi-hand repair, a festival, a coordinated response to a bad season) rather than individual NPC specialization — the direct mechanical expression of the existing "resilience against want" reframe (kin-group surviving together, not personal strength). A settlement riddled with unresolved feuds is fragile regardless of stockpiled material or any one NPC's skill level.
+
+**A fifth piece, resolving a separate tension from the same session:** skill-use growth (the Skyrim pull) reframed as **accumulated relationship between the player's attention and a specific place or practice** rather than a player-character power stat — consistent with the no-PC-development stance, and it turns out to double as the knowledge-modifier for craft/repair work: a steep-but-improving cost curve at low relationship, same shape as spot exhaustion and memory-fade, not a hard skill gate (which would violate Tried Not Chosen).
+
+**How this relates to the original three threads.** Memory absorbs and is strengthened by this, rather than sitting separately. Provenance and Reciprocity are new — they didn't exist as named threads before this session; they emerged from testing a concrete scenario rather than being brainstormed directly, which is itself a useful data point about where the design process needs to run bottom-up rather than top-down. Lore still follows Memory once Witnessed/Recorded is generalized, per the original prioritization note. Seasonal Cycle remains queued behind all of this — nothing in this session moved it up.
+
+**Open, not yet resolved:**
+- What "give a memory" actually looks like as a verb/interaction, distinct from attending a Site or trading a material.
+- How provenance claim-states are authored/generated per Site (manual per-archetype, or systemic).
+- Whether Kinship is tracked per-NPC-pair, per-NPC-vs-settlement, or both, and what data shape that implies.
+- Whether the "relationship-with-place" skill mechanic and the Kinship mechanic should share an underlying value-and-decay implementation, given they're structurally identical (range, shifts through use/facilitation, reads into cost/outcome elsewhere) — worth checking before building either, to avoid duplicating a pattern.
+
+Course Correction (7-9-26)
+
+The Provenance/Memory/Reciprocity/Kinship spine (see synthesis above) was reasoned into existence entirely through thematic argument — "what would someone in this world actually do" — chained across several sessions without touching the greybox prototype at any point. That's a process failure specific to a greybox prototype: theme is good for generating candidates and killing bad ideas fast, but it can't tell you whether a mechanic is fun or whether several separately-plausible systems actually cohere in play — only building and testing can answer that. Worth naming explicitly: this spine also turned out to be quietly merging three things that don't automatically belong in one game — the Midlake mood (solitude, remove), the druid/post-imperial framing (socially embedded, reciprocity-driven), and settlement-development mechanics (systems, progression) — and Kinship specifically exists only because the reciprocity thread needed a mechanism, not because it was a wanted feature on its own terms. The spine isn't discarded, but it's shelved as a package until there's a played, working mechanic to check it against, rather than more argument. Next step reverts to the original complaint that kicked this off — the wilderness field-grind — approached theme-agnostically: smallest possible greybox change, one hardcoded spot, testing only whether tending-shifts-odds-over-time feels better in play than flat RNG. Theme gets reintroduced only after something is actually fun.

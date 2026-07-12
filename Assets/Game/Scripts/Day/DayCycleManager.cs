@@ -24,6 +24,10 @@ namespace Mossmark.Day
 
         public int MaxDaylight => maxDaylight;
         public int DaylightRemaining { get; private set; }
+        // Increments once per Rest(), before DayAdvanced fires. Iteration 47: gives
+        // WorldSite.RegisterGoodDay() a stable value all member spots agree on that
+        // day, regardless of which spot's DayAdvanced subscriber happens to run first.
+        public int DayIndex { get; private set; }
         public DayPhase CurrentPhase { get; private set; }
         public string CurrentAmbientText { get; private set; }
         public bool HasDaylight => DaylightRemaining > 0;
@@ -92,6 +96,7 @@ namespace Mossmark.Day
             DaylightRemaining = maxDaylight;
             DaylightChanged?.Invoke(DaylightRemaining, maxDaylight);
             SetPhase(DayPhase.Dawn);
+            DayIndex++;
             DayAdvanced?.Invoke();
 
             yield return Fade(1f, 0f);

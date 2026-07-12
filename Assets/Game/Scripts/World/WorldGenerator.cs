@@ -39,6 +39,14 @@ namespace Mossmark.World
         // one shared anchor point instead of scattering independently across the wilderness.
         [SerializeField, Min(0f)] private float siteJitterRadius = 3f;
 
+        // Iteration 47: Fen Bog additionally pulls these generic spots into its site
+        // cluster and wires them to its shared WorldSite, instead of letting them scatter
+        // independently via SpawnGenericWildernessSpots() — richer, hand-authored bonus
+        // content for one archetype, orthogonal to every archetype now getting a WorldSite
+        // (below). Same single-pilot discipline as Iteration 42's original site fields.
+        [SerializeField] private WildernessSpotDefinition[] bogSiteMemberSpots;
+        private const string BogSiteArchetypeId = "bog";
+
         public static IReadOnlyList<PlaceArchetype> SelectedArchetypes { get; private set; } = Array.Empty<PlaceArchetype>();
 
         // Iteration 31 pilot, re-keyed in the relational-data migration: spawned Generic
@@ -128,8 +136,22 @@ namespace Mossmark.World
             {
                 var anchor = FindValidPosition();
 
+                // Iteration 47 (generalized): every selected archetype gets a visible
+                // WorldSite ground plane, and its own spot(s) share that Site's Standing
+                // counter — Standing is a property of the place, not any one spot within
+                // it. Archetypes with a single spot behave identically to old spot-scoped
+                // Standing (a Site of one), so this is a safe, uniform generalization.
+                var site = SpawnWorldSite(archetype, anchor);
+
                 foreach (var def in archetype.Spots)
-                    if (def != null) SpawnSpotFromDefinition(def, FindValidPositionNear(anchor));
+                    if (def != null) SpawnSpotFromDefinition(def, FindValidPositionNear(anchor), site);
+
+                // Fen Bog additionally pulls 2 existing generic spots into its cluster as
+                // richer pilot content — hand-authored, single-archetype bonus, same
+                // discipline as every prior single-pilot field (Iteration 42/43).
+                if (archetype.ArchetypeId == BogSiteArchetypeId && bogSiteMemberSpots != null)
+                    foreach (var def in bogSiteMemberSpots)
+                        if (def != null) SpawnSpotFromDefinition(def, FindValidPositionNear(anchor), site);
 
                 if (archetype.PoiStartingTier == PoiTier.Hidden)
                 {
@@ -139,6 +161,29 @@ namespace Mossmark.World
 
                 SpawnPoi(archetype, FindValidPositionNear(anchor));
             }
+        }
+
+        // Ground-plane visual + shared Standing tracker for one archetype's site. Tint
+        // is the archetype's own spot color (identity, not progress — contrast with the
+        // white-lerp formula Standing's stage tint uses), radius matches siteJitterRadius
+        // exactly so the visible boundary and the mechanical clustering radius agree by
+        // construction.
+        private WorldSite SpawnWorldSite(PlaceArchetype archetype, Vector2 anchor)
+        {
+            Color siteColor = archetype.Spots.Length > 0 && archetype.Spots[0] != null
+                ? archetype.Spots[0].color
+                : Color.white;
+
+            var go = new GameObject($"{archetype.DisplayName} Site");
+            go.SetActive(false);
+            go.transform.position = anchor;
+
+            go.AddComponent<SpriteRenderer>();
+            var worldSite = go.AddComponent<WorldSite>();
+            worldSite.Initialize(archetype.ArchetypeId, archetype.DisplayName, siteJitterRadius, siteColor);
+
+            go.SetActive(true);
+            return worldSite;
         }
 
         // Checked on every rest: spawns a dormant archetype's POI, clustered near its
@@ -245,7 +290,7 @@ namespace Mossmark.World
             }
         }
 
-        private void SpawnSpotFromDefinition(WildernessSpotDefinition def, Vector2 position)
+        private void SpawnSpotFromDefinition(WildernessSpotDefinition def, Vector2 position, WorldSite site = null)
         {
             var go = new GameObject(def.displayName);
             go.SetActive(false);
@@ -267,9 +312,10 @@ namespace Mossmark.World
                     def.displayName, def.interactionVerb,
                     def.commonYields, def.EffectiveRareYields, def.rareDropChance,
                     def.minTickInterval, def.maxTickInterval, def.spotStagePool,
-                    def.knowledgeYields, def.hintFlavors);
+                    def.knowledgeYields, def.hintFlavors, site);
                 if (!string.IsNullOrEmpty(def.spotId))
                     spotsById[def.spotId] = stagedSpot;
+                site?.RegisterMember(stagedSpot);
             }
             else
             {

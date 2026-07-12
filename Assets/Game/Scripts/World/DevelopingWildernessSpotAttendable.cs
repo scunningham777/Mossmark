@@ -71,8 +71,22 @@ namespace Mossmark.World
         // stage-cross handler bakes its circle sprite from SpriteRenderer.color.
         private SpriteRenderer spriteRenderer;
 
-        // IGoodAttentionTracker — read by SustainedGoodAttentionCondition.
-        public int GoodAttentionDays => goodAttentionDays;
+        // Iteration 47 (generalized to every archetype's Site): set only for a Site's
+        // member spots (WorldGenerator wires this before activation, inactive-GO pattern).
+        // Random-pool spots not pulled into any Site keep this null and fall back to their
+        // own goodAttentionDays field below — zero behavior change for those.
+        private WorldSite site;
+
+        // IGoodAttentionTracker — read by SustainedGoodAttentionCondition. Delegates to
+        // the shared Site counter when this spot is a Site member, so Standing rewards
+        // touring the cluster instead of camping this one spot.
+        public int GoodAttentionDays => site != null ? site.GoodAttentionDays : goodAttentionDays;
+
+        // Set by HandleDeveloped() whenever this spot crosses a stage, read by WorldSite
+        // right after a successful TryForceStanding() so the Site's single consolidated
+        // announcement reuses this spot's own authored flavor text rather than duplicating
+        // it as a separate hardcoded string on WorldSite.
+        public string LastStandingFlavorText { get; private set; }
 
         // ITendednessSource — so WorldGenerator.GetSpot() keeps working uniformly for any
         // cross-influence consumer (NpcStageDef.passiveDriftSourceSpotId reads this for the
@@ -93,7 +107,8 @@ namespace Mossmark.World
         // call before SetActive(true) so Awake fires with the track already buildable.
         public void Initialize(string displayName, string interactionVerb, ItemYield[] commonYields,
             ItemYield[] rareYields, float rareDropChance, float minTickInterval, float maxTickInterval,
-            SpotStagePool stagePool, KnowledgeYieldEntry[] knowledgeYields = null, HintFlavorEntry[] hintFlavors = null)
+            SpotStagePool stagePool, KnowledgeYieldEntry[] knowledgeYields = null, HintFlavorEntry[] hintFlavors = null,
+            WorldSite site = null)
         {
             this.displayName = displayName;
             this.interactionVerb = interactionVerb;
@@ -105,6 +120,7 @@ namespace Mossmark.World
             this.stagePool = stagePool;
             this.knowledgeYields = knowledgeYields;
             this.hintFlavors = hintFlavors;
+            this.site = site;
         }
 
         public float AttentionDuration => currentTickInterval;
@@ -198,6 +214,21 @@ namespace Mossmark.World
 
         public void OnAttentionCancelled() { }
 
+        // Iteration 47: called by this spot's WorldSite once the shared GoodAttentionDays
+        // counter satisfies every member's SustainedGoodAttentionCondition at the same
+        // rest — reuses the exact AddProgress()/TryApplyStage() path a normal attend would
+        // use, so it's idempotent (silently returns false pre-threshold or once already
+        // applied) and needs no changes to DevelopableEntity, DevelopmentTrack, or the
+        // stage-cross feedback wiring (tint, EntityFeedback pop, GetAppliedUpgrades()) —
+        // only the trigger moves from "this spot's own next attend" to "the Site's shared
+        // rest-boundary check," so every member crosses in the same pass instead of
+        // staggering across separate future attends.
+        public bool TryForceStanding()
+        {
+            AddProgress();
+            return TryApplyStage();
+        }
+
         // Standing's rare-chance multiplier stacks on top of the band proxy's own x1.2 (when
         // applicable) rather than replacing it — the point is that Familiar reads as clearly
         // bigger than anything ordinary attention could reach under the old tendedness model.
@@ -233,7 +264,11 @@ namespace Mossmark.World
         // it, per the design's explicit "costs you, doesn't undo you" split.
         private void OnDayAdvanced()
         {
-            if (attendedThisDay && !overworkedToday) goodAttentionDays++;
+            if (attendedThisDay && !overworkedToday)
+            {
+                if (site != null) site.RegisterGoodDay(DayCycleManager.Instance.DayIndex);
+                else goodAttentionDays++;
+            }
 
             exhaustion = 0f;
             overworkedToday = false;
@@ -265,8 +300,17 @@ namespace Mossmark.World
             string flavor = def != null && !string.IsNullOrEmpty(def.FlavorText)
                 ? def.FlavorText
                 : $"{stage.DisplayName}.";
-            NotificationManager.Post($"{displayName}: {flavor}");
-            Debug.Log($"{displayName}: {flavor}", this);
+            LastStandingFlavorText = flavor;
+
+            // Site-scoped spots: the Site posts one consolidated "place" announcement
+            // instead of every member independently posting its own near-identical line
+            // (Iteration 47 fix — previously each member crossed and announced on its own
+            // next attend, reading as N separate moments instead of one shared one).
+            if (site == null)
+            {
+                NotificationManager.Post($"{displayName}: {flavor}");
+                Debug.Log($"{displayName}: {flavor}", this);
+            }
 
             // Iteration 45: same flag-bridge Buildings already use (Iteration 34 Seam 3) —
             // lets a spot's Standing crossing gate something elsewhere (e.g. a POI's
