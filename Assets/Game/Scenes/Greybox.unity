@@ -1548,9 +1548,7 @@ MonoBehaviour:
   maxSpotCount: 12
   minSeparation: 2
   siteJitterRadius: 3
-  bogSiteMemberSpots:
-  - {fileID: 11400000, guid: b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7, type: 2}
-  - {fileID: 11400000, guid: c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7, type: 2}
+  debugSeedMidProcessStart: 1
 --- !u!4 &900600003
 Transform:
   m_ObjectHideFlags: 0

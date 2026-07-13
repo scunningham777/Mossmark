@@ -51,6 +51,13 @@ namespace Mossmark.World
 
         public void RegisterMember(DevelopingWildernessSpotAttendable spot) => members.Add(spot);
 
+        // Iteration 49 (Pre-Seeded Mid-Process Start pilot): lets the shared counter start
+        // partway toward Familiar at world gen instead of at 0. Called once, before any
+        // members have registered or any rest has passed, so it doesn't trigger
+        // TryApplyStandingToMembers() itself — the player still has to earn the last good
+        // day or two, same mechanism as always, just a different starting point.
+        public void SeedGoodAttentionDays(int amount) => goodAttentionDays = Mathf.Max(goodAttentionDays, amount);
+
         // Called by a member spot's OnDayAdvanced() in place of incrementing its own
         // counter, on a day it was attended and not overworked. Gated on dayIndex rather
         // than event firing order — DayCycleManager.DayIndex is incremented once before

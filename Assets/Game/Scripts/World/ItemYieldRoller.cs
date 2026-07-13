@@ -134,17 +134,35 @@ namespace Mossmark.World
         // Low-weight ambient hint line, gated on a WorldState flag exactly like
         // KnowledgeYieldEntry's item injection, but delivered as flavor text via
         // notification rather than added to the yield pool. At most one per tick.
-        public static void TryFireHintFlavor(string sourceName, HintFlavorEntry[] hintFlavors)
+        // Returns true if a line fired, so callers (Iteration 48) can fall through to an
+        // unconditional ambient pool only when this gated, rarer content didn't fire.
+        public static bool TryFireHintFlavor(string sourceName, HintFlavorEntry[] hintFlavors)
         {
-            if (hintFlavors == null || hintFlavors.Length == 0) return;
+            if (hintFlavors == null || hintFlavors.Length == 0) return false;
             foreach (var hint in hintFlavors)
             {
                 if (string.IsNullOrEmpty(hint.requiredFlag) || !WorldContext.GetFlag(hint.requiredFlag)) continue;
                 if (Random.value >= hint.chance) continue;
                 NotificationManager.Post(hint.text);
                 Debug.Log($"{sourceName}: {hint.text}");
-                return;
+                return true;
             }
+            return false;
+        }
+
+        // Iteration 48: mirrors TryFireHintFlavor's shape, but with no WorldState.GetFlag
+        // check at all — that's the entire point of "unconditional." Fires at a fixed,
+        // notably higher weight (call site passes 0.35 vs. hintFlavors' typical 0.15)
+        // since this needs to be felt regularly, not discovered rarely, to test whether
+        // ambient presence alone gives attending any pull independent of reward. No item,
+        // no progress, no flag — a fired line has zero mechanical effect.
+        public static void TryFireAmbientFlavor(string sourceName, string[] ambientFlavors, float chance)
+        {
+            if (ambientFlavors == null || ambientFlavors.Length == 0) return;
+            if (Random.value >= chance) return;
+            string line = ambientFlavors[Random.Range(0, ambientFlavors.Length)];
+            NotificationManager.Post(line);
+            Debug.Log($"{sourceName}: {line}");
         }
 
         private static ItemYield PickWeighted(ItemYield[] yields)

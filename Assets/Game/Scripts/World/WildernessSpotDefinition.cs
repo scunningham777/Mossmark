@@ -90,6 +90,12 @@ namespace Mossmark.World
         // WorldState flag, fired instead of an item injection. Usually empty.
         [SerializeField] public HintFlavorEntry[] hintFlavors = System.Array.Empty<HintFlavorEntry>();
 
+        // Iteration 48 (Fen Bog pilot): a second, ungated flavor pool — no WorldState flag,
+        // no item, no progress. Fires at a fixed, higher weight than hintFlavors to test
+        // whether ambient presence alone gives attending any pull independent of reward.
+        // Hand-authored asset field, not CSV-wired, same discipline as hintFlavors itself.
+        [SerializeField] public string[] ambientFlavors = System.Array.Empty<string>();
+
         // Iteration 43 (Fen Bog pilot), generalized to every Generic spot in Iteration 44:
         // the exhaustion + latched Standing stage-pool DevelopingWildernessSpotAttendable
         // uses. Wired into the CSV pipeline (wilderness_spots.csv's spotStagePool column)

@@ -47,3 +47,18 @@ MonoBehaviour:
     chance: 0.15
     text: something in the deep water shifts, just past where the channels reach.
   spotStagePool: {fileID: 11400000, guid: 4d22d094d22f4f709b7dbaa6b329e271, type: 2}
+  ambientFlavors:
+  - A heron lifts off from somewhere you can't see and doesn't come back.
+  - The water holds the color of the sky a little longer than it should.
+  - Something's been digging near the old post. Not you.
+  - The reeds lean the same direction they did yesterday, and the day before.
+  - A curl of smoke rises somewhere south, thin and steady.
+  - There's a footprint in the mud that isn't yours.
+  - The frogs go quiet all at once, then start again.
+  - A rut worn into the bank — deer, or something with the same patience.
+  - The cold sits in the ground here long after the sun's found it.
+  - The old post leans further than it did last time you noticed.
+  - Something out past the reeds calls twice and stops.
+  - The water's higher on the west side today than it was.
+  - A trail of broken reeds leads toward the trees and just ends.
+  - Woodsmoke on the wind, and it isn't yours.

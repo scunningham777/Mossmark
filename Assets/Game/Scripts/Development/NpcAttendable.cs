@@ -64,6 +64,11 @@ namespace Mossmark.Development
         private bool lastAttentionWasVisit;
         private bool lastAttentionWasMaintenance;
 
+        // Iteration 49 (Pre-Seeded Mid-Process Start pilot): true only for NPCs spawned via
+        // Initialize() (ArrivalSpawner) — a freshly-arrived settler should never start
+        // mid-specialized, only the hand-placed NPCs already in the world at session start.
+        private bool spawnedAsArrival;
+
         // Iteration 32: fired in OnDayAdvanced when passive progress is added but the
         // stage doesn't cross that rest — signals EntityFeedback to show the drift halo.
         public event System.Action OnPassiveDriftAccrued;
@@ -110,6 +115,7 @@ namespace Mossmark.Development
             this.progressCost = progressCost;
             this.minTickInterval = minTickInterval;
             this.maxTickInterval = maxTickInterval;
+            spawnedAsArrival = true;
         }
 
         public float AttentionDuration => currentTickInterval;
@@ -185,6 +191,15 @@ namespace Mossmark.Development
             }
 
             track = new DevelopmentTrack(stages.ToArray());
+
+            // Iteration 49 (Pre-Seeded Mid-Process Start pilot): hand-placed NPCs (not
+            // procedural arrivals) start partway toward drawing a specialization when the
+            // debug toggle is on — roughly half of progressCost, enough to be noticeable
+            // without specializing on the very first attend. Which specialization eventually
+            // gets drawn is still "tried, not chosen" as always; this seeds the shared
+            // pre-spec progress counter, not any one outcome.
+            if (!spawnedAsArrival && WorldGenerator.DebugSeedMidProcessStart)
+                AddProgress(Mathf.RoundToInt(progressCost * 0.5f));
 
             // Pre-seal all post-spec stages so they can't fire before this NPC has
             // drawn the matching specialization. SpecializationRealizedCondition is

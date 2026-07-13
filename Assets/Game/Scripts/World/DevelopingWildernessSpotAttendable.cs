@@ -54,6 +54,11 @@ namespace Mossmark.World
 
         private KnowledgeYieldEntry[] knowledgeYields;
         private HintFlavorEntry[] hintFlavors;
+        // Iteration 48 (Fen Bog pilot): ungated flavor pool, checked after hintFlavors so
+        // gated content keeps priority — this only fires on a tick the rarer, gated hint
+        // didn't. Empty for every spot but Fen Bog's asset.
+        private string[] ambientFlavors;
+        [SerializeField, Range(0f, 1f)] private float ambientFlavorChance = 0.35f;
         private SpotStagePool stagePool;
 
         private DevelopmentTrack track;
@@ -108,7 +113,7 @@ namespace Mossmark.World
         public void Initialize(string displayName, string interactionVerb, ItemYield[] commonYields,
             ItemYield[] rareYields, float rareDropChance, float minTickInterval, float maxTickInterval,
             SpotStagePool stagePool, KnowledgeYieldEntry[] knowledgeYields = null, HintFlavorEntry[] hintFlavors = null,
-            WorldSite site = null)
+            WorldSite site = null, string[] ambientFlavors = null)
         {
             this.displayName = displayName;
             this.interactionVerb = interactionVerb;
@@ -121,6 +126,7 @@ namespace Mossmark.World
             this.knowledgeYields = knowledgeYields;
             this.hintFlavors = hintFlavors;
             this.site = site;
+            this.ambientFlavors = ambientFlavors;
         }
 
         public float AttentionDuration => currentTickInterval;
@@ -194,7 +200,10 @@ namespace Mossmark.World
 
             ItemYieldRoller.Roll(displayName, "foraged", commonYields, rareYields,
                 GetEffectiveRareChance(), bandProxy, ItemYieldRoller.BuildKnowledgeInjectedYields(knowledgeYields));
-            ItemYieldRoller.TryFireHintFlavor(displayName, hintFlavors);
+            // Ambient flavor (Iteration 48) only rolls if the rarer, gated hint didn't fire
+            // this tick — gated content keeps priority, per the iteration's own ordering.
+            if (!ItemYieldRoller.TryFireHintFlavor(displayName, hintFlavors))
+                ItemYieldRoller.TryFireAmbientFlavor(displayName, ambientFlavors, ambientFlavorChance);
 
             AddProgress();
             TryApplyStage();

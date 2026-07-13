@@ -39,13 +39,18 @@ namespace Mossmark.World
         // one shared anchor point instead of scattering independently across the wilderness.
         [SerializeField, Min(0f)] private float siteJitterRadius = 3f;
 
-        // Iteration 47: Fen Bog additionally pulls these generic spots into its site
-        // cluster and wires them to its shared WorldSite, instead of letting them scatter
-        // independently via SpawnGenericWildernessSpots() — richer, hand-authored bonus
-        // content for one archetype, orthogonal to every archetype now getting a WorldSite
-        // (below). Same single-pilot discipline as Iteration 42's original site fields.
-        [SerializeField] private WildernessSpotDefinition[] bogSiteMemberSpots;
         private const string BogSiteArchetypeId = "bog";
+
+        // Iteration 49 (Pre-Seeded Mid-Process Start pilot): comparison toggle for playing
+        // the same session fresh-start vs. mid-process. Read once at Awake into the static
+        // property below (checked by NpcAttendable and applied here for Fen Bog's Standing
+        // counter) — flip the checkbox and re-enter Play Mode for an A/B feel comparison,
+        // no separate build needed.
+        [Header("Debug")]
+        [SerializeField] private bool debugSeedMidProcessStart = false;
+        private const int DebugSeedGoodAttentionDays = 2;
+
+        public static bool DebugSeedMidProcessStart { get; private set; }
 
         public static IReadOnlyList<PlaceArchetype> SelectedArchetypes { get; private set; } = Array.Empty<PlaceArchetype>();
 
@@ -73,6 +78,7 @@ namespace Mossmark.World
         private void Awake()
         {
             spotsById.Clear();
+            DebugSeedMidProcessStart = debugSeedMidProcessStart;
 
             if (regionData == null || regionData.ArchetypePool == null || regionData.ArchetypePool.Length == 0)
             {
@@ -143,15 +149,21 @@ namespace Mossmark.World
                 // Standing (a Site of one), so this is a safe, uniform generalization.
                 var site = SpawnWorldSite(archetype, anchor);
 
+                // Iteration 49 pilot: Fen Bog's Standing counter starts 1-2 good days short
+                // of Familiar instead of at 0, when the debug toggle is on — the player
+                // inherits work already done rather than starting the clock.
+                if (archetype.ArchetypeId == BogSiteArchetypeId && DebugSeedMidProcessStart)
+                    site.SeedGoodAttentionDays(DebugSeedGoodAttentionDays);
+
                 foreach (var def in archetype.Spots)
                     if (def != null) SpawnSpotFromDefinition(def, FindValidPositionNear(anchor), site);
 
-                // Fen Bog additionally pulls 2 existing generic spots into its cluster as
-                // richer pilot content — hand-authored, single-archetype bonus, same
-                // discipline as every prior single-pilot field (Iteration 42/43).
-                if (archetype.ArchetypeId == BogSiteArchetypeId && bogSiteMemberSpots != null)
-                    foreach (var def in bogSiteMemberSpots)
-                        if (def != null) SpawnSpotFromDefinition(def, FindValidPositionNear(anchor), site);
+                // Iteration 51 (generalized from Iteration 47's Bog-only bogSiteMemberSpots
+                // hardcode): any archetype with a non-empty SiteMemberSpotPool pulls a random
+                // count (within its authored min/max range) of distinct generic spots into its
+                // cluster, drawn fresh each session rather than a fixed set.
+                foreach (var def in DrawSiteMemberSpots(archetype))
+                    if (def != null) SpawnSpotFromDefinition(def, FindValidPositionNear(anchor), site);
 
                 if (archetype.PoiStartingTier == PoiTier.Hidden)
                 {
@@ -184,6 +196,34 @@ namespace Mossmark.World
 
             go.SetActive(true);
             return worldSite;
+        }
+
+        // Iteration 51: draws a random, non-repeating subset of an archetype's
+        // SiteMemberSpotPool, sized within its authored min/max range (clamped to the pool's
+        // actual length) — an empty pool draws nothing, so archetypes that don't opt in are
+        // unaffected. Replaces Iteration 47's fixed bogSiteMemberSpots array with a count that
+        // varies session to session, per "Organic over deterministic."
+        private static List<WildernessSpotDefinition> DrawSiteMemberSpots(PlaceArchetype archetype)
+        {
+            var pool = archetype.SiteMemberSpotPool;
+            if (pool == null || pool.Length == 0) return new List<WildernessSpotDefinition>();
+
+            int min = Mathf.Clamp(archetype.SiteMemberMinCount, 0, pool.Length);
+            int max = Mathf.Clamp(archetype.SiteMemberMaxCount, min, pool.Length);
+            int count = UnityEngine.Random.Range(min, max + 1);
+
+            var remainingIndices = new List<int>(pool.Length);
+            for (int i = 0; i < pool.Length; i++) remainingIndices.Add(i);
+
+            var drawn = new List<WildernessSpotDefinition>(count);
+            for (int i = 0; i < count; i++)
+            {
+                int pick = UnityEngine.Random.Range(0, remainingIndices.Count);
+                drawn.Add(pool[remainingIndices[pick]]);
+                remainingIndices.RemoveAt(pick);
+            }
+
+            return drawn;
         }
 
         // Checked on every rest: spawns a dormant archetype's POI, clustered near its
@@ -312,7 +352,7 @@ namespace Mossmark.World
                     def.displayName, def.interactionVerb,
                     def.commonYields, def.EffectiveRareYields, def.rareDropChance,
                     def.minTickInterval, def.maxTickInterval, def.spotStagePool,
-                    def.knowledgeYields, def.hintFlavors, site);
+                    def.knowledgeYields, def.hintFlavors, site, def.ambientFlavors);
                 if (!string.IsNullOrEmpty(def.spotId))
                     spotsById[def.spotId] = stagedSpot;
                 site?.RegisterMember(stagedSpot);

@@ -88,6 +88,23 @@ namespace Mossmark.World
         public IDependencyCondition PoiRevealCondition => poiRevealCondition;
         public IDependencyCondition PoiUnlockCondition => poiUnlockCondition;
 
+        // Iteration 51: generalizes Iteration 47's Bog-only WorldGenerator.bogSiteMemberSpots
+        // hardcode into per-archetype authored data. An archetype whose pool is non-empty has
+        // its Site draw a random count (within the min/max range, per "Organic over
+        // deterministic") of distinct generic spots from this pool and pull them into its
+        // cluster, alongside its own Spots. Empty pool (the default) means no change from an
+        // archetype's own Spots list — identical to every archetype's behavior before this
+        // iteration. Not wired into the CSV pipeline — hand-authored, same discipline as every
+        // other single/limited-pilot field before it earned real CSV breadth.
+        [Header("Site Member Spots (Iteration 51)")]
+        [SerializeField] private WildernessSpotDefinition[] siteMemberSpotPool = System.Array.Empty<WildernessSpotDefinition>();
+        [SerializeField, Min(0)] private int siteMemberMinCount = 0;
+        [SerializeField, Min(0)] private int siteMemberMaxCount = 0;
+
+        public WildernessSpotDefinition[] SiteMemberSpotPool => siteMemberSpotPool;
+        public int SiteMemberMinCount => siteMemberMinCount;
+        public int SiteMemberMaxCount => siteMemberMaxCount;
+
         public string ArchetypeId => archetypeId;
         public string DisplayName => displayName;
 
