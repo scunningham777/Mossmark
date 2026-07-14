@@ -2380,6 +2380,7 @@ MonoBehaviour:
   restoredFlavors: []
   coldFlavor: 
   maintenanceCostPerReset: 2
+  dominanceArchetypeId: 
 --- !u!114 &902000003
 MonoBehaviour:
   m_ObjectHideFlags: 0

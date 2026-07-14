@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Mossmark.Day;
 using Mossmark.Visuals;
 using UnityEngine;
 
@@ -33,6 +34,17 @@ namespace Mossmark.World
         private int lastGoodDayIndex = -1;
         private bool hasReachedStanding;
 
+        // Iteration 50 pilot (Attention-Weighted Flow Bonus): a rolling trailing window of
+        // the last 3 rests, true for a rest if any member spot was attended that day
+        // (unconditional — unlike goodAttentionDays above, this isn't gated on not being
+        // overworked; "was this place tended at all" is a lower bar than "was it tended
+        // well"). Flushed once per rest via this component's own DayAdvanced subscription
+        // rather than lazily on read/write, so a stretch of rests with no attendance still
+        // advances the window correctly instead of silently merging days together.
+        private readonly bool[] attendanceWindow = new bool[3];
+        private int attendanceWindowSlot;
+        private bool attendedToday;
+
         public string ArchetypeId => archetypeId;
 
         // IGoodAttentionTracker — read by SustainedGoodAttentionCondition via a member
@@ -50,6 +62,18 @@ namespace Mossmark.World
         }
 
         public void RegisterMember(DevelopingWildernessSpotAttendable spot) => members.Add(spot);
+
+        // Iteration 50 pilot: called by any member spot's OnAttentionComplete(), regardless
+        // of exhaustion state — "was this place tended at all today" is unconditional,
+        // unlike RegisterGoodDay's "tended well" bar below.
+        public void MarkAttendedToday() => attendedToday = true;
+
+        public int AttendedDaysInWindow()
+        {
+            int count = 0;
+            foreach (var day in attendanceWindow) if (day) count++;
+            return count;
+        }
 
         // Iteration 49 (Pre-Seeded Mid-Process Start pilot): lets the shared counter start
         // partway toward Familiar at world gen instead of at 0. Called once, before any
@@ -101,6 +125,31 @@ namespace Mossmark.World
                 : "feels like familiar ground now.";
             NotificationManager.Post($"{name}: {flavor}");
             Debug.Log($"{name} (site): reached Standing.", this);
+        }
+
+        private void Start()
+        {
+            if (DayCycleManager.Instance != null)
+                DayCycleManager.Instance.DayAdvanced += OnDayAdvanced;
+        }
+
+        private void OnDestroy()
+        {
+            if (DayCycleManager.Instance != null)
+                DayCycleManager.Instance.DayAdvanced -= OnDayAdvanced;
+        }
+
+        // Flushes unconditionally, every rest, independent of whether any member spot's own
+        // OnDayAdvanced has run yet this cascade — unlike RegisterGoodDay's dayIndex dedup
+        // (which only needs to agree on "this rest" across multiple callers), this only ever
+        // has one writer (this component), so a plain per-rest flush is sufficient and avoids
+        // the multi-rest merge bug a lazily-triggered flush would have if nothing attended
+        // this site for a stretch of rests.
+        private void OnDayAdvanced()
+        {
+            attendanceWindow[attendanceWindowSlot] = attendedToday;
+            attendanceWindowSlot = (attendanceWindowSlot + 1) % attendanceWindow.Length;
+            attendedToday = false;
         }
 
         private void Awake()

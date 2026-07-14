@@ -17,25 +17,49 @@ namespace Mossmark.Development
     {
         [SerializeField] private string propertyId;
         [SerializeField] private string wantDescription;
+        // Iteration 53 pilot (Flow-Filled Reserve): alternate satisfy path via a
+        // passively-filled reserve (IPassiveReserveTracker), independent of carried
+        // inventory. Authored at roughly the same order of magnitude as other
+        // thresholds in the system (a fresh Standing window is 3 days). Not CSV-wired.
+        // Verified in play mode that [SerializeReference] managed-reference objects do
+        // NOT run C# field initializers for fields absent from already-serialized data
+        // (unlike ordinary MonoBehaviour/ScriptableObject fields) — an existing asset
+        // like bog_keeper_drainage deserializes this to 0, not 3. EffectiveThreshold
+        // below treats a non-positive value as "unset" so the gate is still meaningful
+        // on old data, rather than silently satisfied by a reserve of 0.
+        [SerializeField] private float requiredReserveThreshold = 3f;
+
+        private float EffectiveThreshold => requiredReserveThreshold > 0f ? requiredReserveThreshold : 3f;
 
         public string PropertyId => propertyId;
         public string WantDescription => wantDescription;
 
-        public PropertyAvailableCondition(string propertyId, string wantDescription)
+        public PropertyAvailableCondition(string propertyId, string wantDescription,
+            float requiredReserveThreshold = 3f)
         {
             this.propertyId = propertyId;
             this.wantDescription = wantDescription;
+            this.requiredReserveThreshold = requiredReserveThreshold;
         }
 
         public bool IsSatisfied(DevelopableEntity entity)
         {
-            if (InventoryManager.Instance == null) return false;
-            foreach (var stack in InventoryManager.Instance.Stacks)
+            if (InventoryManager.Instance != null)
             {
-                if (stack.Item == null || stack.Item.PropertyIds == null) continue;
-                foreach (var pid in stack.Item.PropertyIds)
-                    if (pid == propertyId) return true;
+                foreach (var stack in InventoryManager.Instance.Stacks)
+                {
+                    if (stack.Item == null || stack.Item.PropertyIds == null) continue;
+                    foreach (var pid in stack.Item.PropertyIds)
+                        if (pid == propertyId) return true;
+                }
             }
+
+            // Carrying a match (checked above) stays the faster/immediate path when
+            // available — this reserve check is an additional "or", not a replacement.
+            if (entity is IPassiveReserveTracker tracker
+                && tracker.GetPassiveReserve(propertyId) >= EffectiveThreshold)
+                return true;
+
             return false;
         }
 

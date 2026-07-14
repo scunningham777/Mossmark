@@ -67,6 +67,44 @@ namespace Mossmark.World
         public static ITendednessSource GetSpot(string spotId) =>
             spotsById.TryGetValue(spotId, out var spot) ? spot : null;
 
+        // Iteration 50 pilot (Attention-Weighted Flow Bonus): one WorldSite spawns per
+        // selected archetype (SpawnWorldSite below) — this registers each by its
+        // archetype id so IsArchetypeDominant() can compare two specific archetypes'
+        // Sites without any positional coupling.
+        private static readonly Dictionary<string, WorldSite> sitesByArchetypeId = new();
+
+        public static WorldSite GetSite(string archetypeId) =>
+            sitesByArchetypeId.TryGetValue(archetypeId, out var site) ? site : null;
+
+        // The pilot pair (Bog Keeper/Fen Bog, Hedge Witch/Sacred Grove) — chosen because
+        // both already have a live passiveDriftSourceSpotId seam (Iteration 34), and
+        // because both spots kept their archetype id as their spotId when spot data was
+        // extracted in the relational-data migration (Iteration 38), so
+        // NpcStageDef.PassiveDriftSourceSpotId ("bog" / "sacred_grove") already doubles as
+        // "source archetype id" here with no new authored field.
+        private static readonly string[] FlowBonusArchetypeIds = { "bog", "sacred_grove" };
+
+        // Additive-only: whichever piloted archetype has strictly more attended days in its
+        // trailing 3-rest window (WorldSite.AttendedDaysInWindow) is dominant this rest; a
+        // tie (0-0 included) is no dominance for either side. Callers outside the pilot
+        // pair, or a pilot archetype whose Site wasn't spawned this session, always get
+        // false. If only one of the pair was selected this session, the other side reads as
+        // permanently 0 — dominance degrades gracefully to "has recent attention," which is
+        // a harmless, still additive-only outcome for the lone piloted archetype in play.
+        public static bool IsArchetypeDominant(string archetypeId)
+        {
+            int pairIndex = Array.IndexOf(FlowBonusArchetypeIds, archetypeId);
+            if (pairIndex < 0) return false;
+
+            var mySite = GetSite(archetypeId);
+            if (mySite == null) return false;
+
+            var otherSite = GetSite(FlowBonusArchetypeIds[1 - pairIndex]);
+            int myDays = mySite.AttendedDaysInWindow();
+            int otherDays = otherSite != null ? otherSite.AttendedDaysInWindow() : 0;
+            return myDays > otherDays;
+        }
+
         // Tracks every position placed so far; used by FindValidPosition to enforce
         // the minimum separation between all wilderness objects.
         private readonly List<Vector2> placedPositions = new();
@@ -78,6 +116,7 @@ namespace Mossmark.World
         private void Awake()
         {
             spotsById.Clear();
+            sitesByArchetypeId.Clear();
             DebugSeedMidProcessStart = debugSeedMidProcessStart;
 
             if (regionData == null || regionData.ArchetypePool == null || regionData.ArchetypePool.Length == 0)
@@ -193,6 +232,7 @@ namespace Mossmark.World
             go.AddComponent<SpriteRenderer>();
             var worldSite = go.AddComponent<WorldSite>();
             worldSite.Initialize(archetype.ArchetypeId, archetype.DisplayName, siteJitterRadius, siteColor);
+            sitesByArchetypeId[archetype.ArchetypeId] = worldSite;
 
             go.SetActive(true);
             return worldSite;
@@ -274,7 +314,8 @@ namespace Mossmark.World
                 2f, 3f,
                 archetype.BuildingRestoredFlavors,
                 archetype.BuildingColdFlavor,
-                archetype.BuildingMaintenanceCost);
+                archetype.BuildingMaintenanceCost,
+                archetype.ArchetypeId);
 
             go.AddComponent<AttendableZone>();
             go.AddComponent<EntityFeedback>();

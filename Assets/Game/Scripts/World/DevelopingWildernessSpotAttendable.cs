@@ -187,6 +187,7 @@ namespace Mossmark.World
         {
             exhaustion = Mathf.Clamp01(exhaustion + exhaustionPerTick);
             attendedThisDay = true;
+            site?.MarkAttendedToday();
             if (exhaustion >= 1f) overworkedToday = true;
 
             // Yield penalty only stacks once fully overworked — the threshold crossing

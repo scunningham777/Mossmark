@@ -33,7 +33,7 @@ namespace Mossmark.Development
     // maintenanceMaterial (archetype's CommonYields[0].Item) resets drift. Visits (fully
     // developed) also reset drift — for universal-spec NPCs with no material, the visit
     // IS the maintenance path.
-    public class NpcAttendable : DevelopableEntity, IAttendable, IMaintenanceConsumer
+    public class NpcAttendable : DevelopableEntity, IAttendable, IMaintenanceConsumer, IPassiveReserveTracker
     {
         [SerializeField] private string genericName = "Wanderer";
         [SerializeField, Min(1)] private int progressCost = 8;
@@ -68,6 +68,13 @@ namespace Mossmark.Development
         // Initialize() (ArrivalSpawner) — a freshly-arrived settler should never start
         // mid-specialized, only the hand-placed NPCs already in the world at session start.
         private bool spawnedAsArrival;
+
+        // Iteration 53 pilot (Flow-Filled Reserve): per-property passive reserve, filled by
+        // OnDayAdvanced while a property-gated stage's source archetype is dominant — an
+        // alternate satisfy path for PropertyAvailableCondition (IPassiveReserveTracker),
+        // additive alongside the existing manual-carry path, never a replacement for it.
+        private readonly Dictionary<string, float> passiveReserveByProperty = new();
+        private const float PassiveReserveIncrement = 1f;
 
         // Iteration 32: fired in OnDayAdvanced when passive progress is added but the
         // stage doesn't cross that rest — signals EntityFeedback to show the drift halo.
@@ -240,10 +247,34 @@ namespace Mossmark.Development
             if (!postSpecStageDefs.TryGetValue(nextStage.Id, out var stageDef)) return;
             if (string.IsNullOrEmpty(stageDef.PassiveDriftSourceSpotId)) return;
 
+            bool dominant = WorldGenerator.IsArchetypeDominant(stageDef.PassiveDriftSourceSpotId);
+
+            // Iteration 53 pilot (Flow-Filled Reserve): independent of the tendedness-
+            // banded progress below — a property-gated stage's reserve fills by a fixed
+            // amount each day its source archetype is dominant, never touching
+            // PendingProgress. This is the second, alternate route to satisfying
+            // PropertyAvailableCondition (see PropertyAvailableCondition.IsSatisfied).
+            var want = FindPropertyWant(nextStage);
+            if (want != null && dominant)
+            {
+                passiveReserveByProperty.TryGetValue(want.PropertyId, out var reserve);
+                passiveReserveByProperty[want.PropertyId] = reserve + PassiveReserveIncrement;
+            }
+
             var sourceSpot = WorldGenerator.GetSpot(stageDef.PassiveDriftSourceSpotId);
             if (sourceSpot == null) return;
 
             int passive = sourceSpot.Tendedness > 0.7f ? 2 : sourceSpot.Tendedness >= 0.3f ? 1 : 0;
+
+            // Iteration 50 pilot (Attention-Weighted Flow Bonus): additive-only on top of
+            // the unmodified tendedness baseline above — never reduces it. When this
+            // stage's source archetype currently has strictly more recent attention than
+            // its pilot counterpart (Bog vs. Sacred Grove), add +1 (0/1/2 -> 1/2/3).
+            // Falling out of dominance just stops earning the +1; it never claws back the
+            // baseline, so shifting focus reads as no longer earning a bonus, not as loss.
+            if (dominant)
+                passive += 1;
+
             if (passive <= 0) return;
 
             AddProgress(passive);
@@ -286,6 +317,10 @@ namespace Mossmark.Development
             GetDriftOverlayDescription(DisplayName, DriftThreshold, coldFlavor);
 
         public IReadOnlyList<string> GetAppliedUpgrades() => GetAppliedUpgradeNames();
+
+        // IPassiveReserveTracker (Iteration 53 pilot).
+        public float GetPassiveReserve(string propertyId) =>
+            passiveReserveByProperty.TryGetValue(propertyId, out var reserve) ? reserve : 0f;
 
         public string GetOverlayInteractionLine()
         {
@@ -555,26 +590,36 @@ namespace Mossmark.Development
 
         // Iteration 37: consume the highest-quantity carried item that has the given
         // property, so property-gated stage completion feels like a real contribution.
+        // Iteration 53: when nothing carried matches, the gate must have been satisfied
+        // via the passive reserve instead — reset it to 0 rather than consuming an item.
+        // Carrying stays the faster/immediate path whenever it's available (checked first).
         private void ConsumePropertyMatchedItem(string propertyId)
         {
-            if (InventoryManager.Instance == null) return;
-            ItemDefinition best = null;
-            int bestQty = 0;
-            foreach (var stack in InventoryManager.Instance.Stacks)
+            if (InventoryManager.Instance != null)
             {
-                if (stack.Item == null || stack.Item.PropertyIds == null) continue;
-                foreach (var pid in stack.Item.PropertyIds)
+                ItemDefinition best = null;
+                int bestQty = 0;
+                foreach (var stack in InventoryManager.Instance.Stacks)
                 {
-                    if (pid == propertyId && stack.Quantity > bestQty)
+                    if (stack.Item == null || stack.Item.PropertyIds == null) continue;
+                    foreach (var pid in stack.Item.PropertyIds)
                     {
-                        best = stack.Item;
-                        bestQty = stack.Quantity;
-                        break;
+                        if (pid == propertyId && stack.Quantity > bestQty)
+                        {
+                            best = stack.Item;
+                            bestQty = stack.Quantity;
+                            break;
+                        }
                     }
                 }
+                if (best != null)
+                {
+                    InventoryManager.Instance.RemoveItem(best, 1);
+                    return;
+                }
             }
-            if (best != null)
-                InventoryManager.Instance.RemoveItem(best, 1);
+
+            passiveReserveByProperty[propertyId] = 0f;
         }
 
         private static int PickWeightedGiftIndex(ItemYield[] gifts)

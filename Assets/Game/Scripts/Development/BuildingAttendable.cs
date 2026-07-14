@@ -3,6 +3,7 @@ using Mossmark.Attention;
 using Mossmark.Day;
 using Mossmark.Inventory;
 using Mossmark.Visuals;
+using Mossmark.World;
 using UnityEngine;
 
 namespace Mossmark.Development
@@ -60,11 +61,23 @@ namespace Mossmark.Development
         [SerializeField] private string coldFlavor;
         [SerializeField, Min(1)] private int maintenanceCostPerReset = 2;
 
+        // Iteration 52 (Dominance Halo): the archetype this building belongs to, set by
+        // WorldGenerator.SpawnBuilding() for every procedurally-spawned building. Reading
+        // WorldGenerator.IsArchetypeDominant() with this id is a no-op (always false) for
+        // every archetype outside Iteration 50's Bog/Sacred Grove pilot pair, so wiring it
+        // unconditionally here needs no per-building special-casing to stay pilot-scoped.
+        [SerializeField] private string dominanceArchetypeId = "";
+
         private DevelopmentTrack track;
         private SpriteRenderer spriteRenderer;
         private ItemDefinition maintenanceMaterial;
         private float currentTickInterval;
         private AttentionOutcomeKind lastOutcomeKind = AttentionOutcomeKind.Develop;
+
+        // Iteration 52: fires the current dominance state (not just changes) any time it's
+        // (re)checked, so a late subscriber (EntityFeedback.Start order vs. this one) always
+        // gets a correct initial read rather than waiting for the next rest.
+        public event System.Action<bool> OnDominanceChanged;
 
         // IMaintenanceConsumer
         public int DriftThreshold => 5;
@@ -96,7 +109,8 @@ namespace Mossmark.Development
 
         public void Initialize(string dilapidatedName, BuildingStageDef[] stages,
             string declaredSpecialization, float minTickInterval = 2f, float maxTickInterval = 3f,
-            string[] restoredFlavors = null, string coldFlavor = null, int maintenanceCostPerReset = 2)
+            string[] restoredFlavors = null, string coldFlavor = null, int maintenanceCostPerReset = 2,
+            string dominanceArchetypeId = "")
         {
             this.dilapidatedName = dilapidatedName;
             this.stages = stages;
@@ -106,6 +120,7 @@ namespace Mossmark.Development
             this.restoredFlavors = restoredFlavors ?? System.Array.Empty<string>();
             this.coldFlavor = coldFlavor;
             this.maintenanceCostPerReset = maintenanceCostPerReset;
+            this.dominanceArchetypeId = dominanceArchetypeId;
         }
 
         // Stage 0's displayName is the building's revived name; post-revival the name
@@ -166,6 +181,26 @@ namespace Mossmark.Development
             UpdateVisual();
             RollTickInterval();
         }
+
+        private void Start()
+        {
+            if (string.IsNullOrEmpty(dominanceArchetypeId)) return;
+            if (DayCycleManager.Instance != null)
+                DayCycleManager.Instance.DayAdvanced += RefreshDominanceHalo;
+            RefreshDominanceHalo();
+        }
+
+        private void OnDestroy()
+        {
+            if (DayCycleManager.Instance != null)
+                DayCycleManager.Instance.DayAdvanced -= RefreshDominanceHalo;
+        }
+
+        // Iteration 52: reads Iteration 50's dominance check directly, no new tracking.
+        // Fires every rest (and once at Start) rather than only on change, so a late
+        // subscriber's first read is always correct.
+        private void RefreshDominanceHalo() =>
+            OnDominanceChanged?.Invoke(WorldGenerator.IsArchetypeDominant(dominanceArchetypeId));
 
         public bool CanAttend()
         {

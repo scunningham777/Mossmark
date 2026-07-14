@@ -20,6 +20,13 @@ namespace Mossmark.Visuals
     //   3. Passive drift  — white halo child object appears when NpcAttendable reports
     //      passive drift has accrued since the last player visit (Iteration 31 pilot).
     //      Halo is hidden when the player makes productive progress on the same entity.
+    //
+    //   4. Dominance halo (Iteration 52) — a second, independent halo child reflecting
+    //      BuildingAttendable's archetype-dominance state (Iteration 50). Unlike the
+    //      passive-drift halo above, this one is never hidden by a productive attend —
+    //      it's a binary "is this archetype dominant right now" read, not a "something
+    //      moved without you" one-shot, so clearing it on attend would misread as
+    //      "dominance was spent" rather than "no longer dominant."
     public class EntityFeedback : MonoBehaviour
     {
         private const int ShapeTextureSize = 32;
@@ -41,6 +48,7 @@ namespace Mossmark.Visuals
         private bool suppressNextPulse;
 
         private GameObject haloGo;
+        private GameObject dominanceHaloGo;
 
         private void Awake()
         {
@@ -68,6 +76,10 @@ namespace Mossmark.Visuals
             var npc = GetComponent<NpcAttendable>();
             if (npc != null)
                 npc.OnPassiveDriftAccrued += ShowHalo;
+
+            var building = GetComponent<BuildingAttendable>();
+            if (building != null)
+                building.OnDominanceChanged += SetDominanceHalo;
         }
 
         private void OnDestroy()
@@ -90,6 +102,10 @@ namespace Mossmark.Visuals
             var npc = GetComponent<NpcAttendable>();
             if (npc != null)
                 npc.OnPassiveDriftAccrued -= ShowHalo;
+
+            var building = GetComponent<BuildingAttendable>();
+            if (building != null)
+                building.OnDominanceChanged -= SetDominanceHalo;
         }
 
         private void HandleProgressMade()
@@ -144,6 +160,26 @@ namespace Mossmark.Visuals
         private void HideHalo()
         {
             if (haloGo != null) haloGo.SetActive(false);
+        }
+
+        // Iteration 52: binary presence, not a meter — SetActive(active) directly, no
+        // fade, no scaling with anything. Visually identical to the passive-drift halo
+        // above (reused, not reinvented) but its own GameObject/lifecycle so a building's
+        // dominance state can never be cleared by HandleProgressMade's HideHalo() call.
+        private void SetDominanceHalo(bool active)
+        {
+            if (dominanceHaloGo == null)
+            {
+                dominanceHaloGo = new GameObject("DominanceHalo");
+                dominanceHaloGo.transform.SetParent(transform, false);
+                dominanceHaloGo.transform.localScale = Vector3.one * 1.9f;
+
+                var sr = dominanceHaloGo.AddComponent<SpriteRenderer>();
+                sr.sprite = CircleSpriteGenerator.CreateSprite(new Color(1f, 1f, 1f, 0.35f), ShapeTextureSize);
+                sr.sortingOrder = spriteRenderer != null ? spriteRenderer.sortingOrder - 1 : -1;
+            }
+
+            dominanceHaloGo.SetActive(active);
         }
 
         // Called externally (e.g. WorkshopUI on successful conversion) to fire the
