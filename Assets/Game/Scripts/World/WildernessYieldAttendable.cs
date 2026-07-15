@@ -28,9 +28,16 @@ namespace Mossmark.World
     // reads it via WorldGenerator.GetSpot()). DevelopingWildernessSpotAttendable (which does
     // NOT extend this class — it has its own exhaustion/Standing progress model) implements
     // this too with a synthetic value, so the registry works uniformly for both spot kinds.
+    //
+    // Iteration 54 (Differentiated Member-Spot Seam pilot): AttendedToday exposes the
+    // same per-day "was this spot worked today" flag both spot kinds already track
+    // internally (attendedThisDay) — the seam a downstream station reads to decide
+    // whether its bias should temporarily widen. Both implementers already had this
+    // state privately; this only makes it visible through the shared registry.
     public interface ITendednessSource
     {
         float Tendedness { get; }
+        bool AttendedToday { get; }
     }
 
     public abstract class WildernessYieldAttendable : MonoBehaviour, IAttendable, ITendednessSource
@@ -57,6 +64,7 @@ namespace Mossmark.World
         // (NpcAttendable's Bog Keeper pilot) — the same continuous value the
         // overlay/yield logic already uses internally.
         public float Tendedness => tendedness;
+        public bool AttendedToday => attendedThisDay;
 
         // Knowledge yield entries — set via Initialize(), not serialized on the base class
         // (each subclass's Initialize path copies from its definition source).

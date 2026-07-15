@@ -30,5 +30,14 @@ namespace Mossmark.Development
         // replaces the building's display name once the station opens.
         public string stationName;
         public string[] biasPropertyIds = System.Array.Empty<string>();
+
+        // Differentiated Member-Spot Seam (Iteration 54, Clay Pit -> Fen Shrine pilot):
+        // while the wilderness spot named by temporaryBiasSourceSpotId was attended
+        // today (WorldGenerator.GetSpot(id).AttendedToday), temporaryBiasProperties
+        // are unioned into this station's effective BiasPropertyIds for the rest of
+        // the day — additive only, never removes anything from biasPropertyIds above.
+        // Empty by default (no effect) on every stage but the one pilot instance.
+        public string temporaryBiasSourceSpotId;
+        public string[] temporaryBiasProperties = System.Array.Empty<string>();
     }
 }

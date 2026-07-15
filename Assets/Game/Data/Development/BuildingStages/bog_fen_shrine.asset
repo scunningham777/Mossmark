@@ -28,6 +28,11 @@ MonoBehaviour:
   - binds_fast
   - draws_the_eye
   - keeps_well
+  temporaryBiasSourceSpotId: clay_pit
+  temporaryBiasProperties:
+  - heavy_true
+  - holds_the_cold
+  - turns_water
   references:
     version: 2
     RefIds: []

@@ -105,6 +105,12 @@ namespace Mossmark.World
             CurrentStageIndex >= 0 ? 0.85f :
             0.5f;
 
+        // Iteration 54 (Differentiated Member-Spot Seam pilot): exposes the same
+        // attendedThisDay flag this class already tracks internally, so a downstream
+        // consumer (BuildingAttendable's temporary station-bias seam) can read whether
+        // this specific spot — not its Site, not any member — was worked today.
+        public bool AttendedToday => attendedThisDay;
+
         public override string DisplayName => displayName;
         protected override DevelopmentTrack Track => track;
 

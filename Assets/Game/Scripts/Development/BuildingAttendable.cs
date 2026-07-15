@@ -103,8 +103,35 @@ namespace Mossmark.Development
         private bool IsStationCapable => AppliedStationStage != null;
 
         public string StationDisplayName => DisplayName;
-        public IReadOnlyList<string> BiasPropertyIds =>
-            IsStationCapable ? AppliedStationStage.biasPropertyIds : System.Array.Empty<string>();
+
+        // Iteration 54 (Differentiated Member-Spot Seam pilot): the applied station
+        // stage's authored biasPropertyIds, plus temporaryBiasProperties whenever its
+        // named source spot (Clay Pit, for the one pilot instance) was attended today.
+        // Read live each time WorkshopUI.Open() captures it, so the addition is only
+        // present on days the source spot was actually worked — additive on top of the
+        // permanent bias, never a replacement for it, same as every prior flow-bonus
+        // decision (50/52/53) staying additive-only.
+        public IReadOnlyList<string> BiasPropertyIds
+        {
+            get
+            {
+                if (!IsStationCapable) return System.Array.Empty<string>();
+                var stage = AppliedStationStage;
+                if (string.IsNullOrEmpty(stage.temporaryBiasSourceSpotId)
+                    || stage.temporaryBiasProperties == null || stage.temporaryBiasProperties.Length == 0)
+                    return stage.biasPropertyIds;
+
+                var sourceSpot = WorldGenerator.GetSpot(stage.temporaryBiasSourceSpotId);
+                if (sourceSpot == null || !sourceSpot.AttendedToday)
+                    return stage.biasPropertyIds;
+
+                var combined = new List<string>(stage.biasPropertyIds);
+                foreach (var pid in stage.temporaryBiasProperties)
+                    if (!combined.Contains(pid)) combined.Add(pid);
+                return combined;
+            }
+        }
+
         public GameObject StationObject => gameObject;
 
         public void Initialize(string dilapidatedName, BuildingStageDef[] stages,
