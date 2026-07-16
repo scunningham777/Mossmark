@@ -19,17 +19,55 @@ namespace Mossmark.Prototype3
         [SerializeField] private string baseDescription = "A dyer, working a cold steeping pit at the fen's edge.";
         [SerializeField] private string[] seededPropertyIds = { "draws_the_eye" };
         [SerializeField] private string playerKnowerId = "p3_player";
-        [SerializeField] private string teachablePropertyId = "turns_water";
-        [SerializeField] private string teachLine = "They listen, still for a moment. Something settles into place.";
 
-        [Header("Taught-Knowledge Branch (Iteration 3.4)")]
-        [SerializeField] private string stageId = "clay_lined_pit";
-        [SerializeField] private string stageDisplayName = "Clay-Lined Steeping Pit";
-        [SerializeField, Min(1)] private int stageProgressCost = 2;
-        [SerializeField] private string stageNeedsLine = "The pit will not hold water; they seem resigned to it.";
-        [SerializeField] private string developedDescription = "The steeping pit sits dark and full. Dye takes slowly now, and deep.";
-        [SerializeField] private string developedInteractionLine = "Hold E to watch the colors take";
-        [SerializeField] private Color developedTint = new Color(0.9f, 0.42f, 0.38f);
+        // Iteration 3.4/3.8: a short authored list rather than one hardcoded pairing.
+        // Each want is independently gated — KnownPropertyCondition doesn't order them,
+        // so if more than one becomes satisfied at once, DevelopableEntity's own
+        // available-stage draw (used everywhere else in the game) picks between them.
+        // That's a deliberate reuse, not an oversight: this entity earns no special
+        // sequencing the rest of the game doesn't already have.
+        [SerializeField] private TeachableWant[] teachableWants =
+        {
+            new TeachableWant
+            {
+                propertyId = "turns_water",
+                teachLine = "They listen, still for a moment. Something settles into place.",
+                stageId = "clay_lined_pit",
+                stageDisplayName = "Clay-Lined Steeping Pit",
+                stageProgressCost = 2,
+                stageNeedsLine = "The pit will not hold water; they seem resigned to it.",
+                developedDescription = "The steeping pit sits dark and full. Dye takes slowly now, and deep.",
+                developedInteractionLine = "Hold E to watch the colors take",
+                developedTint = new Color(0.9f, 0.42f, 0.38f),
+            },
+            new TeachableWant
+            {
+                propertyId = "binds_fast",
+                teachLine = "They go still, turning the thought over — then nod, once, like something's decided.",
+                stageId = "bound_colors",
+                stageDisplayName = "Colors That Hold",
+                stageProgressCost = 2,
+                stageNeedsLine = "The color takes, but washing lifts it; something's missing to bind it fast.",
+                developedDescription = "The steeping pit sits dark and full, and the color holds now — washing will not lift it.",
+                developedInteractionLine = "Hold E to watch the colors hold",
+                developedTint = new Color(0.55f, 0.3f, 0.62f),
+            },
+        };
+
+        [System.Serializable]
+        private class TeachableWant
+        {
+            public string propertyId;
+            public string teachLine;
+            public string stageId;
+            public string stageDisplayName;
+            [Min(1)] public int stageProgressCost = 2;
+            public string stageNeedsLine;
+            public string developedDescription;
+            public string developedInteractionLine;
+            public Color developedTint = Color.white;
+        }
+
         [SerializeField] private Color untaughtTint = new Color(0.55f, 0.55f, 0.55f);
         [SerializeField] private Color knowingTint = new Color(0.78f, 0.5f, 0.38f);
         [SerializeField, Min(0.1f)] private float attendDuration = 2f;
@@ -54,7 +92,7 @@ namespace Mossmark.Prototype3
         // Teaching resolves as a one-shot, not a hold: AttentionManager completes a
         // zero-duration attention on the same frame the hold starts, which is what makes
         // the moment read as deliberate speech rather than sustained work.
-        public float AttentionDuration => TeachPending ? 0f : attendDuration;
+        public float AttentionDuration => GetPendingWant() != null ? 0f : attendDuration;
 
         // Iteration 3.5: every completed attention here — visit, teach, or development
         // tick — draws from the day. Attention is the day's clock (P2's premise); a
@@ -66,10 +104,37 @@ namespace Mossmark.Prototype3
         // CanMakeProgress turning false); visits and teaching stay one-shot.
         public bool ContinueAttending => lastAttentionWasDevelopment && CanMakeProgress();
 
-        // The player knows the teachable property (from any source) and this entity
-        // doesn't yet. Knowledge is the gate — nothing is carried, delivered, or consumed.
-        public bool TeachPending =>
-            WorldContext.IsPropertyKnown(playerKnowerId, teachablePropertyId) && !Knows(teachablePropertyId);
+        // True if any want has the player knowing a property this entity doesn't yet.
+        // Knowledge is the gate — nothing is carried, delivered, or consumed.
+        public bool TeachPending => GetPendingWant() != null;
+
+        // First pending want in authored order — deterministic, same "earliest in the
+        // list wins" rule GetNextStage() already uses for the development track.
+        private TeachableWant GetPendingWant()
+        {
+            foreach (var want in teachableWants)
+            {
+                if (WorldContext.IsPropertyKnown(playerKnowerId, want.propertyId) && !Knows(want.propertyId))
+                    return want;
+            }
+            return null;
+        }
+
+        private TeachableWant FindWant(string stageId)
+        {
+            foreach (var want in teachableWants)
+            {
+                if (want.stageId == stageId) return want;
+            }
+            return null;
+        }
+
+        // The most recently applied stage's want, if any — drives tint/description once
+        // developed. "Most recent" rather than "first in list" because TryApplyStage()
+        // can draw either stage once both are simultaneously available (see the comment
+        // on teachableWants above).
+        private TeachableWant CurrentDevelopedWant =>
+            CurrentStageIndex >= 0 && LastAppliedStage != null ? FindWant(LastAppliedStage.Id) : null;
 
         protected virtual void Awake()
         {
@@ -92,11 +157,19 @@ namespace Mossmark.Prototype3
             RefreshTint();
         }
 
-        // The one authored branch this prototype exists to test: a single stage that
-        // becomes reachable only once the entity knows the taught property.
-        protected virtual DevelopmentTrack BuildTrack() => new DevelopmentTrack(
-            new DevelopmentStage(stageId, stageDisplayName, stageProgressCost,
-                new KnownPropertyCondition(teachablePropertyId, stageNeedsLine)));
+        // The authored branch(es) this prototype exists to test: one stage per want,
+        // each reachable only once the entity knows that want's taught property.
+        protected virtual DevelopmentTrack BuildTrack()
+        {
+            var stages = new DevelopmentStage[teachableWants.Length];
+            for (int i = 0; i < teachableWants.Length; i++)
+            {
+                var want = teachableWants[i];
+                stages[i] = new DevelopmentStage(want.stageId, want.stageDisplayName, want.stageProgressCost,
+                    new KnownPropertyCondition(want.propertyId, want.stageNeedsLine));
+            }
+            return new DevelopmentTrack(stages);
+        }
 
         // Runs before EntityFeedback's stage-cross handler (Awake subscription order),
         // so the circle swap picks up the post-stage tint.
@@ -125,9 +198,10 @@ namespace Mossmark.Prototype3
             var spriteRenderer = GetComponent<SpriteRenderer>();
             if (spriteRenderer == null) return;
 
-            if (CurrentStageIndex >= 0)
+            var developedWant = CurrentDevelopedWant;
+            if (developedWant != null)
             {
-                spriteRenderer.color = developedTint;
+                spriteRenderer.color = developedWant.developedTint;
             }
             else
             {
@@ -141,7 +215,8 @@ namespace Mossmark.Prototype3
 
         public virtual string GetOverlayDescription()
         {
-            var lead = CurrentStageIndex >= 0 ? developedDescription : baseDescription;
+            var developedWant = CurrentDevelopedWant;
+            var lead = developedWant != null ? developedWant.developedDescription : baseDescription;
 
             var description = lead;
             var known = GetKnownProperties();
@@ -151,11 +226,12 @@ namespace Mossmark.Prototype3
             }
 
             // The resolver's "needs" surface, kept descriptive rather than instructive:
-            // the blockage is stated, never the remedy.
+            // the blockage is stated, never the remedy. Reuses the stage's own condition
+            // text rather than re-deriving it from the want list.
             var nextStage = GetNextStage();
             if (nextStage != null && !nextStage.AreDependenciesSatisfied(this))
             {
-                description = $"{description} {stageNeedsLine}";
+                description = $"{description} {nextStage.GetUnsatisfiedNeedsDescription(this)}";
             }
 
             return description;
@@ -163,14 +239,16 @@ namespace Mossmark.Prototype3
 
         public virtual string GetOverlayInteractionLine()
         {
-            if (TeachPending)
+            var pendingWant = GetPendingWant();
+            if (pendingWant != null)
             {
-                var property = PropertyRegistry.GetById(teachablePropertyId);
-                var phrase = property != null ? property.Phrase : teachablePropertyId;
+                var property = PropertyRegistry.GetById(pendingWant.propertyId);
+                var phrase = property != null ? property.Phrase : pendingWant.propertyId;
                 return $"Press E to speak of what {phrase}";
             }
 
-            if (CurrentStageIndex >= 0) return developedInteractionLine;
+            var developedWant = CurrentDevelopedWant;
+            if (developedWant != null) return developedWant.developedInteractionLine;
             if (CanMakeProgress()) return "Hold E to work alongside them";
 
             return "Hold E to spend a while with them";
@@ -200,14 +278,17 @@ namespace Mossmark.Prototype3
 
         private void Teach()
         {
-            PropertyKnowledge.MarkKnown(entityId, teachablePropertyId);
+            var want = GetPendingWant();
+            if (want == null) return;
+
+            PropertyKnowledge.MarkKnown(entityId, want.propertyId);
             RefreshTint();
 
             var feedback = GetComponent<Visuals.EntityFeedback>();
             if (feedback != null) feedback.TriggerPop();
 
-            Visuals.NotificationManager.Post(teachLine);
-            Debug.Log($"{displayName}: taught '{teachablePropertyId}'.", this);
+            Visuals.NotificationManager.Post(want.teachLine);
+            Debug.Log($"{displayName}: taught '{want.propertyId}'.", this);
         }
 
         public void OnAttentionCancelled() { }

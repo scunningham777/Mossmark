@@ -65,23 +65,28 @@ namespace Mossmark.EditorTools
             InvokeManagerMethod("HandleHoldReleased");
         }
 
-        [MenuItem("Mossmark/Prototype3/Teleport Player To Pickup")]
-        private static void TeleportToPickup()
+        [MenuItem("Mossmark/Prototype3/Teleport Player To Clay")]
+        private static void TeleportToClay() => TeleportToNamed("Lump of Clay");
+
+        [MenuItem("Mossmark/Prototype3/Teleport Player To Bark")]
+        private static void TeleportToBark() => TeleportToNamed("Bark Strips");
+
+        [MenuItem("Mossmark/Prototype3/Teleport Player To Reeds")]
+        private static void TeleportToReeds() => TeleportToNamed("Reeds");
+
+        [MenuItem("Mossmark/Prototype3/Teleport Player To Bench")]
+        private static void TeleportToBench() => TeleportToNamed("Scouring Bench");
+
+        private static void TeleportToNamed(string gameObjectName)
         {
-            var player = GameObject.FindWithTag("Player");
-            var pickup = Object.FindAnyObjectByType<PropertyPickupAttendable>();
-            if (player == null || pickup == null)
+            var target = GameObject.Find(gameObjectName);
+            if (target == null)
             {
-                Debug.Log("P3Debug: missing Player or PropertyPickupAttendable.");
+                Debug.Log($"P3Debug: no GameObject named '{gameObjectName}'.");
                 return;
             }
 
-            var destination = (Vector2)pickup.transform.position + new Vector2(0.6f, 0f);
-            var rb = player.GetComponent<Rigidbody2D>();
-            if (rb != null) rb.position = destination;
-            else player.transform.position = destination;
-            Physics2D.SyncTransforms();
-            Debug.Log($"P3Debug: teleported player next to '{pickup.name}'.");
+            TeleportTo(target.transform);
         }
 
         [MenuItem("Mossmark/Prototype3/Teleport Player To Weir")]
@@ -130,6 +135,27 @@ namespace Mossmark.EditorTools
             else player.transform.position = destination;
             Physics2D.SyncTransforms();
             Debug.Log($"P3Debug: teleported player next to '{target.name}'.");
+        }
+
+        [MenuItem("Mossmark/Prototype3/Log Taken Ledger")]
+        private static void LogTakenLedger()
+        {
+            if (TakenLedger.All.Count == 0)
+            {
+                Debug.Log("P3Debug: taken ledger is empty.");
+                return;
+            }
+
+            foreach (var entry in TakenLedger.All)
+            {
+                var parts = new System.Collections.Generic.List<string>();
+                foreach (var propertyId in entry.PropertyIds)
+                {
+                    parts.Add($"{propertyId}={(WorldContext.IsPropertyKnown(entry.ItemId, propertyId) ? "known" : "unknown")}");
+                }
+
+                Debug.Log($"P3Debug: {entry.DisplayName} ({entry.ItemId}) - {string.Join(", ", parts)}");
+            }
         }
 
         [MenuItem("Mossmark/Prototype3/Log Entity Knowledge")]

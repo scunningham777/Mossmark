@@ -81,7 +81,7 @@ All scripts live under the `Mossmark` root namespace, organized by system. This 
 | `Mossmark.Inventory` | Inventory manager, item database, item pickups, settlement chest |
 | `Mossmark.Development` | Generic dependency/response resolver and developable entities (buildings, NPCs, POIs, town) — generalizes P1's `Entity`/`UpgradePool`/`TownEntity` |
 | `Mossmark.World` | Region and town generation, place archetypes, and wilderness-spot attendables (e.g. `DevelopingWildernessSpotAttendable`, `PoiAttendable`) |
-| `Mossmark.Prototype3` | Knowledge-spine pilot scripts scoped to `Prototype3.unity` (`KnowingEntityAttendable`, `PropertyPickupAttendable`, `KnownPropertyCondition`) — new components only, per that doc's Reuse Discipline; nothing in Greybox references this namespace |
+| `Mossmark.Prototype3` | Knowledge-spine pilot scripts scoped to `Prototype3.unity` (`KnowingEntityAttendable`, `PropertyPickupAttendable`, `KnownPropertyCondition`, `TakenLedger`, `WorkingSurfaceAttendable`) — new components only, per that doc's Reuse Discipline; nothing in Greybox references this namespace |
 
 P1's `Mossmark.Quests` and `Mossmark.Combat` are **not** part of P2 — collection quests and discrete combat encounters were dropped per IDEAS.md's "Prototype 2" section. Add namespaces here as new systems land; keep this table in sync with what's actually implemented.
 
@@ -106,7 +106,7 @@ Default to no comments. Only add a comment when the *why* is non-obvious (a hidd
 ## Active Scenes
 
 - **`Assets/Game/Scenes/Greybox.unity`** — the Prototype 2 scene; the site/exhaustion/Standing thread lives here and still plays
-- **`Assets/Game/Scenes/Prototype3.unity`** — the Knowledge Spine pilot scene (see PROTOTYPE3_KNOWLEDGE_SPINE.md); hand-placed, no `WorldGenerator`. Day cycle wired in as of Iteration 3.5 (`maxDaylight: 4` — deliberately tight; bedroll + fade + HUD reused from Greybox). Reuses shared scripts unmodified; its own scripts live in `Assets/Game/Scripts/Prototype3/`. Editor test drivers: `Assets/Editor/Prototype3Debug.cs` (`Mossmark/Prototype3/*` menu items — teleports, begin/release attend via reflection, log entity knowledge, log daylight)
+- **`Assets/Game/Scenes/Prototype3.unity`** — the Knowledge Spine pilot scene (see PROTOTYPE3_KNOWLEDGE_SPINE.md); hand-placed, no `WorldGenerator`. Day cycle wired in as of Iteration 3.5 (`maxDaylight: 4` — deliberately tight; bedroll + fade + HUD reused from Greybox). The Discovery Thread (Iterations 3.6–3.8) added a Taken Ledger, a non-modal working surface, and a second teachable want on the Dyer. Reuses shared scripts unmodified; its own scripts live in `Assets/Game/Scripts/Prototype3/`. Editor test drivers: `Assets/Editor/Prototype3Debug.cs` (`Mossmark/Prototype3/*` menu items — teleports, begin/release attend via reflection, log entity/taken-ledger knowledge, log daylight)
 - **`Assets/Settings/Scenes/URP2DSceneTemplate.unity`** — Unity's URP 2D scene template (used when creating new scenes via the Editor); not part of gameplay
 
 ---
@@ -176,6 +176,10 @@ Default to no comments. Only add a comment when the *why* is non-obvious (a hidd
 | P3 Teach Interaction (Iteration 3.3) | Complete | `PropertyPickupAttendable`, `KnowingEntityAttendable.TeachPending` (zero-duration one-shot teach) |
 | P3 Behavior Branch on Taught Knowledge (Iteration 3.4) | Complete | `KnownPropertyCondition`, `KnowingEntityAttendable.BuildTrack()` (Clay-Lined Steeping Pit stage) |
 | P3 Teaching Under Real Scarcity (Iteration 3.5) | Complete | `DayCycleManager` @ maxDaylight 4 in `Prototype3.unity`, Fish Weir (`LandmarkAttendable`, cost 3), `RequiresDaylight => true` on P3 attendables, Bedroll/fade/HUD |
+| P3 Taken Ledger (Iteration 3.6) | Complete | `TakenLedger` (static, insertion-ordered), `PropertyPickupAttendable.propertyIds[]`/`.autoRevealOnTake`, Bark Strips + Reeds pickups |
+| P3 Discovery at the Working Surface (Iteration 3.7) | Complete | `WorkingSurfaceAttendable` (non-modal, bias-filtered, one reveal per hold), Scouring Bench |
+| P3 Teaching What You Worked Out (Iteration 3.8) | Complete | `KnowingEntityAttendable.TeachableWant[]` (generalized from single-property pairing), second Dyer want (`binds_fast` / "Colors That Hold") |
+| P3 Seeing What You Carry (Iteration 3.9) | Deferred | Not built — per its own stated condition, build only once 3.7/3.8 playtesting raises the "what have I taken?" question |
 
 Full iteration plan is in [FEATURES.md](FEATURES.md). Update this table as each iteration lands.
 
