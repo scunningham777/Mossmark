@@ -71,6 +71,7 @@ namespace Mossmark.Prototype3
         [SerializeField] private Color untaughtTint = new Color(0.55f, 0.55f, 0.55f);
         [SerializeField] private Color knowingTint = new Color(0.78f, 0.5f, 0.38f);
         [SerializeField, Min(0.1f)] private float attendDuration = 2f;
+        [SerializeField, Min(0.1f)] private float teachDuration = 0.6f;
         [SerializeField] private string[] visitFlavors =
         {
             "They work in silence a while, hands stained to the wrist.",
@@ -89,10 +90,13 @@ namespace Mossmark.Prototype3
         // read-after-complete latch rule as everywhere else.
         private bool lastAttentionWasDevelopment;
 
-        // Teaching resolves as a one-shot, not a hold: AttentionManager completes a
-        // zero-duration attention on the same frame the hold starts, which is what makes
-        // the moment read as deliberate speech rather than sustained work.
-        public float AttentionDuration => GetPendingWant() != null ? 0f : attendDuration;
+        // Teaching still resolves as a one-shot (ContinueAttending stays false below),
+        // but now runs the same short hold-to-complete timer as every other attendable
+        // rather than firing on the press frame — a zero-duration teach read as
+        // instantaneous next to the rest of the game's tending, which broke the "tried,
+        // not chosen" feel of sustained attention. teachDuration is deliberately shorter
+        // than attendDuration: brief, but still felt.
+        public float AttentionDuration => GetPendingWant() != null ? teachDuration : attendDuration;
 
         // Iteration 3.5: every completed attention here — visit, teach, or development
         // tick — draws from the day. Attention is the day's clock (P2's premise); a
@@ -244,7 +248,7 @@ namespace Mossmark.Prototype3
             {
                 var property = PropertyRegistry.GetById(pendingWant.propertyId);
                 var phrase = property != null ? property.Phrase : pendingWant.propertyId;
-                return $"Press E to speak of what {phrase}";
+                return $"Hold E to speak of what {phrase}";
             }
 
             var developedWant = CurrentDevelopedWant;
