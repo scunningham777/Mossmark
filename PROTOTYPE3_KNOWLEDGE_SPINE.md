@@ -84,8 +84,45 @@ One authored branch: once the entity knows the taught property in addition to wh
 
 ---
 
+### Iteration 3.5 — Teaching Under Real Scarcity
+
+3.1-3.4 deliberately excluded the pacing thread (exhaustion/Standing/dominance/reserve, Iterations 43-53) as noise — correctly. But daylight itself isn't part of that thread; it's Prototype 2's actual premise, and 3.1-3.4 left it out too, which means 3.4's result can't yet distinguish "teaching feels meaningful" from "teaching was the only button available, so of course I pressed it." This iteration adds back the one piece of scarcity that was never optional, and nothing else.
+
+Reuse `DayCycleManager`'s daylight pool as-is — already built, already proven in Greybox, no new mechanic. Give the player one more legitimate daylight cost that competes directly with teaching: either a second entity that also wants attention, or a second, different need at the same 3.2 entity. The specific competing use matters less than that it's real — something the player would actually want, not a decoy.
+
+**Explicitly out of scope:** any pacing mechanism beyond the daylight pool itself (no exhaustion, no Standing, no dominance, no reserve); a third entity; any change to how teaching itself works from 3.3/3.4.
+
+**Success criterion:** re-run 3.4's exact end-to-end test, but with daylight now tight enough that teaching and the competing use can't both happen the same day. Does choosing to teach — knowing it costs the alternative — feel different from teaching because there was nothing else to spend attention on? This is the test 3.4 couldn't run on its own: not whether the effect is legible, but whether it's worth choosing.
+
+---
+
+## Build Notes (7-14-26, updated 7-15-26)
+
+All five iterations (3.1–3.5) are built and verified in `Assets/Game/Scenes/Prototype3.unity`, with the Greybox regression gate run clean (0 errors, 0 warnings) after each one. New code is confined to `Assets/Game/Scripts/Prototype3/` (`Mossmark.Prototype3`) plus an Editor-only test driver — no shared script was modified, no Greybox asset touched.
+
+**The content pairing:** The Dyer works a steeping pit that won't hold water. She spawns knowing `draws_the_eye` (warm tint + "They speak of what draws the eye" — the 3.2 "this person has history" read). A Lump of Clay sits across the ground plane; taking it (hold E, no inventory, no quantity) auto-reveals `turns_water`. With that known, attending the Dyer offers "Press E to speak of what turns water" — a zero-duration one-shot, distinct from every hold in the game. Once taught, the Clay-Lined Steeping Pit stage (gated on `KnownPropertyCondition`) becomes reachable: two held ticks and it applies — stage pop, triangle→circle, deepened tint, description flips to "The steeping pit sits dark and full."
+
+**The 3.5 scarcity layer:** `DayCycleManager` is wired in as-is at **maxDaylight 4**, with the Day Cycle HUD, transition fade, and a Bedroll (rest works at zero daylight). Every completed attention in the scene now costs 1 daylight — visits, teaching, development ticks, and taking the clay all draw from the same pool. The competing use is a **Fish Weir** (`LandmarkAttendable`, pure reuse, progress cost 3 — three separate holds): food for the fen, a completion the player would actually want. The arithmetic makes the choice real: weir = 3, teach arc = 3 (+1 for the clay), day = 4 — one or the other, never both. Verified in play: weir + clay spent day 1 to 0/4 at Dusk, the teach *refused to start* at zero daylight (the existing "too late to start that now" gate, unmodified), and day 2 ran teach → develop with 1 daylight to spare.
+
+**Implementation choices worth knowing:**
+- Entity knowledge is stored in `PropertyKnowledge` keyed by the entity's own id (`p3_dyer`), and the player's teachable knowledge under `p3_player` — the store is already a flat (subject, property) map, so aiming it at knowers needed zero new store code. Caveat: the backtick `RevealAll()` debug would flood entity knowledge too; that debug hook isn't wired in this scene.
+- Teaching is gated on *knowledge*, not possession — the clay is not consumed, and nothing is delivered. `TeachPending` = player knows it, entity doesn't.
+- The teach one-shot works by returning `AttentionDuration = 0` while `TeachPending` — `AttentionManager` completes a zero-duration attention on the press frame, unmodified.
+- The pre-teach blockage surfaces descriptively in the overlay ("The pit will not hold water; they seem resigned to it.") — the blockage stated, never the remedy.
+- Play-mode verification used `Mossmark/Prototype3/*` menu items (teleport + reflection-invoked hold start) since MCP can't press keys; the full cold-load → find → teach → change sequence ran end to end in-engine, and 3.5's two-day weir-vs-teach sequence likewise.
+- 3.5 daylight rule: `KnowingEntityAttendable.RequiresDaylight` and `PropertyPickupAttendable.RequiresDaylight` are constant `true` (every completed attention there is productive, so the Greybox `LastAttentionMadeProgress` latch degenerates to `true` — and a constant is safe under both of `AttentionManager`'s reads, the pre-start gate and the post-complete spend). The Fish Weir uses `LandmarkAttendable`'s own latch unchanged. Teaching itself was not touched, per 3.5's out-of-scope line.
+- `maxDaylight: 4` on the scene's Day Cycle Manager is the tuning knob if the squeeze feels wrong in play — 5 gives one spare tick of slack, 3 forces the teach arc itself across two days.
+
+**Still open — the actual go/no-go:** whether the 3.4 moment *feels* meaningful, and whether 3.5's choice — teaching at the cost of the weir (or the reverse) — feels like *choosing* rather than sequencing, are judgments only playing can give. Timed path, day one of two: spawn → weir is 3 holds, or clay (~5s walk, 1 hold) → Dyer (~10s) → press E → hold ~4s; whichever you didn't pick waits for tomorrow.
+
+---
+
 ## After this
 
-If 3.4 lands: the next honest tests are a second taught property (does compounding knowledge stay legible or turn muddy) and seeding partial knowledge across more than one entity at once — the direct test of "settlements already know some things" from the IDEAS.md entry. Neither is scoped here. Decide after playing 3.4, not before — same rule that's held for every iteration so far.
+If 3.5 lands: property discovery (Iteration 35/36) is a natural, low-risk next thread to pull in — it already populates the same `PropertyKnowledge` state teaching does, just via a different route (Workshop failure-reveal instead of being taught). Discover a property at a Workshop, then go teach it somewhere — same currency, second faucet, not a merge risk.
+
+Delivery-driven upgrades (buildings/NPCs progressing via carried items) are a different matter — the actual rival mechanic to teaching, not a candidate for folding in yet. Putting both in the same scene before either is separately proven risks the player defaulting to whichever is more familiar (probably delivery) and quietly starving the other of a fair test. Keep them apart until teaching has survived 3.5 on its own merits; only then is it worth deliberately testing whether the two coexist as real alternatives or whether one should replace the other.
+
+Beyond that: a second taught property (does compounding knowledge stay legible or turn muddy) and seeding partial knowledge across more than one entity at once — the direct test of "settlements already know some things" from the IDEAS.md entry. None of this is scoped yet. Decide after playing 3.5, not before — same rule that's held for every iteration so far.
 
 ---
