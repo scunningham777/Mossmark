@@ -94,6 +94,58 @@ Reuse `DayCycleManager`'s daylight pool as-is — already built, already proven 
 
 **Success criterion:** re-run 3.4's exact end-to-end test, but with daylight now tight enough that teaching and the competing use can't both happen the same day. Does choosing to teach — knowing it costs the alternative — feel different from teaching because there was nothing else to spend attention on? This is the test 3.4 couldn't run on its own: not whether the effect is legible, but whether it's worth choosing.
 
+**Verdict (played 7-15-26): the choice reads.** Teaching at the cost of the weir felt like choosing, not sequencing. That's the green light for the discovery thread below.
+
+---
+
+## The Discovery Thread (planned 7-15-26)
+
+With 3.5 landed, knowledge has a *spend* (teaching, under scarcity) but only one trivial *source* (auto-reveal on pickup). This thread adds the second faucet — property discovery, the already-proven Iteration 35/36 system — so the loop becomes: take things whose nature you don't yet know → work them out → carry that knowledge to someone it changes. Same currency, second faucet.
+
+**Decision, 7-15-26 — what the working surface works over:** P2's Workshop drew its options from the pack (`InventoryManager.Stacks`). P3 has no pack, deliberately. The working surface instead works over **the full list of everything the player has taken** — identities, not quantities. This is not a loophole; it's the 7-14-26 frame stated plainly: what you carry forward from a taken thing is *acquaintance with it*, not a stack of it. A UI for viewing that list outside the workshop is deliberately a later step (3.9).
+
+**Why not reuse `WorkshopUI` directly:** it's coupled to `InventoryManager`/`ConversionDef` (quantity-and-consumption semantics this scene excludes), and a *new* modal UI can't be added cleanly either — the modal input guards (`IsOpen` checks) live hardcoded in shared `PlayerController`/`AttentionManager`, and adding a P3 guard there would break the hard rule. So the surface is **non-modal, attend-driven** — no input capture, no shared-script edits, and truer to Tried, Not Chosen anyway: the player chooses what to take and where to work, never which outcome to have. If the loss of P2's combination-picking texture is felt in play, a selection surface becomes a later iteration with that known cost attached.
+
+---
+
+### Iteration 3.6 — The Taken Ledger
+
+A minimal session store of what the player has taken: item id, display name, property ids — identity only, no counts, nothing consumable. `PropertyPickupAttendable` registers each take. Pickups gain an authorable **auto-reveal flag**: the Lump of Clay keeps its 3.3 auto-reveal (the proven teach path stays intact as the control), but two new pickups — Bark Strips (`binds_fast`, `keeps_well`) and Reeds (`binds_fast`, `split_prone`) — are taken *without* their properties revealing. Their overlay read is the itch discovery answers: identity known, nature not ("There's more to it," same vocabulary as `InventoryUI`).
+
+**Explicitly out of scope:** the working surface itself; any way to learn the unrevealed properties; any teach target for them; any UI listing the ledger.
+
+**Success criterion:** taking a thing whose nature stays unknown reads clearly as "I have this, but I don't know it yet" — the pull toward a place to work it out exists before that place does. Clay/teach/weir loop unchanged.
+
+---
+
+### Iteration 3.7 — Discovery at the Working Surface
+
+One hand-placed working surface (a scouring bench by the water, or similar — new minimal P3 attendable, not `BuildingAttendable`). Attending it works over the full Taken Ledger: each completed hold-tick costs 1 daylight and reveals one not-yet-known property from among the taken things — filtered by the surface's authored **bias** (the Iteration 39 `biasPropertyIds` pattern, reused as data: e.g. `binds_fast`/`keeps_well`, so this bench can teach you what binds and what keeps, and nothing else). Reveals land in `PropertyKnowledge` under both the item id and `p3_player` — exactly where pickup auto-reveal already puts them, so the teach gate needs no changes. Deterministic one-reveal-per-tick for the pilot; the organic pass can probabilize later. When nothing on-bias remains unknown, attending falls back to a flavor linger.
+
+**Explicitly out of scope:** recipes, conversion, item consumption, success/failure states; a second surface; any change to teaching; any modal UI.
+
+**Success criterion:** working out `binds_fast` at the bench — spending scarce daylight that the weir, the Dyer, and the pit all also want — feels like *earning* a piece of knowledge rather than being handed it. The day math should force the same shape of choice 3.5 proved: a discovery tick is a real alternative, not filler.
+
+---
+
+### Iteration 3.8 — Teaching What You Worked Out
+
+Loop closure, and the doc's deferred "second taught property" test in the same stroke. The Dyer gains a second want: `binds_fast` — the mordant. Her colors take now (3.4's pit) but they fade with washing; bark's tannin is the historically real fix. Generalize the teach branch from one authored property to a short authored list (each entry: property, teach line, gated stage — `KnownPropertyCondition` is already generic), and add the second stage ("Colors That Hold" or similar) with its own needs line, tint step, and developed read. Teaching stays one press per property — each transfer its own moment.
+
+**Explicitly out of scope:** a third property; a second entity; any generalization beyond the authored list.
+
+**Success criterion — the thread's go/no-go:** cold load → take bark (nature unknown) → work it out at the bench → teach the Dyer → see the second change, all under the same 4-tick days. Two questions, judged together in play: does discover-then-teach feel like one loop with knowledge as its currency, and does the Dyer's state stay legible with two taught properties and two applied stages — or does compounding start to turn muddy?
+
+---
+
+### Iteration 3.9 — Seeing What You Carry (deferred until wanted)
+
+The later step flagged in the 7-15-26 decision: a glanceable, **non-modal** HUD strip (the `InventoryUI` pattern — persistent, captures no input) listing taken things with their known phrases in folk language, "There's more to it" for the rest. This is the first small gesture at the 7-14-26 "literal in-world catalog," in HUD form only. Build it when playing 3.7/3.8 actually produces the "wait, what have I taken?" question — not before.
+
+**Explicitly out of scope:** any diegetic/physical catalog object; recording/Witnessed-vs-Recorded; any interaction beyond reading it.
+
+**Success criterion:** you can answer "what am I carrying knowledge of?" at a glance without the display collapsing into a stats screen — phrases, not numbers.
+
 ---
 
 ## Build Notes (7-14-26, updated 7-15-26)
@@ -119,10 +171,10 @@ All five iterations (3.1–3.5) are built and verified in `Assets/Game/Scenes/Pr
 
 ## After this
 
-If 3.5 lands: property discovery (Iteration 35/36) is a natural, low-risk next thread to pull in — it already populates the same `PropertyKnowledge` state teaching does, just via a different route (Workshop failure-reveal instead of being taught). Discover a property at a Workshop, then go teach it somewhere — same currency, second faucet, not a merge risk.
+Property discovery is now scoped as the Discovery Thread above (3.6–3.9), and the "second taught property" question is folded into 3.8's success criterion rather than waiting as its own test.
 
-Delivery-driven upgrades (buildings/NPCs progressing via carried items) are a different matter — the actual rival mechanic to teaching, not a candidate for folding in yet. Putting both in the same scene before either is separately proven risks the player defaulting to whichever is more familiar (probably delivery) and quietly starving the other of a fair test. Keep them apart until teaching has survived 3.5 on its own merits; only then is it worth deliberately testing whether the two coexist as real alternatives or whether one should replace the other.
+Delivery-driven upgrades (buildings/NPCs progressing via carried items) remain the actual rival mechanic to teaching, and still not a candidate for folding in. Putting both in the same scene before either is separately proven risks the player defaulting to whichever is more familiar (probably delivery) and quietly starving the other of a fair test. Only after the Discovery Thread has been played is it worth deliberately testing whether the two coexist as real alternatives or whether one should replace the other.
 
-Beyond that: a second taught property (does compounding knowledge stay legible or turn muddy) and seeding partial knowledge across more than one entity at once — the direct test of "settlements already know some things" from the IDEAS.md entry. None of this is scoped yet. Decide after playing 3.5, not before — same rule that's held for every iteration so far.
+Beyond that: seeding partial knowledge across more than one entity at once — the direct test of "settlements already know some things" from the IDEAS.md entry — and, if 3.7's choiceless surface leaves the P2 combination-picking texture genuinely missed, a selection surface with the input-guard cost named in the thread preamble. None of this is scoped. Decide after playing 3.8, not before — same rule that's held for every iteration so far.
 
 ---
