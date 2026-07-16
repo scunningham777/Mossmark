@@ -138,7 +138,7 @@ Loop closure, and the doc's deferred "second taught property" test in the same s
 
 ---
 
-### Iteration 3.9 — Seeing What You Carry (deferred until wanted)
+### Iteration 3.9 — Seeing What You Carry
 
 The later step flagged in the 7-15-26 decision: a glanceable, **non-modal** HUD strip (the `InventoryUI` pattern — persistent, captures no input) listing taken things with their known phrases in folk language, "There's more to it" for the rest. This is the first small gesture at the 7-14-26 "literal in-world catalog," in HUD form only. Build it when playing 3.7/3.8 actually produces the "wait, what have I taken?" question — not before.
 
@@ -150,7 +150,7 @@ The later step flagged in the 7-15-26 decision: a glanceable, **non-modal** HUD 
 
 ## Build Notes (7-14-26, updated 7-15-26, updated 7-15-26 again for the Discovery Thread)
 
-All eight iterations (3.1–3.8) are built and verified in `Assets/Game/Scenes/Prototype3.unity`, with the Greybox regression gate run clean (0 errors, 0 warnings) after each one. **3.9 is deferred**, per its own stated condition — see "Discovery Thread status" below. New code is confined to `Assets/Game/Scripts/Prototype3/` (`Mossmark.Prototype3`) plus an Editor-only test driver — no shared script was modified, no Greybox asset touched.
+All nine iterations (3.1–3.9) are built and verified in `Assets/Game/Scenes/Prototype3.unity`, with the Greybox regression gate run clean (0 errors, 0 warnings) after each one. New code is confined to `Assets/Game/Scripts/Prototype3/` (`Mossmark.Prototype3`) plus an Editor-only test driver — no shared script was modified, no Greybox asset touched.
 
 **The content pairing:** The Dyer works a steeping pit that won't hold water. She spawns knowing `draws_the_eye` (warm tint + "They speak of what draws the eye" — the 3.2 "this person has history" read). A Lump of Clay sits across the ground plane; taking it (hold E, no inventory, no quantity) auto-reveals `turns_water`. With that known, attending the Dyer offers "Press E to speak of what turns water" — a zero-duration one-shot, distinct from every hold in the game. Once taught, the Clay-Lined Steeping Pit stage (gated on `KnownPropertyCondition`) becomes reachable: two held ticks and it applies — stage pop, triangle→circle, deepened tint, description flips to "The steeping pit sits dark and full."
 
@@ -175,7 +175,7 @@ All eight iterations (3.1–3.8) are built and verified in `Assets/Game/Scenes/P
 
 **A legibility texture to judge in play, not a bug:** between the two stages crossing, the interaction line always shows whichever stage just applied ("Hold E to watch the colors take" / "...hold") — it doesn't say "and there's more to develop" while a second want is still pending. The overlay's upgrades bullet list (`GetAppliedUpgrades()`, already wired to `AttendableOverlayUI`'s detail panel) does show both once both land, so the information isn't hidden, just not in the single-line prompt. Left as-is deliberately: whether this reads as a gap or as "felt, not read" (you find out by continuing to attend, not by being told) is exactly the kind of call 3.8's "does compounding stay legible" success criterion asks the player to make, not the code.
 
-**Discovery Thread status:** 3.9 (the non-modal HUD strip listing taken things) is **not built**, per its own stated deferral — "build it when playing 3.7/3.8 actually produces the 'wait, what have I taken?' question, not before." Play 3.6–3.8 first and decide.
+**3.9 (Seeing What You Carry), built 7-16-26:** `TakenLedgerUI` (`Mossmark.Prototype3`) is a persistent, non-modal `UIDocument` HUD strip, positioned top-left exactly like `InventoryUI` (whose corner is free in this scene, since P3 has no pack) — same "push state, capture no input" pattern, reading `TakenLedger.All` instead of `InventoryManager.Stacks`. Each entry renders its display name plus known property phrases (folk language, or `[tag]` under the shared `PropertyKnowledge.ShowDebugTags` toggle); any still-unknown property collapses to a single "There's more to it." line, same vocabulary as `InventoryUI`/`ItemPropertyDisplay`. Refreshes on `TakenLedger.Changed` and `PropertyKnowledge.PropertyRevealed`. Property-line rendering was written fresh rather than reusing the shared `ItemPropertyDisplay` helper (`Mossmark.Inventory`), which is keyed off `ItemDefinition` — `TakenLedger.Entry` only carries `itemId`/`displayName`/`propertyIds` — following the same precedent `WorkingSurfaceAttendable` set in 3.7 by inlining its own phrase lookup rather than touching a Greybox-shared display path. Verified in play: took Bark Strips (both properties unknown) and the Lump of Clay (auto-reveals `turns_water`), worked the bench to reveal `binds_fast` on Bark Strips, and confirmed via `Log Taken Ledger` that ledger state matches what the HUD renders — Clay `turns_water=known`, Bark Strips `binds_fast=known, keeps_well=unknown`. 0 console errors/warnings throughout; Greybox regression gate re-run clean afterward.
 
 **Still open — the actual go/no-go:** whether the 3.4 moment *feels* meaningful, whether 3.5's scarcity choice feels like choosing, and now whether discover-then-teach reads as one loop with knowledge as its currency and stays legible with two taught properties — all judgments only playing can give.
 

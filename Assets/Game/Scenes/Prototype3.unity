@@ -215,8 +215,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   m_RenderShadows: 1
   m_RequiresDepthTextureOption: 2
   m_RequiresOpaqueTextureOption: 2
@@ -267,7 +267,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c65c7f9cb6c041d585568c61b25be541, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Player.CameraFollow
   target: {fileID: 1200002}
   smoothTime: 0.3
@@ -314,8 +314,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 073797afb82c5a1438f328866b10b3f0, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   m_ComponentVersion: 2
   m_LightType: 4
   m_BlendStyleIndex: 0
@@ -339,62 +339,19 @@ MonoBehaviour:
   m_ShadowSoftnessFalloffIntensity: 0.5
   m_ShadowVolumeIntensityEnabled: 0
   m_ShadowVolumeIntensity: 0.75
-  m_MaskLayer:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_CastsShadows: 1
+  m_LocalBounds:
+    m_Center: {x: 0, y: 0, z: 0}
+    m_Extent: {x: 0, y: 0, z: 0}
   m_PointLightInnerAngle: 360
   m_PointLightOuterAngle: 360
   m_PointLightInnerRadius: 0
   m_PointLightOuterRadius: 1
-  m_LightCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 1
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  m_FalloffCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 1
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
+  m_ShapeLightParametricSides: 5
+  m_ShapeLightParametricAngleOffset: 0
+  m_ShapeLightParametricRadius: 1
+  m_ShapeLightFalloffSize: 0.5
+  m_ShapeLightFalloffOffset: {x: 0, y: 0}
+  m_ShapePath: []
 --- !u!1 &1200001
 GameObject:
   m_ObjectHideFlags: 0
@@ -442,7 +399,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e1be6c8401d64ce782936cbc254ea857, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Player.PlayerController
   moveSpeed: 4
   smoothing: 0.1
@@ -581,7 +538,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bde2dc41307d86344a4cada6192f9987, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Attention.AttentionInput
 --- !u!114 &1200008
 MonoBehaviour:
@@ -593,7 +550,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 968e36af5a420454d8b0f739a4c4232d, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Attention.AttendableDetector
 --- !u!1 &1300001
 GameObject:
@@ -637,7 +594,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6bd3b71bf6c909f498d7e1e1cbf50512, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Attention.AttentionManager
 --- !u!1 &1400001
 GameObject:
@@ -682,7 +639,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 19102, guid: 0000000000000000e000000000000000, type: 0}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.dll::UnityEngine.UIElements.UIDocument
   m_PanelSettings: {fileID: 0}
   m_ParentUI: {fileID: 0}
@@ -705,7 +662,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cae218a6055cb3d468f53898016c3622, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Attention.AttendableOverlayUI
 --- !u!1 &1500001
 GameObject:
@@ -809,7 +766,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8cdd54b5b79e0e64bbf6835965948900, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Visuals.SquareSpriteGenerator
   _color: {r: 0.18, g: 0.22, b: 0.16, a: 1}
 --- !u!1 &1600001
@@ -918,7 +875,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: aa0714b824ac415ea7bad38c61b9b7d2, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Visuals.TriangleSpriteGenerator
   _color: {r: 1, g: 1, b: 1, a: 1}
   _textureSize: 32
@@ -968,7 +925,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4dbe510cc74b7c149ba35c8678f3aad2, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Attention.AttendableZone
 --- !u!114 &1600007
 MonoBehaviour:
@@ -980,7 +937,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 81220e19050184d41b28058948766b75, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Prototype3.KnowingEntityAttendable
   entityId: p3_dyer
   displayName: The Dyer
@@ -995,20 +952,20 @@ MonoBehaviour:
     stageDisplayName: Clay-Lined Steeping Pit
     stageProgressCost: 2
     stageNeedsLine: The pit will not hold water; they seem resigned to it.
-    developedDescription: The steeping pit sits dark and full. Dye takes slowly
-      now, and deep.
+    developedDescription: The steeping pit sits dark and full. Dye takes slowly now,
+      and deep.
     developedInteractionLine: Hold E to watch the colors take
     developedTint: {r: 0.9, g: 0.42, b: 0.38, a: 1}
   - propertyId: binds_fast
-    teachLine: They go still, turning the thought over — then nod, once, like
-      something's decided.
+    teachLine: "They go still, turning the thought over \u2014 then nod, once, like
+      something's decided."
     stageId: bound_colors
     stageDisplayName: Colors That Hold
     stageProgressCost: 2
-    stageNeedsLine: The color takes, but washing lifts it; something's missing
-      to bind it fast.
-    developedDescription: The steeping pit sits dark and full, and the color
-      holds now — washing will not lift it.
+    stageNeedsLine: The color takes, but washing lifts it; something's missing to
+      bind it fast.
+    developedDescription: "The steeping pit sits dark and full, and the color holds
+      now \u2014 washing will not lift it."
     developedInteractionLine: Hold E to watch the colors hold
     developedTint: {r: 0.55, g: 0.3, b: 0.62, a: 1}
   untaughtTint: {r: 0.55, g: 0.55, b: 0.55, a: 1}
@@ -1028,7 +985,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ee97101fdb5f7264f8432e54876e78e8, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Visuals.EntityFeedback
 --- !u!1 &1700001
 GameObject:
@@ -1073,7 +1030,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 19102, guid: 0000000000000000e000000000000000, type: 0}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.dll::UnityEngine.UIElements.UIDocument
   m_PanelSettings: {fileID: 0}
   m_ParentUI: {fileID: 0}
@@ -1096,7 +1053,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d687b33f7ed38e94c859cd9f7c6e88ec, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Visuals.NotificationUI
 --- !u!1 &1800001
 GameObject:
@@ -1203,7 +1160,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: aa0714b824ac415ea7bad38c61b9b7d2, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Visuals.TriangleSpriteGenerator
   _color: {r: 0.62, g: 0.52, b: 0.44, a: 1}
   _textureSize: 32
@@ -1253,7 +1210,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4dbe510cc74b7c149ba35c8678f3aad2, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Attention.AttendableZone
 --- !u!114 &1800007
 MonoBehaviour:
@@ -1265,7 +1222,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 83706b689248c6445a9b1aec4a833902, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Prototype3.PropertyPickupAttendable
   itemId: p3_clay_lump
   playerKnowerId: p3_player
@@ -1275,7 +1232,7 @@ MonoBehaviour:
   - turns_water
   autoRevealOnTake: 1
   revealLine: Clay. Slick, dense. Water beads and runs off it.
-  unrevealedTakeLine: 'Taken. There''s more to it than you can say yet.'
+  unrevealedTakeLine: Taken. There's more to it than you can say yet.
   attendDuration: 1
 --- !u!1 &1900001
 GameObject:
@@ -1319,7 +1276,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 07b5a8e6f14bee9448f07f0052775b36, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Day.DayCycleManager
   maxDaylight: 4
   ambientTextData: {fileID: 11400000, guid: 1cacecf386b940799f0a966dd5a5f65e, type: 2}
@@ -1367,7 +1324,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 19102, guid: 0000000000000000e000000000000000, type: 0}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.dll::UnityEngine.UIElements.UIDocument
   m_PanelSettings: {fileID: 0}
   m_ParentUI: {fileID: 0}
@@ -1390,7 +1347,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bd33c8806002987459d3a8ad903b7ecc, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Day.DayCycleUI
 --- !u!1 &2100001
 GameObject:
@@ -1435,7 +1392,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 19102, guid: 0000000000000000e000000000000000, type: 0}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.dll::UnityEngine.UIElements.UIDocument
   m_PanelSettings: {fileID: 0}
   m_ParentUI: {fileID: 0}
@@ -1458,7 +1415,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 614e37710cc1c3945994cda93df070d4, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Day.DayTransitionFadeUI
 --- !u!1 &2200001
 GameObject:
@@ -1565,7 +1522,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: aa0714b824ac415ea7bad38c61b9b7d2, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Visuals.TriangleSpriteGenerator
   _color: {r: 0.5, g: 0.2, b: 0.25, a: 1}
   _textureSize: 32
@@ -1615,7 +1572,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4dbe510cc74b7c149ba35c8678f3aad2, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Attention.AttendableZone
 --- !u!114 &2200007
 MonoBehaviour:
@@ -1627,7 +1584,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e4263a1d92472be4c99490e425cfa4db, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Day.BedrollAttendable
   restDuration: 1
 --- !u!1 &2300001
@@ -1736,7 +1693,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: aa0714b824ac415ea7bad38c61b9b7d2, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Visuals.TriangleSpriteGenerator
   _color: {r: 0.35, g: 0.48, b: 0.52, a: 1}
   _textureSize: 32
@@ -1786,7 +1743,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4dbe510cc74b7c149ba35c8678f3aad2, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Attention.AttendableZone
 --- !u!114 &2300007
 MonoBehaviour:
@@ -1798,7 +1755,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 853030447147c2e41aef7cafaf5503ce, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Development.LandmarkAttendable
   displayName: Fish Weir
   entityColor: {r: 0.35, g: 0.48, b: 0.52, a: 1}
@@ -1820,7 +1777,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ee97101fdb5f7264f8432e54876e78e8, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Visuals.EntityFeedback
 --- !u!1 &2400001
 GameObject:
@@ -1927,7 +1884,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: aa0714b824ac415ea7bad38c61b9b7d2, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Visuals.TriangleSpriteGenerator
   _color: {r: 0.58, g: 0.44, b: 0.3, a: 1}
   _textureSize: 32
@@ -1977,7 +1934,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4dbe510cc74b7c149ba35c8678f3aad2, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Attention.AttendableZone
 --- !u!114 &2400007
 MonoBehaviour:
@@ -1989,7 +1946,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 83706b689248c6445a9b1aec4a833902, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Prototype3.PropertyPickupAttendable
   itemId: p3_bark_strips
   playerKnowerId: p3_player
@@ -1999,9 +1956,9 @@ MonoBehaviour:
   - binds_fast
   - keeps_well
   autoRevealOnTake: 0
-  revealLine:
-  unrevealedTakeLine: 'Bark, stripped and coiled. There''s more to it than you
-    can say yet.'
+  revealLine: 
+  unrevealedTakeLine: Bark, stripped and coiled. There's more to it than you can
+    say yet.
   attendDuration: 1
 --- !u!1 &2500001
 GameObject:
@@ -2108,7 +2065,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: aa0714b824ac415ea7bad38c61b9b7d2, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Visuals.TriangleSpriteGenerator
   _color: {r: 0.68, g: 0.62, b: 0.32, a: 1}
   _textureSize: 32
@@ -2158,7 +2115,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4dbe510cc74b7c149ba35c8678f3aad2, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Attention.AttendableZone
 --- !u!114 &2500007
 MonoBehaviour:
@@ -2170,7 +2127,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 83706b689248c6445a9b1aec4a833902, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Prototype3.PropertyPickupAttendable
   itemId: p3_reeds
   playerKnowerId: p3_player
@@ -2180,9 +2137,9 @@ MonoBehaviour:
   - binds_fast
   - split_prone
   autoRevealOnTake: 0
-  revealLine:
-  unrevealedTakeLine: 'Reeds, cut and bundled. There''s more to it than you can
-    say yet.'
+  revealLine: 
+  unrevealedTakeLine: Reeds, cut and bundled. There's more to it than you can say
+    yet.
   attendDuration: 1
 --- !u!1 &2600001
 GameObject:
@@ -2290,7 +2247,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: aa0714b824ac415ea7bad38c61b9b7d2, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Visuals.TriangleSpriteGenerator
   _color: {r: 0.5, g: 0.55, b: 0.58, a: 1}
   _textureSize: 32
@@ -2340,7 +2297,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4dbe510cc74b7c149ba35c8678f3aad2, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Attention.AttendableZone
 --- !u!114 &2600007
 MonoBehaviour:
@@ -2352,7 +2309,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ae3e4cb0eb5224d9a8d448079e64daf0, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Prototype3.WorkingSurfaceAttendable
   displayName: Scouring Bench
   description: A flat stone by the water, worn smooth by scrubbing.
@@ -2376,8 +2333,76 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ee97101fdb5f7264f8432e54876e78e8, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Visuals.EntityFeedback
+--- !u!1 &2700001
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2700002}
+  - component: {fileID: 2700003}
+  - component: {fileID: 2700004}
+  m_Layer: 0
+  m_Name: Taken Ledger UI
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2700002
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2700001}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2700003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2700001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 19102, guid: 0000000000000000e000000000000000, type: 0}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.dll::UnityEngine.UIElements.UIDocument
+  m_PanelSettings: {fileID: 0}
+  m_ParentUI: {fileID: 0}
+  sourceAsset: {fileID: 0}
+  m_SortingOrder: 0
+  m_Position: 0
+  m_WorldSpaceSizeMode: 1
+  m_WorldSpaceWidth: 1920
+  m_WorldSpaceHeight: 1080
+  m_PivotReferenceSize: 0
+  m_Pivot: 0
+  m_WorldSpaceCollider: {fileID: 0}
+--- !u!114 &2700004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2700001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 17ef268ee0143db4baec16b417b47ad2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Prototype3.TakenLedgerUI
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -2399,3 +2424,4 @@ SceneRoots:
   - {fileID: 2400002}
   - {fileID: 2500002}
   - {fileID: 2600002}
+  - {fileID: 2700002}

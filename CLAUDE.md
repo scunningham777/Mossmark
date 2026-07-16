@@ -179,7 +179,7 @@ Default to no comments. Only add a comment when the *why* is non-obvious (a hidd
 | P3 Taken Ledger (Iteration 3.6) | Complete | `TakenLedger` (static, insertion-ordered), `PropertyPickupAttendable.propertyIds[]`/`.autoRevealOnTake`, Bark Strips + Reeds pickups |
 | P3 Discovery at the Working Surface (Iteration 3.7) | Complete | `WorkingSurfaceAttendable` (non-modal, bias-filtered, one reveal per hold), Scouring Bench |
 | P3 Teaching What You Worked Out (Iteration 3.8) | Complete | `KnowingEntityAttendable.TeachableWant[]` (generalized from single-property pairing), second Dyer want (`binds_fast` / "Colors That Hold") |
-| P3 Seeing What You Carry (Iteration 3.9) | Deferred | Not built — per its own stated condition, build only once 3.7/3.8 playtesting raises the "what have I taken?" question |
+| P3 Seeing What You Carry (Iteration 3.9) | Complete | `TakenLedgerUI` (non-modal HUD strip, top-left, mirrors `InventoryUI`'s layout pattern reading `TakenLedger` instead of `InventoryManager.Stacks`) |
 
 Full iteration plan is in [FEATURES.md](FEATURES.md). Update this table as each iteration lands.
 
