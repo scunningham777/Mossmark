@@ -9,6 +9,8 @@ See [IDEAS.md](IDEAS.md) for the high-level vision and [FEATURES.md](FEATURES.md
 > **Historical Note:** This is "Prototype 2" — a fresh Unity project started from scratch (see PROTOTYPE2.md's "Why a second prototype"). It is informed by Prototype 1 but does not carry over P1's architecture; P1 systems referenced in PROTOTYPE2.md (e.g. `PlayerMovement`, `DayCycleManager`, `Entity`/`UpgradePool`) are reference material from the old project, not code that exists here yet. (Iterations beyond P2's "30" are currently sourced in FEATURES.md)
 >
 > **[PROTOTYPE3_KNOWLEDGE_SPINE.md](PROTOTYPE3_KNOWLEDGE_SPINE.md)** is a new scene now being built alongside `Greybox.unity`, testing one atomic claim (does teaching an entity a property change its behavior in a way that feels meaningful with no item delivery involved?) before committing further iterations to the larger reframe it's drawn from. It reuses select `Greybox.unity` systems directly without modifying them — see that doc's "Reuse Discipline" section for exactly what's shared and what's deliberately left out.
+>
+> **[PROTOTYPE4_ACQUAINTANCE.md](PROTOTYPE4_ACQUAINTANCE.md)** is the next pilot after P3 answered its claim: a scene (`Prototype4.unity`) testing whether *getting to know an already-alive place* — attention spent only to find out what's there, with zero effect on the thing attended — is a wantable activity in its own right. Same Reuse Discipline as P3; acquaintance is a `DevelopmentTrack` on the shared resolver. See that doc's Build Notes for implementation decisions and verification status.
 
 ---
 
@@ -39,7 +41,7 @@ These are the load-bearing principles of Mossmark. They take precedence over imp
 - **Physics**: 2D (`Rigidbody2D`, gravity = 0 for top-down movement)
 - **Input**: new Input System (`com.unity.inputsystem`), via the project-wide actions asset `Assets/InputSystem_Actions.inputactions`. See "Input Actions" below.
 - **UI system**: Unity UI Toolkit (`UIDocument`, `VisualTreeAsset`, `VisualElement`) — **not** uGUI/Canvas
-- **Editor tooling**: `com.gamelovers.mcp-unity` is installed for MCP-based editor automation. **Entering/exiting Play Mode**: MCP-Unity's `execute_menu_item` can't reach Unity's built-in `Edit/Play` toggle (it silently fails) — use the project's own `Mossmark/Debug/Enter Play Mode` / `Mossmark/Debug/Exit Play Mode` menu items instead (`Assets/Editor/PlayModeMenu.cs`, thin wrappers around `EditorApplication.EnterPlaymode()`/`ExitPlaymode()`), confirmed working. Iterations 45/46/49 hit the `Edit/Play` dead end and skipped live verification as a result — use the custom menu items for any future Play Mode check instead of re-trying `Edit/Play`.
+- **Editor tooling**: `com.gamelovers.mcp-unity` is installed for MCP-based editor automation. Files created outside the Editor (scripts, scenes) are not seen until `Assets/Refresh` runs — `recompile_scripts` alone can silently compile *without* the new files, so refresh first, then recompile, then read the generated `.meta` for GUIDs. Expect the MCP WebSocket (port 8090) to drop for ~15–30s around every domain reload (play enter/exit, recompile) — retry, don't diagnose. If the Windows session locks, the editor loop stalls entirely and MCP stays down until the machine is unlocked. **Entering/exiting Play Mode**: MCP-Unity's `execute_menu_item` can't reach Unity's built-in `Edit/Play` toggle (it silently fails) — use the project's own `Mossmark/Debug/Enter Play Mode` / `Mossmark/Debug/Exit Play Mode` menu items instead (`Assets/Editor/PlayModeMenu.cs`, thin wrappers around `EditorApplication.EnterPlaymode()`/`ExitPlaymode()`), confirmed working. Iterations 45/46/49 hit the `Edit/Play` dead end and skipped live verification as a result — use the custom menu items for any future Play Mode check instead of re-trying `Edit/Play`.
 
 ---
 
@@ -81,7 +83,8 @@ All scripts live under the `Mossmark` root namespace, organized by system. This 
 | `Mossmark.Inventory` | Inventory manager, item database, item pickups, settlement chest |
 | `Mossmark.Development` | Generic dependency/response resolver and developable entities (buildings, NPCs, POIs, town) — generalizes P1's `Entity`/`UpgradePool`/`TownEntity` |
 | `Mossmark.World` | Region and town generation, place archetypes, and wilderness-spot attendables (e.g. `DevelopingWildernessSpotAttendable`, `PoiAttendable`) |
-| `Mossmark.Prototype3` | Knowledge-spine pilot scripts scoped to `Prototype3.unity` (`KnowingEntityAttendable`, `PropertyPickupAttendable`, `KnownPropertyCondition`, `TakenLedger`, `WorkingSurfaceAttendable`) — new components only, per that doc's Reuse Discipline; nothing in Greybox references this namespace |
+| `Mossmark.Prototype3` | Knowledge-spine pilot scripts scoped to `Prototype3.unity` (`KnowingEntityAttendable`, `PropertyPickupAttendable`, `KnownPropertyCondition`, `TakenLedger`, `WorkingSurfaceAttendable`) — new components only, per that doc's Reuse Discipline; nothing in Greybox references this namespace. `PropertyPickupAttendable` is additionally reused (unmodified) by `Prototype4.unity` |
+| `Mossmark.Prototype4` | Acquaintance pilot scripts scoped to `Prototype4.unity` (`AcquaintableAttendable`, `AttentionCountCondition`) — new components only, same Reuse Discipline as P3; nothing in Greybox or Prototype3 references this namespace |
 
 P1's `Mossmark.Quests` and `Mossmark.Combat` are **not** part of P2 — collection quests and discrete combat encounters were dropped per IDEAS.md's "Prototype 2" section. Add namespaces here as new systems land; keep this table in sync with what's actually implemented.
 
@@ -107,6 +110,7 @@ Default to no comments. Only add a comment when the *why* is non-obvious (a hidd
 
 - **`Assets/Game/Scenes/Greybox.unity`** — the Prototype 2 scene; the site/exhaustion/Standing thread lives here and still plays
 - **`Assets/Game/Scenes/Prototype3.unity`** — the Knowledge Spine pilot scene (see PROTOTYPE3_KNOWLEDGE_SPINE.md); hand-placed, no `WorldGenerator`. Day cycle wired in as of Iteration 3.5 (`maxDaylight: 5` as of a 7-16-26 retune — see PROTOTYPE3_KNOWLEDGE_SPINE.md's Build Notes; bedroll + fade + HUD reused from Greybox). The Discovery Thread (Iterations 3.6–3.9) added a Taken Ledger, a non-modal working surface, a second teachable want on the Dyer, and a non-modal HUD listing what's been taken. Reuses shared scripts unmodified; its own scripts live in `Assets/Game/Scripts/Prototype3/`. Editor test drivers: `Assets/Editor/Prototype3Debug.cs` (`Mossmark/Prototype3/*` menu items — teleports, begin/release attend via reflection, log entity/taken-ledger knowledge, log daylight)
+- **`Assets/Game/Scenes/Prototype4.unity`** — the Acquaintance pilot scene (see PROTOTYPE4_ACQUAINTANCE.md); hand-placed, no `WorldGenerator`. Scaffold copied from `Prototype3.unity` (camera/player/attention/overlay/day cycle @ `maxDaylight: 5`/bedroll/notification UI), P3 content stripped. Two hand-authored sites: a river landing (Netmender / Smokehouse / Osier Bed + Withy and Alder Billet pickups) and a colliers' hearth (Collier / Bothy / Hearth Ring + Char Knot pickup). Its own scripts live in `Assets/Game/Scripts/Prototype4/`; editor test drivers in `Assets/Editor/Prototype4Debug.cs` (`Mossmark/Prototype4/*` — teleports, begin/release attend via reflection, advance acquaintance, log entity state/daylight)
 - **`Assets/Settings/Scenes/URP2DSceneTemplate.unity`** — Unity's URP 2D scene template (used when creating new scenes via the Editor); not part of gameplay
 
 ---
@@ -180,6 +184,12 @@ Default to no comments. Only add a comment when the *why* is non-obvious (a hidd
 | P3 Discovery at the Working Surface (Iteration 3.7) | Complete | `WorkingSurfaceAttendable` (non-modal, bias-filtered, one reveal per hold), Scouring Bench |
 | P3 Teaching What You Worked Out (Iteration 3.8) | Complete | `KnowingEntityAttendable.TeachableWant[]` (generalized from single-property pairing), second Dyer want (`binds_fast` / "Colors That Hold") |
 | P3 Seeing What You Carry (Iteration 3.9) | Complete | `TakenLedgerUI` (non-modal HUD strip, top-left, mirrors `InventoryUI`'s layout pattern reading `TakenLedger` instead of `InventoryManager.Stacks`) |
+| P4 Scene Scaffold + Two-State Read (Iteration 4.1) | Complete | `Prototype4.unity`, `AcquaintableAttendable` (initial bool-swapped read), `Assets/Editor/Prototype4Debug.cs` |
+| P4 Acquaintance as a DevelopmentTrack (Iteration 4.2) | Complete | `AttentionCountCondition` (always-satisfied; stage `attendsCost` is the threshold), `AcquaintableAttendable` (track-driven reads, subject-fingerprint zero-effect check) |
+| P4 Three-Stage Deepening (Iteration 4.3) | Complete | `AcquaintanceStage[]` scene data (Unfamiliar → Acquainted → Known on the Netmender) |
+| P4 Second Entity Type: Building (Iteration 4.4) | Complete | Smokehouse authored as pure `AcquaintableAttendable` data; `seededKnowledgeLead` (the one language field the re-skin question actually required) |
+| P4 Third Entity Type + Items (Iteration 4.5) | Complete | Osier Bed data; `PropertyPickupAttendable` (P3, unmodified) Withy/Alder Billet auto-reveal pickups |
+| P4 Second Site (Iteration 4.6) | Complete | Collier / Colliers' Bothy / Hearth Ring / Char Knot — hand-authored second-archetype voice, zero new code |
 
 Full iteration plan is in [FEATURES.md](FEATURES.md). Update this table as each iteration lands.
 
