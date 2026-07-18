@@ -110,6 +110,40 @@ Only after 4.5 lands: a second hand-placed site with a different archetype flavo
 
 ---
 
+## The Results Thread (planned 7-17-26)
+
+Scoped from the 7-17-26 playtest findings above. The three iterations attack the two named problems — countable crossings and tradeoff-free daylight — and add the first *results of knowing*, keeping the flavor reveal as the only direct reward. Same discipline as every prior thread: no shared-script behavior changes, new behavior in `Mossmark.Prototype4` components and scene data.
+
+### Iteration 4.7 — Organic Crossings: Felt, Not Counted
+
+Replace the exact `attendsCost` crossing with the Organic value's own prescription: each stage authors a `minAttends` floor (no crossing possible before it — the authored pacing bound stays) and a `ripenChance` that ramps per qualifying attend past the floor, so the crossing *arrives* somewhere in a band rather than landing on a countable tick. The crossing itself still runs through the shared resolver (`TryApplyStage`, `OnDeveloped`, `EntityFeedback` pop, tint swap) — only *when* it fires becomes probabilistic, and gates stay exact per the Design Values (Gates can be exact; outcomes shouldn't be).
+
+**Explicitly out of scope:** any change to what the stages reveal; any new entity; day-gating (that's 4.8).
+
+**Success criterion:** across several run-throughs the same stage crosses on different ticks, always at or past its floor — and holding attention no longer feels like watching a counter, because there is no counter to watch.
+
+---
+
+### Iteration 4.8 — Temperament: Trust That Keeps Its Own Time
+
+Some entities gate acquaintance the way P2's Standing gates a spot: by *returning across days*, not by quantity in a sitting. A wary entity accepts one qualifying attend per day (tracked against `DayCycleManager.DayIndex` — per-entity, so no `WorldSite` needed); further attends the same day resolve as flavor visits, with an authored sated line surfacing descriptively in the overlay ("They've said what they'll say today"), never as an instruction. The Collier (who counts everything in nights) and the Osier Bed (a place that only shows itself in returns) become wary; the river-landing entities stay sitting-gated — temperament expressed through the gate type itself.
+
+**Explicitly out of scope:** site-scoped aggregation (`WorldSite` stays parked); any penalty for over-attending (extra visits are visits, not scolding); more than two wary entities.
+
+**Success criterion:** getting to know the Collier *cannot* be brute-forced in a day and therefore threads through multiple rests — and that reads as who the Collier is, not as a timer. Rest/daylight acquire real weight in the acquaintance loop.
+
+---
+
+### Iteration 4.9 — The Earned Workshop: The Smoking Racks
+
+The first result-of-knowing, and the competing daylight use the checklist finding calls for. A new hand-placed working surface (The Smoking Racks, beside the Smokehouse) is present from cold load but not usable — its overlay reads as another's workplace. The Smokehouse's `Known` crossing quietly sets a WorldState flag (`worldStateFlag`, new per-stage data); the racks' `CanAttend()` reads it. Nothing is announced — you find out the racks will have you by coming back to them, felt-not-read. The surface itself is P3's 3.7 shape rebuilt as a P4 component (non-modal, works over the `TakenLedger`, bias-filtered, one reveal per held tick, 1 daylight each): bias `burns_slow`/`keeps_well`, plus `binds_fast` unioned in only while the Osier Bed is Known (the Iteration 54 additive-seam pattern, keyed on the osier's own crossing flag) — knowing the bed teaches the racks' work a second language. To give discovery something to answer, the site's pickups stop auto-revealing (Withy, Alder Billet, Char Knot go "there's more to it") and a fourth unrevealed pickup (A Smoked Eel, `keeps_well`) hangs forgotten by the smokehouse. The Withy's `split_prone` stays off-bias everywhere in this scene — a deliberately unanswerable itch, per the vending-machine guard: not every question gets a dispenser.
+
+**Explicitly out of scope:** any modal UI; recipes/conversion/consumption; a second surface; per-reveal rewards of any kind beyond the reveal itself; teaching (still excluded).
+
+**Success criterion — the thread's go/no-go:** cold load → the racks read as not-yours → earn the Smokehouse to Known → the racks will have you, and it feels earned rather than dispensed ("I've developed enough trust to be allowed to work here") → discovery ticks at the racks now genuinely compete with acquaintance ticks elsewhere for the same daylight. Judge whether the checklist/grind feel from the 7-17-26 playtest recedes once the day has real alternatives.
+
+---
+
 ## Build Notes (7-17-26)
 
 All six iterations (4.1–4.6) are built in `Assets/Game/Scenes/Prototype4.unity`. New code is confined to `Assets/Game/Scripts/Prototype4/` (`Mossmark.Prototype4`: `AcquaintableAttendable`, `AttentionCountCondition`) plus an Editor-only test driver (`Assets/Editor/Prototype4Debug.cs`) — no shared script was modified, no Greybox or Prototype3 asset touched.
@@ -149,6 +183,20 @@ This is the same call P3 made with `KnowingEntityAttendable` over `NpcAttendable
 
 ---
 
+## Results Thread Build Notes (7-17-26, same day as the thread was scoped)
+
+All three iterations (4.7–4.9) are built and verified in Play Mode via MCP, 0 errors/warnings, with the Greybox + Prototype3 regression gates re-run clean afterward. New code stays in `Mossmark.Prototype4` (`AcquaintableAttendable` reworked; new `EarnedSurfaceAttendable`); no shared script touched.
+
+**4.7 (organic crossings), verified:** each `AcquaintanceStage` now authors `minAttends` + `ripenChance` instead of `attendsCost`; the component rolls `ripenChance × (attends past floor + 1)` per qualifying tick and only routes through `TryApplyStage` on the tick that crosses (each `DevelopmentStage`'s `ProgressCost` is now 1). Observed in play: the Netmender crossed Acquainted on attend 2 (at the floor) and Known on attend 4 (one past), with a separate run's Known chain deepening through attend 3 without crossing — the band is real. A hold at zero remaining daylight correctly ends (the existing `AttentionManager` daylight check, unmodified). Baseline tuning: sitting-gated stages are 2/0.5 (Acquainted) and 3/0.34 (Known); wary stages are 1/0.65 and 2/0.5 — in *days*.
+
+**One real bug caught by the build's own ladder:** with every stage at `ProgressCost` 1, `TryApplyStage()`'s random draw among available stages could apply *Known before Acquainted* (observed live: "A charcoal-burner: developed - Known!"). The old cumulative `attendsCost` values had been enforcing order by accident. Fixed structurally: each stage's `DevelopmentStage` now also carries a private `InOrderCondition` (satisfied only when `CurrentStageIndex` is exactly the prior index), making acquaintance explicitly sequential. Re-verified: crossings land in order on both the sitting-gated and wary paths.
+
+**4.8 (temperament), verified:** `oneQualifyingTickPerDay` + `todaySpentLine` on the entity. The Collier's hold ends after its single daily ripening tick; a same-day re-attend resolves as a flavor visit and the overlay gains the sated line ("They don't turn around. They've said what they'll say today."); the next day's attend qualifies again. Wary entities: the Collier and the Osier Bed. Deliberate texture: the sated visit still costs its daylight — sitting with someone who's done talking is still an afternoon spent.
+
+**4.9 (the earned workshop), verified end-to-end:** cold load → the racks refuse the hold (`CanAttend` false; state stays `InRange`) with the not-yours read → Smokehouse Known crossing logs `WorldState flag 'p4_smokehouse_known' set` (fired from `HandleDeveloped`, so the debug advance and the real attend path both set it) → racks open, and three work ticks revealed, in strict first-taken order: `burns_slow` on An Alder Billet, `keeps_well` on A Smoked Eel, then the fallback linger (the Withy's `binds_fast` off-bias) → Osier Bed Known set `p4_osier_bed_known` → the next racks tick revealed `binds_fast` on A Cut Withy. Final ledger confirmed: `split_prone` alone stays unknown — the deliberately unanswerable itch. All four pickups now take unrevealed ("There's more to it"), giving discovery something to answer without a pack or a modal UI.
+
+---
+
 ## Playtest findings (Sean, 7-17-26)
 
 **Overall verdict: favorite direction yet, even with nothing to *do*.** The per-iteration criteria, answered in play:
@@ -164,6 +212,39 @@ This is the same call P3 made with `KnowingEntityAttendable` over `NpcAttendable
 - **The third phase of one or more sites as a workshop.** At full acquaintance, a site entity (the Smokehouse is the obvious candidate) opens as a working surface — "I've developed enough trust to be allowed to work here." A more direct reward than a quiet flag, but still earned rather than dispensed, and it doubles as exactly the *competing daylight use* the checklist finding calls for: discovery ticks at the earned surface compete with acquaintance ticks everywhere else. One large earned consequence (Flame Sword register), not a per-reveal drip.
 
 **Also flagged for the next iteration:** current crossings are exact attend counts (`attendsCost`), which invites counting — "two more and it flips" reads as grind. The Organic value's pending audit applies here directly: a rising chance of crossing per (qualifying) tick, instead of a fixed count, makes recognition feel like it arrives rather than like a meter filled.
+
+---
+
+## Playtest findings — the Results Thread (Sean, 7-17-26)
+
+**Overall: better again.** The day-pacing adds variety, and **gaining access to the racks felt earned** — 4.9's go/no-go reads as passed.
+
+- **4.7 (organic crossings): mechanically working, barely felt.** Nearly every stage still landed in 2–3 tending sessions, so the variance didn't register as variance — but crucially, nothing felt countable either ("I definitely did not feel like I was explicitly able to count out updates"). Verdict: the counter-feel is gone, which was the point; the band is just too narrow to read as a band. Worth a light odds tweak (lower floors, lower per-tick chance → wider spread) but explicitly **not worth getting bogged down in**.
+- **4.8 (temperament): the day-gating adds variety.** No issues raised.
+- **4.9 legibility gap, confirmed from play:** Sean asked whether any spot *other* than the racks offers revealing at Known — the answer is no (the Osier Bed's crossing extends the racks' bias rather than opening its own surface), and the fact that the question needed asking is the finding. The osier→racks seam is currently invisible except through a withy yielding where it previously didn't. Two fixes queued: the **Taken Ledger HUD** (P3's 3.9 `TakenLedgerUI`, pure reuse — makes "there are properties you haven't uncovered" visible at a glance, which also makes the bias extension legible as new reveals landing), and possibly a felt-not-read clause in the racks' open description while the bonus bias is active.
+- **Daylight: felt, but a touch rushed.** Candidate retune: `maxDaylight` 5 → 6 (same judgment-call shape as P3's 4 → 5).
+- **The big one: the need to *do* something with what's being uncovered is now pressing.** Two pulls named: reconnecting the flow/valve thread parked at the end of P2 (Standing/dominance/flow-reserve, Iterations 42–54), and the sense that hold-to-attend is "a placeholder for something more rich and involved" — with the open question of how to enrich interaction without breaking the design values.
+
+---
+
+## Where to pick up (for a new session)
+
+**Quick items first (same-day size, before any new thread):**
+1. **`TakenLedgerUI` into `Prototype4.unity`** — pure P3 3.9 reuse, one scene GameObject. Directly answers two findings at once (unrevealed-property visibility; osier-seam legibility).
+2. **`maxDaylight` 5 → 6** on the scene's Day Cycle Manager.
+3. *(Optional, time-boxed)* widen the ripening bands: drop floors by ~1 and `ripenChance` a step so crossings spread across more sessions — re-judge in play, don't iterate on it.
+
+**The thread choice — what "doing something" should mean next.** Recommendation: **compose acquaintance with P3's teach loop before reconnecting flow/valve.** Reasons:
+- Both halves are independently proven (P3: teaching under scarcity is worth choosing; P4: getting-to-know is worth doing), and their composition was already flagged in *After this* as the natural next question: does deep acquaintance gate or ease what someone will accept being taught?
+- It answers the itch *directly*: the loop becomes take → work out at an earned surface → **teach it to a person you've come to know** → their work visibly changes. That's a spend for uncovered knowledge that stays inside the attention vocabulary — no new verb needed.
+- The wary gate gives teaching a natural new texture for free: perhaps the Collier will only *hear* something taught once Known, or a taught property lands differently at different acquaintance depths. One authored pairing (e.g. teaching the Netmender `keeps_well` from the smoked eel — smoking the catch is the historically real answer to her three households' winters) would be a P3-3.4-sized pilot inside the existing scene.
+- The flow/valve thread (Greybox, parked) answers a *different* question — pacing and site economy, not "what is knowledge for." Reconnect it after knowledge has a spend, not instead of one; the merge is bigger and touches `WorldSite`/`WorldGenerator` machinery this scene deliberately excludes.
+
+**On richer interaction than hold-E (notes, not scope — this needs its own pilot when it's picked up):** the design values constrain the direction usefully. "Tried, not chosen" rules out outcome menus, recipe grids, and QTE-shaped skill checks — all of them make the player pick what happens. What it *doesn't* rule out is enriching the channels attention already has:
+- **Where you stand** — position relative to the entity as expressive input (watching from the path vs. standing alongside the work vs. walking the osier rows while attending). The player still only chooses where to stand and how long to stay — that's the design value's own sentence, given a larger vocabulary.
+- **When you come** — time-of-day/rhythm as texture (a dusk watch shared with the Collier reading differently than a midday one), via the existing `IOutcomeModifier` pattern as ambient chance/flavor influence, never as a puzzle requirement to be solved.
+- **What you bring** — attention flavored by what the player knows or carries, which is P3's teach shape generalized; already half-built.
+Any of these keeps "hold" as the core act while making *how* it's held mean something. The wrong fork is adding a second input verb; the right fork is making the world read more out of the one verb. A one-entity pilot (positional attending, probably — it's the most bodily and least puzzle-prone) would be the 4.x-sized way to test it.
 
 ---
 

@@ -1374,7 +1374,8 @@ MonoBehaviour:
   acquaintanceStages:
   - stageId: acquainted
     stageDisplayName: Acquainted
-    attendsCost: 2
+    minAttends: 2
+    ripenChance: 0.5
     shortName: A netmender
     description: "A mender of nets — traps too, by the shapes drying on the rail.
       Old work, sure work. They nod when you come up the path now."
@@ -1385,7 +1386,8 @@ MonoBehaviour:
       as if you'd asked.
   - stageId: known
     stageDisplayName: Known
-    attendsCost: 3
+    minAttends: 3
+    ripenChance: 0.34
     shortName: The Netmender
     description: The netmender who was the ferryman here, before the rope went.
       Three households still eat out of these traps. The hands are slowing; nobody
@@ -1596,7 +1598,8 @@ MonoBehaviour:
   acquaintanceStages:
   - stageId: acquainted
     stageDisplayName: Acquainted
-    attendsCost: 2
+    minAttends: 2
+    ripenChance: 0.5
     shortName: A smokehouse
     description: A smokehouse. The dark on the walls is soot, not rot, and the roof
       is sound. Kept, though it has not been fired in a while.
@@ -1606,13 +1609,15 @@ MonoBehaviour:
     - Under the eaves the smell of old smoke holds on, faint but certain.
   - stageId: known
     stageDisplayName: Known
-    attendsCost: 3
+    minAttends: 3
+    ripenChance: 0.34
     shortName: The Smokehouse
     description: The smokehouse, re-raised on its own old timbers after the river
       took the walls. Fired every autumn run for longer than anyone here remembers,
       and the eaves are hung ready for this one.
     tint: {r: 0.72, g: 0.45, b: 0.3, a: 1}
     interactionLine: Hold E to stand a while inside
+    worldStateFlag: p4_smokehouse_known
     attendFlavors:
     - The racks are worn smooth where a hundred seasons of eels have hung.
     - The light comes through the smoke-hole the way it was built to, thin and exactly
@@ -1813,10 +1818,13 @@ MonoBehaviour:
   seededKnowledgeLead: The willows here are known for
   trueStateNote: coppiced on a three-year turn for the netmender's withies; north
     side ready this year
+  oneQualifyingTickPerDay: 1
+  todaySpentLine: The bed shows nothing new today; it keeps its own turns.
   acquaintanceStages:
   - stageId: acquainted
     stageDisplayName: Acquainted
-    attendsCost: 2
+    minAttends: 1
+    ripenChance: 0.65
     shortName: An osier bed
     description: An osier bed. Willow, cut and come again. The stools are old and
       the rods are young, and someone crops it in turns.
@@ -1827,13 +1835,15 @@ MonoBehaviour:
       see it.
   - stageId: known
     stageDisplayName: Known
-    attendsCost: 3
+    minAttends: 2
+    ripenChance: 0.5
     shortName: The Osier Bed
     description: The osier bed, coppiced on a three-year turn for as long as the
       netmender has needed withies. The north side is this year's, rods straight
       as a wish and ready for cutting.
     tint: {r: 0.42, g: 0.68, b: 0.38, a: 1}
     interactionLine: Hold E to linger among the willows
+    worldStateFlag: p4_osier_bed_known
     attendFlavors:
     - A moorhen picks its way between the stools like it owns them.
     - The cut stumps bead with sap. The bed is never done, only resting.
@@ -2028,7 +2038,7 @@ MonoBehaviour:
   propertyIds:
   - binds_fast
   - split_prone
-  autoRevealOnTake: 1
+  autoRevealOnTake: 0
   revealLine: Withy. It bends, it binds. And split with the grain, it makes two.
   unrevealedTakeLine: Taken. There's more to it than you can say yet.
   attendDuration: 1
@@ -2207,7 +2217,7 @@ MonoBehaviour:
   description: Split wood, stacked against a dark wall and half forgotten.
   propertyIds:
   - burns_slow
-  autoRevealOnTake: 1
+  autoRevealOnTake: 0
   revealLine: Alder. It doesn't blaze, it smolders. Smoke you could hang a season's
     catch in.
   unrevealedTakeLine: Taken. There's more to it than you can say yet.
@@ -2393,10 +2403,13 @@ MonoBehaviour:
   seededKnowledgeLead: They speak of
   trueStateNote: burns the hearth ring alone since their partner died; sleeps beside
     lit clamps; counts burns in nights
+  oneQualifyingTickPerDay: 1
+  todaySpentLine: They've said what they'll say today.
   acquaintanceStages:
   - stageId: acquainted
     stageDisplayName: Acquainted
-    attendsCost: 2
+    minAttends: 1
+    ripenChance: 0.65
     shortName: A charcoal-burner
     description: A charcoal-burner. The grey is ash, and the not-turning-around is
       the work. A burn left alone will eat itself.
@@ -2407,7 +2420,8 @@ MonoBehaviour:
       turf a hand's width.
   - stageId: known
     stageDisplayName: Known
-    attendsCost: 3
+    minAttends: 2
+    ripenChance: 0.5
     shortName: The Collier
     description: The collier, who sleeps beside the clamp when it's lit and counts
       the burn in nights, not days. There were two of them once. The second bed
@@ -2617,7 +2631,8 @@ MonoBehaviour:
   acquaintanceStages:
   - stageId: acquainted
     stageDisplayName: Acquainted
-    attendsCost: 2
+    minAttends: 2
+    ripenChance: 0.5
     shortName: A bothy
     description: A working bothy. Someone sleeps here in the burning seasons, close
       to whatever the work is. One bed slept in, by the wear of the door path.
@@ -2628,7 +2643,8 @@ MonoBehaviour:
       of mendings.
   - stageId: known
     stageDisplayName: Known
-    attendsCost: 3
+    minAttends: 3
+    ripenChance: 0.34
     shortName: The Colliers' Bothy
     description: The colliers' bothy, two beds and one slept in. The pair of them
       raised it the year the hearth ring was recut, and one of them has mended it
@@ -2837,7 +2853,8 @@ MonoBehaviour:
   acquaintanceStages:
   - stageId: acquainted
     stageDisplayName: Acquainted
-    attendsCost: 2
+    minAttends: 2
+    ripenChance: 0.5
     shortName: A burn site
     description: A burn site. A hearth ring, used and used again. Kick the leaf-fall
       aside and the char goes down past a finger's depth.
@@ -2847,7 +2864,8 @@ MonoBehaviour:
     - After rain the ground gives back a heat-smell, like an old promise.
   - stageId: known
     stageDisplayName: Known
-    attendsCost: 3
+    minAttends: 3
+    ripenChance: 0.34
     shortName: The Hearth Ring
     description: The hearth ring, cut generations back where the draught runs clean
       up the slope. Char this deep is a hundred burns, and the coppice all around
@@ -3048,10 +3066,392 @@ MonoBehaviour:
   description: A knot of charcoal fallen from someone's load, edges like broken glass.
   propertyIds:
   - burns_slow
-  autoRevealOnTake: 1
+  autoRevealOnTake: 0
   revealLine: Charcoal. Feather-light, bone-black. A fire that agreed to wait.
   unrevealedTakeLine: Taken. There's more to it than you can say yet.
   attendDuration: 1
+--- !u!1 &3900001
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3900002}
+  - component: {fileID: 3900003}
+  - component: {fileID: 3900004}
+  - component: {fileID: 3900005}
+  - component: {fileID: 3900006}
+  - component: {fileID: 3900007}
+  m_Layer: 0
+  m_Name: A Smoked Eel
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3900002
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3900001}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -8, y: 3, z: 0}
+  m_LocalScale: {x: 0.6, y: 0.6, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!212 &3900003
+SpriteRenderer:
+  serializedVersion: 2
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3900001}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 0
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_Sprite: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_FlipX: 0
+  m_FlipY: 0
+  m_DrawMode: 0
+  m_Size: {x: 1, y: 1}
+  m_AdaptiveModeThreshold: 0.5
+  m_SpriteTileMode: 0
+  m_WasSpriteAssigned: 0
+  m_SpriteSortPoint: 0
+--- !u!114 &3900004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3900001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa0714b824ac415ea7bad38c61b9b7d2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Visuals.TriangleSpriteGenerator
+  _color: {r: 0.55, g: 0.42, b: 0.28, a: 1}
+  _textureSize: 32
+--- !u!58 &3900005
+CircleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3900001}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 1
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 0}
+  m_Radius: 0.5
+--- !u!114 &3900006
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3900001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4dbe510cc74b7c149ba35c8678f3aad2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Attention.AttendableZone
+--- !u!114 &3900007
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3900001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 83706b689248c6445a9b1aec4a833902, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Prototype3.PropertyPickupAttendable
+  itemId: p4_smoked_eel
+  playerKnowerId: p3_player
+  displayName: A Smoked Eel
+  description: An eel, bronze and stiff, hanging forgotten under the eaves since
+    some past firing.
+  propertyIds:
+  - keeps_well
+  autoRevealOnTake: 0
+  revealLine: Smoked eel. A season old and sound as the day it was hung.
+  unrevealedTakeLine: Taken. There's more to it than you can say yet.
+  attendDuration: 1
+--- !u!1 &4000001
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4000002}
+  - component: {fileID: 4000003}
+  - component: {fileID: 4000004}
+  - component: {fileID: 4000005}
+  - component: {fileID: 4000006}
+  - component: {fileID: 4000007}
+  - component: {fileID: 4000008}
+  m_Layer: 0
+  m_Name: The Smoking Racks
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4000002
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4000001}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -5.5, y: 2.2, z: 0}
+  m_LocalScale: {x: 0.8, y: 0.8, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!212 &4000003
+SpriteRenderer:
+  serializedVersion: 2
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4000001}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 0
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_Sprite: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_FlipX: 0
+  m_FlipY: 0
+  m_DrawMode: 0
+  m_Size: {x: 1, y: 1}
+  m_AdaptiveModeThreshold: 0.5
+  m_SpriteTileMode: 0
+  m_WasSpriteAssigned: 0
+  m_SpriteSortPoint: 0
+--- !u!114 &4000004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa0714b824ac415ea7bad38c61b9b7d2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Visuals.TriangleSpriteGenerator
+  _color: {r: 0.45, g: 0.3, b: 0.2, a: 1}
+  _textureSize: 32
+--- !u!58 &4000005
+CircleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4000001}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 1
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 0}
+  m_Radius: 0.5
+--- !u!114 &4000006
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4dbe510cc74b7c149ba35c8678f3aad2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Attention.AttendableZone
+--- !u!114 &4000007
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a374d87f00a8dd6458dc1b13ce6fade6, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Prototype4.EarnedSurfaceAttendable
+  displayName: The Smoking Racks
+  playerKnowerId: p3_player
+  requiredWorldStateFlag: p4_smokehouse_known
+  lockedDescription: Racks under the eaves, hung shoulder-high, worn smooth with
+    use. Another's work, and not yours to handle.
+  lockedInteractionLine: You keep your hands off another's racks
+  openDescription: The racks stand open to you now. What you've taken and carried
+    could be worked out here, in the smoke's slow language.
+  workVerb: work at the racks
+  biasPropertyIds:
+  - burns_slow
+  - keeps_well
+  bonusBiasWorldStateFlag: p4_osier_bed_known
+  bonusBiasPropertyIds:
+  - binds_fast
+  attendDuration: 1.5
+  fallbackFlavorLines:
+  - The smoke has told you what it can, for now.
+  - You turn what you've taken over in your mind; nothing more comes clear at the
+    racks.
+--- !u!114 &4000008
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ee97101fdb5f7264f8432e54876e78e8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Visuals.EntityFeedback
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -3076,3 +3476,5 @@ SceneRoots:
   - {fileID: 3600002}
   - {fileID: 3700002}
   - {fileID: 3800002}
+  - {fileID: 3900002}
+  - {fileID: 4000002}

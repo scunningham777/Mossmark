@@ -45,6 +45,12 @@ namespace Mossmark.EditorTools
         [MenuItem("Mossmark/Prototype4/Teleport Player To Char Knot")]
         private static void TeleportToCharKnot() => TeleportToNamed("A Char Knot");
 
+        [MenuItem("Mossmark/Prototype4/Teleport Player To Smoked Eel")]
+        private static void TeleportToSmokedEel() => TeleportToNamed("A Smoked Eel");
+
+        [MenuItem("Mossmark/Prototype4/Teleport Player To Smoking Racks")]
+        private static void TeleportToSmokingRacks() => TeleportToNamed("The Smoking Racks");
+
         [MenuItem("Mossmark/Prototype4/Teleport Player To Bedroll")]
         private static void TeleportToBedroll()
         {
@@ -64,7 +70,7 @@ namespace Mossmark.EditorTools
         [MenuItem("Mossmark/Prototype4/Log Entity State")]
         private static void LogEntityState()
         {
-            foreach (var entity in Object.FindObjectsByType<AcquaintableAttendable>(FindObjectsSortMode.None))
+            foreach (var entity in Object.FindObjectsByType<AcquaintableAttendable>())
             {
                 var spriteRenderer = entity.GetComponent<SpriteRenderer>();
                 Debug.Log($"P4Debug: '{entity.name}' acquaintanceStage={entity.CurrentStageIndex}, " +
@@ -112,7 +118,7 @@ namespace Mossmark.EditorTools
 
             AcquaintableAttendable nearest = null;
             float nearestSqrDist = float.MaxValue;
-            foreach (var entity in Object.FindObjectsByType<AcquaintableAttendable>(FindObjectsSortMode.None))
+            foreach (var entity in Object.FindObjectsByType<AcquaintableAttendable>())
             {
                 float sqrDist = (entity.transform.position - player.transform.position).sqrMagnitude;
                 if (sqrDist < nearestSqrDist)

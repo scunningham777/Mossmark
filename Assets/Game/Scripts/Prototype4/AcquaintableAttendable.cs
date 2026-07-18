@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Mossmark.Attention;
+using Mossmark.Day;
 using Mossmark.Development;
 using Mossmark.Inventory;
 using UnityEngine;
@@ -14,12 +15,23 @@ namespace Mossmark.Prototype4
     // world -> player).
     //
     // Iteration 4.2: acquaintance IS a DevelopmentTrack — the same machinery as a
-    // building's repair stages, gated on AttentionCountCondition (always satisfied; each
-    // stage's attendsCost is the threshold). CurrentStageIndex is the acquaintance depth:
-    // -1 = Unfamiliar, then one authored AcquaintanceStage per crossing. Deepening has
-    // ZERO effect on the entity itself — the subject block below is fixed at scene load,
-    // and VerifySubjectUnchanged() checks that explicitly after every attend rather than
-    // assuming it.
+    // building's repair stages. CurrentStageIndex is the acquaintance depth: -1 =
+    // Unfamiliar, then one authored AcquaintanceStage per crossing. Deepening has ZERO
+    // effect on the entity itself — the subject block below is fixed at scene load, and
+    // VerifySubjectUnchanged() checks that explicitly after every attend.
+    //
+    // Iteration 4.7: crossings ripen instead of counting down. Each stage has a
+    // minAttends floor (exact — gates can be exact) and a ripenChance that ramps per
+    // qualifying attend past the floor, so the moment of recognition arrives somewhere
+    // in a band rather than on a countable tick (outcomes shouldn't be exact). The
+    // crossing still runs through TryApplyStage/OnDeveloped, so tint, pop, and the
+    // overlay's upgrades list behave exactly as before; each stage's ProgressCost is 1
+    // and progress is only added on the tick that crosses.
+    //
+    // Iteration 4.8: wary entities (oneQualifyingTickPerDay) accept a single ripening
+    // attend per day, tracked against DayCycleManager.DayIndex — P2's Standing shape
+    // aimed at trust, per-entity so no WorldSite is needed. Same-day repeats resolve as
+    // flavor visits, surfaced descriptively via todaySpentLine, never as an instruction.
     public class AcquaintableAttendable : DevelopableEntity, IAttendable
     {
         [SerializeField] private string entityId = "p4_netmender";
@@ -58,13 +70,23 @@ namespace Mossmark.Prototype4
         {
             public string stageId;
             public string stageDisplayName;
-            [Min(1)] public int attendsCost = 3;
+            [Min(1)] public int minAttends = 2;
+            [Range(0.05f, 1f)] public float ripenChance = 0.5f;
             public string shortName;
             [TextArea] public string description;
             public Color tint = Color.white;
             public string interactionLine;
             public string[] attendFlavors;
+            // Set true on the crossing — the quiet consequence hook (Iteration 4.9's
+            // earned surface reads it). Empty = the crossing changes nothing elsewhere.
+            public string worldStateFlag;
         }
+
+        // Iteration 4.8: a wary entity accepts one ripening attend per day; repeats the
+        // same day are visits. todaySpentLine surfaces that state in the overlay,
+        // descriptively (the condition, never the remedy).
+        [SerializeField] private bool oneQualifyingTickPerDay;
+        [SerializeField] private string todaySpentLine;
 
         [SerializeField, Min(0.1f)] private float attendDuration = 2f;
         [SerializeField] private string[] unfamiliarAttendFlavors =
@@ -74,6 +96,11 @@ namespace Mossmark.Prototype4
 
         private DevelopmentTrack track;
         private string subjectFingerprint;
+
+        // Ripening state for the current (next-uncrossed) stage. Not part of the
+        // subject fingerprint — it belongs to the player's knowing, not to the subject.
+        private int attendsTowardNextStage;
+        private int lastQualifyingDayIndex = -1;
 
         // Read-after-complete latch, same rule as everywhere else: set in
         // OnAttentionComplete, read by ContinueAttending.
@@ -88,6 +115,15 @@ namespace Mossmark.Prototype4
                 ? acquaintanceStages[CurrentStageIndex]
                 : null;
 
+        private AcquaintanceStage NextStageDef =>
+            CurrentStageIndex + 1 < acquaintanceStages.Length ? acquaintanceStages[CurrentStageIndex + 1] : null;
+
+        private bool IsFullyAcquainted => NextStageDef == null;
+
+        private static int TodayIndex => DayCycleManager.Instance != null ? DayCycleManager.Instance.DayIndex : 0;
+
+        private bool SpentToday => oneQualifyingTickPerDay && lastQualifyingDayIndex == TodayIndex;
+
         public float AttentionDuration => attendDuration;
 
         // Every completed attention in this scene draws from the day — attention is the
@@ -96,10 +132,10 @@ namespace Mossmark.Prototype4
         // reads, same reasoning as P3.
         public bool RequiresDaylight => true;
 
-        // Deepening ticks repeat while held (the stage-crossing tick ends the hold, same
-        // interrupt rule as development everywhere); visits at full acquaintance are
-        // one-shot check-ins.
-        public bool ContinueAttending => lastAttentionWasDeepening && CanMakeProgress();
+        // Deepening ticks repeat while held; the crossing tick ends the hold (the
+        // standard interrupt rule). Wary entities end the hold after their one daily
+        // ripening tick rather than bleeding daylight into same-day visits.
+        public bool ContinueAttending => lastAttentionWasDeepening;
 
         private void Awake()
         {
@@ -108,7 +144,7 @@ namespace Mossmark.Prototype4
             {
                 var stage = acquaintanceStages[i];
                 stages[i] = new DevelopmentStage(stage.stageId, stage.stageDisplayName,
-                    stage.attendsCost, new AttentionCountCondition());
+                    1, new AttentionCountCondition(), new InOrderCondition(i));
             }
             track = new DevelopmentTrack(stages);
             OnDeveloped += HandleDeveloped;
@@ -144,7 +180,7 @@ namespace Mossmark.Prototype4
 
         // The 4.2 zero-effect check, made explicit rather than assumed: everything that
         // constitutes the subject's own state, in one comparable string. Acquaintance
-        // progress (CurrentStageIndex/PendingProgress) is deliberately NOT part of it —
+        // progress (CurrentStageIndex, ripening ticks) is deliberately NOT part of it —
         // that state belongs to the player's knowing, not to the subject.
         public string ComputeSubjectFingerprint()
         {
@@ -177,9 +213,28 @@ namespace Mossmark.Prototype4
 
         // Runs before EntityFeedback's stage-cross handler (Awake subscription order), so
         // the circle swap picks up the post-stage tint — same ordering note as P3.
+        // Also the single place a crossing's quiet consequence fires (both the attend
+        // path and the debug advance route through TryApplyStage -> OnDeveloped).
         private void HandleDeveloped(DevelopmentStage stage)
         {
             RefreshTint();
+            attendsTowardNextStage = 0;
+
+            var def = FindStageDef(stage.Id);
+            if (def != null && !string.IsNullOrEmpty(def.worldStateFlag))
+            {
+                WorldState.SetFlag(def.worldStateFlag, true);
+                Debug.Log($"{name}: WorldState flag '{def.worldStateFlag}' set.", this);
+            }
+        }
+
+        private AcquaintanceStage FindStageDef(string stageId)
+        {
+            foreach (var stage in acquaintanceStages)
+            {
+                if (stage.stageId == stageId) return stage;
+            }
+            return null;
         }
 
         public bool CanAttend() => true;
@@ -189,19 +244,21 @@ namespace Mossmark.Prototype4
         public string GetOverlayDescription()
         {
             var stage = CurrentStage;
-            if (stage == null) return unfamiliarDescription;
-
-            var description = stage.description;
+            var description = stage == null ? unfamiliarDescription : stage.description;
 
             // What they know of their own craft only becomes sayable at full
             // acquaintance — partway, you can see the skill but not name it.
-            if (!CanMakeProgress())
+            if (IsFullyAcquainted)
             {
                 var seeded = GetSeededKnownProperties();
                 if (seeded.Count > 0)
                 {
                     description = $"{description} {seededKnowledgeLead} {JoinPhrases(seeded)}.";
                 }
+            }
+            else if (SpentToday && !string.IsNullOrEmpty(todaySpentLine))
+            {
+                description = $"{description} {todaySpentLine}";
             }
 
             return description;
@@ -220,24 +277,55 @@ namespace Mossmark.Prototype4
         {
             lastAttentionWasDeepening = false;
 
-            if (CanMakeProgress())
+            if (IsFullyAcquainted || SpentToday)
             {
-                // The whole mechanic: one attend = one progress on the acquaintance
-                // track, and nothing else. ResolveAttention's own stage-cross
-                // notification uses the post-cross DisplayName, so the moment reads
-                // "The Netmender: Acquainted" — the name arriving with the crossing.
-                ResolveAttention();
-                lastAttentionWasDeepening = LastAttentionMadeProgress && !LastAttentionAppliedStage;
+                PostAttendFlavor();
+                RaiseProgressMade();
+                VerifySubjectUnchanged();
+                return;
+            }
+
+            if (oneQualifyingTickPerDay) lastQualifyingDayIndex = TodayIndex;
+            attendsTowardNextStage++;
+
+            if (RollCrossing(NextStageDef))
+            {
+                Cross();
             }
             else
             {
-                // Fully acquainted: attending is a visit. Flavor keeps the entity alive
-                // to be around; the pulse marks that the attend landed.
-                PostAttendFlavor();
+                // A ripening tick: the pulse marks that the attend landed; no counter
+                // surfaces anywhere. Wary entities end the hold here (their day's
+                // sitting is done); others keep deepening while held.
+                Debug.Log($"{name}: deepening (attend {attendsTowardNextStage} at this depth).", this);
                 RaiseProgressMade();
+                lastAttentionWasDeepening = !oneQualifyingTickPerDay;
             }
 
             VerifySubjectUnchanged();
+        }
+
+        // The 4.7 ripening roll: nothing before the floor, then a chance that ramps by
+        // ripenChance per attend past it — the crossing arrives in a band, uncountable
+        // but bounded below by authored pacing.
+        private bool RollCrossing(AcquaintanceStage stage)
+        {
+            int pastFloor = attendsTowardNextStage - stage.minAttends;
+            if (pastFloor < 0) return false;
+
+            float chance = stage.ripenChance * (pastFloor + 1);
+            return Random.value < chance;
+        }
+
+        private void Cross()
+        {
+            AddProgress();
+            if (!TryApplyStage()) return;
+
+            // Mirrors ResolveAttention's stage-cross surface, which this path bypasses:
+            // DisplayName is read after the cross, so the name arrives with the moment.
+            Debug.Log($"{DisplayName}: developed - {LastAppliedStage.DisplayName}!", this);
+            Visuals.NotificationManager.Post($"{DisplayName}: {LastAppliedStage.DisplayName}");
         }
 
         public void OnAttentionCancelled() { }
@@ -246,15 +334,13 @@ namespace Mossmark.Prototype4
         // stage across without spending play-mode attends.
         public void DebugAdvanceAcquaintance()
         {
-            if (!CanMakeProgress())
+            if (IsFullyAcquainted)
             {
                 Debug.Log($"{name}: already fully acquainted.", this);
                 return;
             }
 
-            var next = GetNextStage();
-            int needed = Mathf.Max(0, next.ProgressCost - PendingProgress);
-            if (needed > 0) AddProgress(needed);
+            AddProgress();
             TryApplyStage();
             VerifySubjectUnchanged();
         }
@@ -267,6 +353,25 @@ namespace Mossmark.Prototype4
                 : unfamiliarAttendFlavors;
             if (flavors.Length == 0) return;
             Visuals.NotificationManager.Post(flavors[Random.Range(0, flavors.Length)]);
+        }
+
+        // Acquaintance is strictly sequential — you can't be Known before you're
+        // Acquainted. Pre-4.7 the cumulative attendsCost values enforced this by
+        // accident (a deeper stage was never affordable first); with every stage at
+        // ProgressCost 1, TryApplyStage's random draw among available stages needs the
+        // order made structural or the first crossing can land on any stage.
+        private class InOrderCondition : IDependencyCondition
+        {
+            private readonly int stageIndex;
+
+            public InOrderCondition(int stageIndex)
+            {
+                this.stageIndex = stageIndex;
+            }
+
+            public bool IsSatisfied(DevelopableEntity entity) => entity.CurrentStageIndex == stageIndex - 1;
+
+            public string GetNeedsDescription(DevelopableEntity entity) => "wants only more of your attention";
         }
 
         private static string JoinPhrases(List<PropertyDefinition> properties)
