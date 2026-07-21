@@ -881,7 +881,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 07b5a8e6f14bee9448f07f0052775b36, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Day.DayCycleManager
-  maxDaylight: 5
+  maxDaylight: 6
   ambientTextData: {fileID: 11400000, guid: 1cacecf386b940799f0a966dd5a5f65e, type: 2}
   transitionFadeDuration: 0.6
 --- !u!1 &2000001
@@ -1374,8 +1374,8 @@ MonoBehaviour:
   acquaintanceStages:
   - stageId: acquainted
     stageDisplayName: Acquainted
-    minAttends: 2
-    ripenChance: 0.5
+    minAttends: 1
+    ripenChance: 0.34
     shortName: A netmender
     description: "A mender of nets — traps too, by the shapes drying on the rail.
       Old work, sure work. They nod when you come up the path now."
@@ -1386,8 +1386,8 @@ MonoBehaviour:
       as if you'd asked.
   - stageId: known
     stageDisplayName: Known
-    minAttends: 3
-    ripenChance: 0.34
+    minAttends: 2
+    ripenChance: 0.2
     shortName: The Netmender
     description: The netmender who was the ferryman here, before the rope went.
       Three households still eat out of these traps. The hands are slowing; nobody
@@ -1598,8 +1598,8 @@ MonoBehaviour:
   acquaintanceStages:
   - stageId: acquainted
     stageDisplayName: Acquainted
-    minAttends: 2
-    ripenChance: 0.5
+    minAttends: 1
+    ripenChance: 0.34
     shortName: A smokehouse
     description: A smokehouse. The dark on the walls is soot, not rot, and the roof
       is sound. Kept, though it has not been fired in a while.
@@ -1609,8 +1609,8 @@ MonoBehaviour:
     - Under the eaves the smell of old smoke holds on, faint but certain.
   - stageId: known
     stageDisplayName: Known
-    minAttends: 3
-    ripenChance: 0.34
+    minAttends: 2
+    ripenChance: 0.2
     shortName: The Smokehouse
     description: The smokehouse, re-raised on its own old timbers after the river
       took the walls. Fired every autumn run for longer than anyone here remembers,
@@ -1824,7 +1824,7 @@ MonoBehaviour:
   - stageId: acquainted
     stageDisplayName: Acquainted
     minAttends: 1
-    ripenChance: 0.65
+    ripenChance: 0.5
     shortName: An osier bed
     description: An osier bed. Willow, cut and come again. The stools are old and
       the rods are young, and someone crops it in turns.
@@ -1835,8 +1835,8 @@ MonoBehaviour:
       see it.
   - stageId: known
     stageDisplayName: Known
-    minAttends: 2
-    ripenChance: 0.5
+    minAttends: 1
+    ripenChance: 0.34
     shortName: The Osier Bed
     description: The osier bed, coppiced on a three-year turn for as long as the
       netmender has needed withies. The north side is this year's, rods straight
@@ -2409,7 +2409,7 @@ MonoBehaviour:
   - stageId: acquainted
     stageDisplayName: Acquainted
     minAttends: 1
-    ripenChance: 0.65
+    ripenChance: 0.5
     shortName: A charcoal-burner
     description: A charcoal-burner. The grey is ash, and the not-turning-around is
       the work. A burn left alone will eat itself.
@@ -2420,8 +2420,8 @@ MonoBehaviour:
       turf a hand's width.
   - stageId: known
     stageDisplayName: Known
-    minAttends: 2
-    ripenChance: 0.5
+    minAttends: 1
+    ripenChance: 0.34
     shortName: The Collier
     description: The collier, who sleeps beside the clamp when it's lit and counts
       the burn in nights, not days. There were two of them once. The second bed
@@ -2631,8 +2631,8 @@ MonoBehaviour:
   acquaintanceStages:
   - stageId: acquainted
     stageDisplayName: Acquainted
-    minAttends: 2
-    ripenChance: 0.5
+    minAttends: 1
+    ripenChance: 0.34
     shortName: A bothy
     description: A working bothy. Someone sleeps here in the burning seasons, close
       to whatever the work is. One bed slept in, by the wear of the door path.
@@ -2643,8 +2643,8 @@ MonoBehaviour:
       of mendings.
   - stageId: known
     stageDisplayName: Known
-    minAttends: 3
-    ripenChance: 0.34
+    minAttends: 2
+    ripenChance: 0.2
     shortName: The Colliers' Bothy
     description: The colliers' bothy, two beds and one slept in. The pair of them
       raised it the year the hearth ring was recut, and one of them has mended it
@@ -2853,8 +2853,8 @@ MonoBehaviour:
   acquaintanceStages:
   - stageId: acquainted
     stageDisplayName: Acquainted
-    minAttends: 2
-    ripenChance: 0.5
+    minAttends: 1
+    ripenChance: 0.34
     shortName: A burn site
     description: A burn site. A hearth ring, used and used again. Kick the leaf-fall
       aside and the char goes down past a finger's depth.
@@ -2864,8 +2864,8 @@ MonoBehaviour:
     - After rain the ground gives back a heat-smell, like an old promise.
   - stageId: known
     stageDisplayName: Known
-    minAttends: 3
-    ripenChance: 0.34
+    minAttends: 2
+    ripenChance: 0.2
     shortName: The Hearth Ring
     description: The hearth ring, cut generations back where the draught runs clean
       up the slope. Char this deep is a hundred burns, and the coppice all around
@@ -3452,6 +3452,74 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ee97101fdb5f7264f8432e54876e78e8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Visuals.EntityFeedback
+--- !u!1 &4100001
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4100002}
+  - component: {fileID: 4100003}
+  - component: {fileID: 4100004}
+  m_Layer: 0
+  m_Name: Taken Ledger UI
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4100002
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4100001}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4100003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4100001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 19102, guid: 0000000000000000e000000000000000, type: 0}
+  m_Name:
+  m_EditorClassIdentifier: UnityEngine.dll::UnityEngine.UIElements.UIDocument
+  m_PanelSettings: {fileID: 0}
+  m_ParentUI: {fileID: 0}
+  sourceAsset: {fileID: 0}
+  m_SortingOrder: 0
+  m_Position: 0
+  m_WorldSpaceSizeMode: 1
+  m_WorldSpaceWidth: 1920
+  m_WorldSpaceHeight: 1080
+  m_PivotReferenceSize: 0
+  m_Pivot: 0
+  m_WorldSpaceCollider: {fileID: 0}
+--- !u!114 &4100004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4100001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 17ef268ee0143db4baec16b417b47ad2, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Prototype3.TakenLedgerUI
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -3478,3 +3546,4 @@ SceneRoots:
   - {fileID: 3800002}
   - {fileID: 3900002}
   - {fileID: 4000002}
+  - {fileID: 4100002}

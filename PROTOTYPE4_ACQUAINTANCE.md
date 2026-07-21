@@ -227,14 +227,47 @@ All three iterations (4.7–4.9) are built and verified in Play Mode via MCP, 0 
 
 ---
 
+## Build Notes (7-18-26)
+
+The three quick items queued at the end of the 7-17-26 session are landed in `Prototype4.unity`, no new script: `TakenLedgerUI` added as a scene root (`Transform` + `UIDocument` + `TakenLedgerUI`, wiring identical to its P3 original — the component has no serialized asset references, which is what made it safe to add by hand-editing the scene YAML directly); `maxDaylight` 5 → 6; and the ripening bands widened one tier further, extending the existing 0.65/0.5/0.34 progression to 0.5/0.34/0.2 and dropping each `minAttends` floor by 1 where it was above the `[Min(1)]` clamp, across all six entities' stages.
+
+**Verification gap, flagged rather than papered over:** this pass was made without a live Play Mode check — MCP-Unity was unreachable for the whole session (`load_scene`/`get_console_logs` timed out repeatedly), consistent with the documented lock-stall limitation, not a code problem. The YAML was hand-verified (script GUID checked against `TakenLedgerUI.cs.meta`, the inserted GameObject block re-read, all twelve `minAttends`/`ripenChance` pairs and `maxDaylight` grepped for the expected values) but the regression gate (cold-load, 0 console errors, Greybox + Prototype3 still clean) has not actually been run via MCP. The playtest below is the real gate — it came back clean — but log it as a formal regression pass next time the editor's reachable via MCP too.
+
+---
+
+## Playtest findings (Sean, 7-18-26)
+
+**All three quick items landed positive.** The wider ripening bands read as more variation across thresholds, and the Taken Ledger HUD removes a lot of "wait, what did I just pick up?" / "do I have anything left to work?" noise — direct hits on both findings it was queued to answer.
+
+Two items flagged to workshop — notes, not yet scoped as iterations:
+
+**1. Tending-to-yield instead of one-shot pickup.** Sean prefers P2's shape — attend a spot repeatedly until it yields, rather than an item just lying there for a single take. This has to look different than P2 proper since P4 deliberately has no item quantity/stacking (Reuse Discipline), but the fix isn't reintroducing P2's yield-table machinery wholesale: condense a site's item pickups (e.g. the river landing's Withy + Alder Billet, or the hearth's Char Knot + Smoked Eel) into a single attendable styled after the old, pre-Iteration-44 generic wilderness spot — no development stages, attention always plays a flavor line, and each attend rolls a chance to yield one of the spot's still-untaken items (checked against `TakenLedger`, so a taken item drops out of the roll). Sean also names this as the natural seam for reconnecting the parked flow/valve thread (`WorldSite`/dominance/flow-reserve, Iterations 42–54) once that's picked back up: these become the upstream sources a flow system would throttle.
+
+*My addition:* this could also do double duty against finding 2 below, almost for free. If a tending spot's *yield chance* (never its flavor line, which should always fire — tending should never feel like it "failed") scales up the longer it's been since the player's last visit — the wary-entity days-gating shape from Iteration 4.8, reused for ripeness instead of trust — then sitting at one spot in a single visit burns through its yield chance fast, while a return after time away finds it fuller. Same precedent as the 4.4 re-skin finding (one meter, re-skinned per entity type), just applied to a place's yield instead of a person's trust. Candidate name: `TendableSpotAttendable`, sibling to `EarnedSurfaceAttendable` in `Mossmark.Prototype4`.
+
+**2. No strategic weight between diving deep on one site and going broad across several.** Right now the choice is close to pure preference: the days-gated entities (4.8) push weakly toward breadth, economy of movement pushes toward depth, and neither creates real tension. Sean is sitting with how to fix this rather than proposing an answer yet.
+
+*My addition, offered as notes rather than a recommendation:* the trap to watch for is turning this into an optimization puzzle — if there's a calculable right order (visit A then B then C to minimize days), that's a menu choice wearing a spreadsheet, which violates "Tried, not chosen" as surely as a literal dropdown would. Directions that seem more likely to stay organic:
+- Lean on item 1's ripeness idea directly — spreading attention across sites keeps more of the world "eager" at once, felt through flavor-line texture (a spot that "seems glad to see you" after time away) rather than shown as a number to route around.
+- Extend the cross-site bonus-bias seam already proven in 4.9 (the Osier Bed's crossing quietly enriching the Smoking Racks) so that knowing *several* sites, not just one deeply, occasionally opens a richer read or bias somewhere else entirely — breadth paying off in occasional Flame-Sword-register moments, not a per-visit bonus, so the direct reward stays the reveal itself (per the 7-17-26 finding).
+- Whatever shape this takes, it should surface as the same overlay/flavor texture the player already reads, never a new stat — the "felt, not read" discipline this whole doc has held to so far.
+
+Neither item is scoped as an iteration yet; recorded here for whenever this thread gets picked up, alongside the teach-loop composition already recommended below.
+
+---
+
 ## Where to pick up (for a new session)
 
-**Quick items first (same-day size, before any new thread):**
-1. **`TakenLedgerUI` into `Prototype4.unity`** — pure P3 3.9 reuse, one scene GameObject. Directly answers two findings at once (unrevealed-property visibility; osier-seam legibility).
-2. **`maxDaylight` 5 → 6** on the scene's Day Cycle Manager.
-3. *(Optional, time-boxed)* widen the ripening bands: drop floors by ~1 and `ripenChance` a step so crossings spread across more sessions — re-judge in play, don't iterate on it.
+**Quick items — done (7-18-26), see Build Notes above.** `TakenLedgerUI` added, `maxDaylight` 5 → 6, ripening bands widened a further tier. Regression gate (cold-load, 0 errors, Greybox + Prototype3 clean) still needs a formal re-run — flagged in the Build Notes verification gap.
 
-**The thread choice — what "doing something" should mean next.** Recommendation: **compose acquaintance with P3's teach loop before reconnecting flow/valve.** Reasons:
+**Three candidate threads now sit unscoped, none chosen yet:**
+- **Compose acquaintance with P3's teach loop** (recommended below, from 7-17-26) — take → work out at an earned surface → teach it to someone you've come to know → their work visibly changes.
+- **Tending-to-yield spots** (7-18-26, above) — condenses item pickups into a P2-shaped generic spot, and doubles as the flow/valve thread's eventual upstream source.
+- **Strategic depth-vs-breadth weight** (7-18-26, above) — still an open question, no shape committed.
+
+These aren't mutually exclusive — the ripeness idea in particular threads through both of the 7-18-26 items — but which to build first is a real choice, not yet made.
+
+**The thread choice — what "doing something" should mean next.** Recommendation (from 7-17-26, still standing): **compose acquaintance with P3's teach loop before reconnecting flow/valve.** Reasons:
 - Both halves are independently proven (P3: teaching under scarcity is worth choosing; P4: getting-to-know is worth doing), and their composition was already flagged in *After this* as the natural next question: does deep acquaintance gate or ease what someone will accept being taught?
 - It answers the itch *directly*: the loop becomes take → work out at an earned surface → **teach it to a person you've come to know** → their work visibly changes. That's a spend for uncovered knowledge that stays inside the attention vocabulary — no new verb needed.
 - The wary gate gives teaching a natural new texture for free: perhaps the Collier will only *hear* something taught once Known, or a taught property lands differently at different acquaintance depths. One authored pairing (e.g. teaching the Netmender `keeps_well` from the smoked eel — smoking the catch is the historically real answer to her three households' winters) would be a P3-3.4-sized pilot inside the existing scene.
@@ -250,9 +283,8 @@ Any of these keeps "hold" as the core act while making *how* it's held mean some
 
 ## After this
 
-If 4.1–4.5 hold, P4 will have shown that "getting to know an already-alive place" is a real, attention-spending activity distinct from both development-by-tending (Greybox) and teaching (P3) — the missing first act of the playthrough described in the 7-16-26 conversation this doc is drawn from. What's still explicitly unbuilt at that point, in rough order of what would come next:
+4.1–4.9 held, across two rounds of playtesting (7-17-26, 7-18-26): "getting to know an already-alive place" is a real, attention-spending activity distinct from both development-by-tending (Greybox) and teaching (P3), and the first result-of-knowing (4.9's Smoking Racks) landed as a genuinely earned consequence rather than a dispensed one. What's still open from here:
 
-- **Indirect results of knowing (next-iteration candidate per the 7-17-26 findings)**: acquaintance crossings quietly changing what the world affords, without a per-reveal payout. The machinery already exists — a `worldStateFlag` on an acquaintance stage would let a crossing set a flag that a `PoiRevealCondition` (Iteration 45's three-tier reveal) or a working surface's bias (the Iteration 39/54 pattern, already reused by P3's Scouring Bench) reads. That's both of Sean's named examples — spot access and bias growth — on proven mechanisms, with the flavor reward left untouched as the direct one. Also the natural place to add the *competing daylight uses* the checklist finding calls for (a weir-shaped landmark, a working surface — both pure reuse).
-- **Procedural rollout**: multiple sites, randomized count and archetype mix, using `WorldGenerator`'s existing clustering/member-pool machinery (Iterations 47/51) — parked until 4.6 confirms hand-authored variety is worth generalizing.
-- **Reconnecting to P3's teach loop**: once acquaintance and knowledge-as-currency have both been proven independently (P3 and P4 respectively), a later prototype is the natural place to test whether they compose — does deepening acquaintance with the Dyer, say, gate or ease what she'll accept being taught? Not assumed here; a real open question for whenever that reframe is attempted.
-- **A review surface**: if 4.5/4.6 playtesting produces the same "wait, what have I learned so far" itch P3's 3.9 answered for taken items, a non-modal acquaintance summary is the obvious next small iteration, same size and shape as `TakenLedgerUI`.
+- **Procedural rollout**: multiple sites, randomized count and archetype mix, using `WorldGenerator`'s existing clustering/member-pool machinery (Iterations 47/51). 4.6 confirmed two hand-authored sites read as genuinely different voices (the differentiation criterion held) — but procedural generalization itself is still untried, and stays parked until one of the live threads (see "Where to pick up") makes it worth the machinery.
+- **Reconnecting to P3's teach loop**: no longer just an open question — acquaintance and knowledge-as-currency have both now been independently proven (P3, P4), so this is the actively recommended next thread (see "Where to pick up" above) rather than something to speculate about.
+- **A review surface**: the item-side itch is already answered — `TakenLedgerUI`, reused into P4 on 7-18-26, directly after the 7-17-26 playtest named the osier→racks legibility gap. Still open is the acquaintance-depth side: a glanceable "who and what have I come to know, and how well" summary. The overlay's per-entity applied-upgrades list already surfaces this one entity at a time (Build Notes, 7-17-26) but reads as slightly ledger-like — worth a dedicated non-modal summary only if a future playtest names this itch specifically for acquaintance, not assumed here.
