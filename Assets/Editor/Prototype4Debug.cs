@@ -39,11 +39,11 @@ namespace Mossmark.EditorTools
         [MenuItem("Mossmark/Prototype4/Teleport Player To Hearth Ring")]
         private static void TeleportToHearthRing() => TeleportToNamed("The Hearth Ring");
 
-        [MenuItem("Mossmark/Prototype4/Teleport Player To Char Knot")]
-        private static void TeleportToCharKnot() => TeleportToNamed("A Char Knot");
-
-        [MenuItem("Mossmark/Prototype4/Teleport Player To Fused Clinker")]
-        private static void TeleportToFusedClinker() => TeleportToNamed("A Fused Clinker");
+        // Iteration 4.14: A Char Knot / A Fused Clinker were condensed into The Ash
+        // Bed (mirrors 4.12's river-landing condensation) — their standalone
+        // PropertyPickupAttendable GameObjects no longer exist.
+        [MenuItem("Mossmark/Prototype4/Teleport Player To Ash Bed")]
+        private static void TeleportToAshBed() => TeleportToNamed("The Ash Bed");
 
         [MenuItem("Mossmark/Prototype4/Teleport Player To Smoking Racks")]
         private static void TeleportToSmokingRacks() => TeleportToNamed("The Smoking Racks");
@@ -86,6 +86,37 @@ namespace Mossmark.EditorTools
                     $"subject=({entity.ComputeSubjectFingerprint()}), tint={spriteRenderer.color}, " +
                     $"overlay=\"{entity.GetOverlayDescription()}\", interaction=\"{entity.GetOverlayInteractionLine()}\"");
             }
+        }
+
+        // Iteration 4.13: surfaces TendableSpotAttendable's internal ripeness state
+        // (days away, attends spent today, the next roll's effective chance) so the
+        // organic ramp can be verified without inferring it from miss/hit frequency
+        // alone across a long MCP session.
+        [MenuItem("Mossmark/Prototype4/Log Tending Spot State")]
+        private static void LogTendingSpotState()
+        {
+            foreach (var spot in Object.FindObjectsByType<TendableSpotAttendable>())
+            {
+                Debug.Log($"P4Debug: '{spot.name}' {spot.DebugRipenessState()}");
+            }
+        }
+
+        // Iteration 4.13: calls DayCycleManager.Rest() directly (public API, the same
+        // method BedrollAttendable's OnAttentionComplete already calls) so multi-day
+        // ripeness testing doesn't require walking to the bedroll and holding through
+        // a real Begin/Release Attend cycle for every day advanced.
+        [MenuItem("Mossmark/Prototype4/Force Rest (Advance Day)")]
+        private static void ForceRest()
+        {
+            var day = DayCycleManager.Instance;
+            if (day == null)
+            {
+                Debug.Log("P4Debug: no DayCycleManager (is Play Mode running?).");
+                return;
+            }
+
+            day.Rest();
+            Debug.Log("P4Debug: forced Rest().");
         }
 
         [MenuItem("Mossmark/Prototype4/Log Daylight")]
