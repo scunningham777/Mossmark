@@ -16,7 +16,7 @@ namespace Mossmark.Inventory
             new PropertyDefinition("burns_slow",     "burns slow"),
             new PropertyDefinition("keeps_well",     "keeps well"),
             new PropertyDefinition("draws_the_eye",  "draws the eye"),
-            new PropertyDefinition("heavy_true",     "heavy and true"),
+            new PropertyDefinition("heavy_true",     "heavy and true", isAdjectival: true),
         };
 
         public static IReadOnlyList<PropertyDefinition> All => all;

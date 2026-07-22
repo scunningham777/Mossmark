@@ -68,7 +68,7 @@ namespace Mossmark.Development
             if (!string.IsNullOrEmpty(wantDescription)) return wantDescription;
             var prop = PropertyRegistry.GetById(propertyId);
             return prop != null
-                ? $"needs something that {prop.Phrase}"
+                ? $"needs something that {prop.Clause}"
                 : $"needs an item with the quality \"{propertyId}\"";
         }
     }

@@ -247,8 +247,8 @@ namespace Mossmark.Prototype3
             if (pendingWant != null)
             {
                 var property = PropertyRegistry.GetById(pendingWant.propertyId);
-                var phrase = property != null ? property.Phrase : pendingWant.propertyId;
-                return $"Hold E to speak of what {phrase}";
+                var clause = property != null ? property.Clause : pendingWant.propertyId;
+                return $"Hold E to speak of what {clause}";
             }
 
             var developedWant = CurrentDevelopedWant;
@@ -312,7 +312,7 @@ namespace Mossmark.Prototype3
             var phrases = new string[properties.Count];
             for (int i = 0; i < properties.Count; i++)
             {
-                phrases[i] = $"what {properties[i].Phrase}";
+                phrases[i] = $"what {properties[i].Clause}";
             }
             return string.Join(", and of ", phrases);
         }

@@ -48,6 +48,12 @@ namespace Mossmark.Prototype4
     // it now means "nothing further reachable by pure attention" rather than "no
     // stages left," so a taught-gated stage sitting past Known doesn't make ordinary
     // post-Known visits silently attempt to ripen toward content they can't reach yet.
+    //
+    // Iteration 4.11: the same taught-stage mechanism, reused with zero code change
+    // beyond the optional earlyTeachHintLine above, extended to a wary entity (the
+    // Collier). Confirms the mechanism itself is temperament-agnostic — what needed
+    // its own voice was authored data (a distinct pairing, a distinct hint line),
+    // never a distinct gate.
     public class AcquaintableAttendable : DevelopableEntity, IAttendable
     {
         [SerializeField] private string entityId = "p4_netmender";
@@ -104,6 +110,14 @@ namespace Mossmark.Prototype4
             // Posted the moment the property is taught (Teach()), distinct from
             // attendFlavors, which only ever fire on ordinary ripening/visit ticks.
             public string teachLine;
+            // Iteration 4.11: authored only on a taught stage, and only where the
+            // temperament actually calls for it (the Netmender's doesn't; the
+            // Collier's does). Surfaces in the overlay the moment the player already
+            // knows the paired property but the entity itself hasn't reached the
+            // taught stage yet — new authored texture for "they're not ready to hear
+            // that from you yet," not a new gating mechanism (TeachPending still only
+            // ever evaluates once the ladder's done; this is descriptive only).
+            public string earlyTeachHintLine;
         }
 
         // Iteration 4.8: a wary entity accepts one ripening attend per day; repeats the
@@ -156,6 +170,31 @@ namespace Mossmark.Prototype4
         private static int TodayIndex => DayCycleManager.Instance != null ? DayCycleManager.Instance.DayIndex : 0;
 
         private bool SpentToday => oneQualifyingTickPerDay && lastQualifyingDayIndex == TodayIndex;
+
+        // A taught stage is always authored as the array's final entry, sitting past
+        // the ladder's own end (see the class comment above) — true regardless of how
+        // far the ladder has actually progressed, unlike NextStageDef.
+        private AcquaintanceStage TaughtStageDef =>
+            acquaintanceStages.Length > 0 && !string.IsNullOrEmpty(acquaintanceStages[^1].taughtPropertyId)
+                ? acquaintanceStages[^1]
+                : null;
+
+        // Iteration 4.11: true the moment the player already knows the paired
+        // property but the entity hasn't reached the taught stage yet — the "attempt
+        // it early" case "The Teaching Thread" left open. Descriptive only; it never
+        // changes GetOverlayInteractionLine, which keeps surfacing "Hold E to speak
+        // of..." only once TeachPending itself is true (today's default, unchanged).
+        private bool EarlyTeachAttemptPending
+        {
+            get
+            {
+                var taught = TaughtStageDef;
+                if (taught == null || string.IsNullOrEmpty(taught.earlyTeachHintLine)) return false;
+                if (IsFullyAcquainted) return false;
+                if (KnowsOfSelf(taught.taughtPropertyId)) return false;
+                return WorldContext.IsPropertyKnown(playerKnowerId, taught.taughtPropertyId);
+            }
+        }
 
         // True the moment a taught-gated stage is next in line, the entity doesn't
         // already know its property, and the player does — generally, not tied to any
@@ -315,6 +354,10 @@ namespace Mossmark.Prototype4
             {
                 description = $"{description} {todaySpentLine}";
             }
+            else if (EarlyTeachAttemptPending)
+            {
+                description = $"{description} {TaughtStageDef.earlyTeachHintLine}";
+            }
 
             return description;
         }
@@ -324,8 +367,8 @@ namespace Mossmark.Prototype4
             if (TeachPending)
             {
                 var property = PropertyRegistry.GetById(NextStageDef.taughtPropertyId);
-                var phrase = property != null ? property.Phrase : NextStageDef.taughtPropertyId;
-                return $"Hold E to speak of what {phrase}";
+                var clause = property != null ? property.Clause : NextStageDef.taughtPropertyId;
+                return $"Hold E to speak of what {clause}";
             }
 
             var stage = CurrentStage;
@@ -510,7 +553,7 @@ namespace Mossmark.Prototype4
             var phrases = new string[properties.Count];
             for (int i = 0; i < properties.Count; i++)
             {
-                phrases[i] = $"what {properties[i].Phrase}";
+                phrases[i] = $"what {properties[i].Clause}";
             }
             return string.Join(", and of ", phrases);
         }

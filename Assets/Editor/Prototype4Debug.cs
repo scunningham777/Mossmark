@@ -45,6 +45,9 @@ namespace Mossmark.EditorTools
         [MenuItem("Mossmark/Prototype4/Teleport Player To Char Knot")]
         private static void TeleportToCharKnot() => TeleportToNamed("A Char Knot");
 
+        [MenuItem("Mossmark/Prototype4/Teleport Player To Fused Clinker")]
+        private static void TeleportToFusedClinker() => TeleportToNamed("A Fused Clinker");
+
         [MenuItem("Mossmark/Prototype4/Teleport Player To Smoked Eel")]
         private static void TeleportToSmokedEel() => TeleportToNamed("A Smoked Eel");
 

@@ -107,8 +107,8 @@ namespace Mossmark.Prototype4
             PropertyKnowledge.MarkKnown(playerKnowerId, candidate.Value.PropertyId);
 
             var property = PropertyRegistry.GetById(candidate.Value.PropertyId);
-            var phrase = property != null ? property.Phrase : candidate.Value.PropertyId;
-            Visuals.NotificationManager.Post($"Working the {candidate.Value.Entry.DisplayName}, it comes clear: it {phrase}.");
+            var clause = property != null ? property.Clause : candidate.Value.PropertyId;
+            Visuals.NotificationManager.Post($"Working the {candidate.Value.Entry.DisplayName}, it comes clear: it {clause}.");
             Debug.Log($"{displayName}: revealed '{candidate.Value.PropertyId}' on {candidate.Value.Entry.DisplayName}.", this);
 
             GetComponent<Visuals.EntityFeedback>()?.TriggerPop();

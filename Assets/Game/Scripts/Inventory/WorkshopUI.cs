@@ -430,8 +430,8 @@ namespace Mossmark.Inventory
                 PropertyKnowledge.MarkKnown(pick.item.ItemId, pick.propId);
 
                 var def = PropertyRegistry.GetById(pick.propId);
-                string phrase = def != null ? def.Phrase : pick.propId;
-                NotificationManager.Post($"{StationName}: nothing comes of it — though you notice {pick.item.DisplayName} {phrase}.");
+                string clause = def != null ? def.Clause : pick.propId;
+                NotificationManager.Post($"{StationName}: nothing comes of it — though you notice {pick.item.DisplayName} {clause}.");
 
                 highlightDiscoveredItemIds.Add(pick.item.ItemId);
                 Refresh();
