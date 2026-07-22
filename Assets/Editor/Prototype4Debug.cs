@@ -27,11 +27,8 @@ namespace Mossmark.EditorTools
         [MenuItem("Mossmark/Prototype4/Teleport Player To Osier Bed")]
         private static void TeleportToOsierBed() => TeleportToNamed("The Osier Bed");
 
-        [MenuItem("Mossmark/Prototype4/Teleport Player To Withy")]
-        private static void TeleportToWithy() => TeleportToNamed("A Cut Withy");
-
-        [MenuItem("Mossmark/Prototype4/Teleport Player To Alder Billet")]
-        private static void TeleportToAlderBillet() => TeleportToNamed("An Alder Billet");
+        [MenuItem("Mossmark/Prototype4/Teleport Player To The Landing")]
+        private static void TeleportToLanding() => TeleportToNamed("The Landing");
 
         [MenuItem("Mossmark/Prototype4/Teleport Player To Collier")]
         private static void TeleportToCollier() => TeleportToNamed("The Collier");
@@ -47,9 +44,6 @@ namespace Mossmark.EditorTools
 
         [MenuItem("Mossmark/Prototype4/Teleport Player To Fused Clinker")]
         private static void TeleportToFusedClinker() => TeleportToNamed("A Fused Clinker");
-
-        [MenuItem("Mossmark/Prototype4/Teleport Player To Smoked Eel")]
-        private static void TeleportToSmokedEel() => TeleportToNamed("A Smoked Eel");
 
         [MenuItem("Mossmark/Prototype4/Teleport Player To Smoking Racks")]
         private static void TeleportToSmokingRacks() => TeleportToNamed("The Smoking Racks");

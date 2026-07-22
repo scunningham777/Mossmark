@@ -1221,7 +1221,7 @@ Transform:
   m_GameObject: {fileID: 3000001}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -4, y: 1, z: 0}
+  m_LocalPosition: {x: -4, y: 0.5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1377,47 +1377,61 @@ MonoBehaviour:
     minAttends: 1
     ripenChance: 0.34
     shortName: A netmender
-    description: "A mender of nets — traps too, by the shapes drying on the rail.
-      Old work, sure work. They nod when you come up the path now."
+    description: "A mender of nets \u2014 traps too, by the shapes drying on the
+      rail. Old work, sure work. They nod when you come up the path now."
     tint: {r: 0.52, g: 0.55, b: 0.45, a: 1}
     interactionLine: Hold E to spend a while with them
     attendFlavors:
     - They work on without minding you. Once, they angle a knot toward the light,
       as if you'd asked.
+    worldStateFlag: 
+    taughtPropertyId: 
+    teachLine: 
+    earlyTeachHintLine: 
   - stageId: known
     stageDisplayName: Known
     minAttends: 2
     ripenChance: 0.2
     shortName: The Netmender
-    description: The netmender who was the ferryman here, before the rope went.
-      Three households still eat out of these traps. The hands are slowing; nobody
-      is learning the knots.
+    description: The netmender who was the ferryman here, before the rope went. Three
+      households still eat out of these traps. The hands are slowing; nobody is learning
+      the knots.
     tint: {r: 0.45, g: 0.62, b: 0.4, a: 1}
     interactionLine: Hold E to pass a while with them
     attendFlavors:
     - They glance up and go back to the knots. The silence is an easy one now.
-    - "They hold a trap out for you to see — where it wore through, and where
+    - "They hold a trap out for you to see \u2014 where it wore through, and where
       it was mended."
+    worldStateFlag: 
+    taughtPropertyId: 
+    teachLine: 
+    earlyTeachHintLine: 
   - stageId: smokes_the_catch
     stageDisplayName: Smokes the Catch
     minAttends: 1
     ripenChance: 0.5
     shortName: The Netmender
-    description: The netmender, and something new alongside the old work — a rack
-      over her own fire now, an eel split and hung. She learned it from you, and
-      hasn't stopped since. Three households will keep a little better this winter
-      for it.
+    description: "The netmender, and something new alongside the old work \u2014
+      a rack over her own fire now, an eel split and hung. She learned it from you,
+      and hasn't stopped since. Three households will keep a little better this winter
+      for it."
     tint: {r: 0.68, g: 0.56, b: 0.32, a: 1}
     interactionLine: Hold E to watch the smoke curl
     attendFlavors:
-    - She turns the rack a quarter-turn, checks the color, says nothing — but
-      she's watching for it now, same as you taught her.
+    - "She turns the rack a quarter-turn, checks the color, says nothing \u2014 but
+      she's watching for it now, same as you taught her."
     - The smoke sits low over the eaves. Whatever this winter brings, it'll keep
       a little longer for it.
+    worldStateFlag: 
     taughtPropertyId: keeps_well
-    teachLine: She goes still, working it over — then, quiet, "Keeps, does it.
-      All this time." She doesn't ask how you know. She just starts building the
-      rack.
+    teachLine: "She goes still, working it over \u2014 then, quiet, \"Keeps, does
+      it. All this time.\" She doesn't ask how you know. She just starts building
+      the rack."
+    earlyTeachHintLine: 
+  oneQualifyingTickPerDay: 0
+  todaySpentLine: 
+  playerKnowerId: p3_player
+  teachDuration: 0.6
   attendDuration: 2
   unfamiliarAttendFlavors:
   - You watch a while. The work goes on; nothing gives itself away.
@@ -1602,7 +1616,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2ea6422d1962ba3409655b2a2dc99dff, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Prototype4.AcquaintableAttendable
   entityId: p4_smokehouse
   unfamiliarShortName: A low building
@@ -1627,6 +1641,10 @@ MonoBehaviour:
     interactionLine: Hold E to take the measure of it
     attendFlavors:
     - Under the eaves the smell of old smoke holds on, faint but certain.
+    worldStateFlag: 
+    taughtPropertyId: 
+    teachLine: 
+    earlyTeachHintLine: 
   - stageId: known
     stageDisplayName: Known
     minAttends: 2
@@ -1637,11 +1655,18 @@ MonoBehaviour:
       and the eaves are hung ready for this one.
     tint: {r: 0.72, g: 0.45, b: 0.3, a: 1}
     interactionLine: Hold E to stand a while inside
-    worldStateFlag: p4_smokehouse_known
     attendFlavors:
     - The racks are worn smooth where a hundred seasons of eels have hung.
     - The light comes through the smoke-hole the way it was built to, thin and exactly
       placed.
+    worldStateFlag: p4_smokehouse_known
+    taughtPropertyId: 
+    teachLine: 
+    earlyTeachHintLine: 
+  oneQualifyingTickPerDay: 0
+  todaySpentLine: 
+  playerKnowerId: p3_player
+  teachDuration: 0.6
   attendDuration: 2
   unfamiliarAttendFlavors:
   - You walk its walls. Shut up, quiet, keeping its own counsel.
@@ -1825,7 +1850,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2ea6422d1962ba3409655b2a2dc99dff, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Prototype4.AcquaintableAttendable
   entityId: p4_osier_bed
   unfamiliarShortName: A stand of growth
@@ -1838,8 +1863,6 @@ MonoBehaviour:
   seededKnowledgeLead: The willows here are known for
   trueStateNote: coppiced on a three-year turn for the netmender's withies; north
     side ready this year
-  oneQualifyingTickPerDay: 1
-  todaySpentLine: The bed shows nothing new today; it keeps its own turns.
   acquaintanceStages:
   - stageId: acquainted
     stageDisplayName: Acquainted
@@ -1853,6 +1876,10 @@ MonoBehaviour:
     attendFlavors:
     - Cut low, grown tall, cut low again. The rhythm of it is everywhere once you
       see it.
+    worldStateFlag: 
+    taughtPropertyId: 
+    teachLine: 
+    earlyTeachHintLine: 
   - stageId: known
     stageDisplayName: Known
     minAttends: 1
@@ -1863,10 +1890,17 @@ MonoBehaviour:
       as a wish and ready for cutting.
     tint: {r: 0.42, g: 0.68, b: 0.38, a: 1}
     interactionLine: Hold E to linger among the willows
-    worldStateFlag: p4_osier_bed_known
     attendFlavors:
     - A moorhen picks its way between the stools like it owns them.
     - The cut stumps bead with sap. The bed is never done, only resting.
+    worldStateFlag: p4_osier_bed_known
+    taughtPropertyId: 
+    teachLine: 
+    earlyTeachHintLine: 
+  oneQualifyingTickPerDay: 1
+  todaySpentLine: The bed shows nothing new today; it keeps its own turns.
+  playerKnowerId: p3_player
+  teachDuration: 0.6
   attendDuration: 2
   unfamiliarAttendFlavors:
   - You walk the edge of it. Even rows, or nearly. It keeps whatever it knows.
@@ -1896,8 +1930,9 @@ GameObject:
   - component: {fileID: 3300005}
   - component: {fileID: 3300006}
   - component: {fileID: 3300007}
+  - component: {fileID: 3300008}
   m_Layer: 0
-  m_Name: A Cut Withy
+  m_Name: The Landing
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1912,7 +1947,7 @@ Transform:
   m_GameObject: {fileID: 3300001}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -2.5, y: -0.5, z: 0}
+  m_LocalPosition: {x: -4, y: 1.5, z: 0}
   m_LocalScale: {x: 0.6, y: 0.6, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1989,7 +2024,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aa0714b824ac415ea7bad38c61b9b7d2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Visuals.TriangleSpriteGenerator
-  _color: {r: 0.55, g: 0.68, b: 0.45, a: 1}
+  _color: {r: 0.42, g: 0.38, b: 0.3, a: 1}
   _textureSize: 32
 --- !u!58 &3300005
 CircleCollider2D:
@@ -2048,200 +2083,47 @@ MonoBehaviour:
   m_GameObject: {fileID: 3300001}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 83706b689248c6445a9b1aec4a833902, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Prototype3.PropertyPickupAttendable
-  itemId: p4_withy
-  playerKnowerId: p3_player
-  displayName: A Cut Withy
-  description: A willow rod left by the bed's edge, still green enough to bend double.
-  propertyIds:
-  - binds_fast
-  - split_prone
-  autoRevealOnTake: 0
-  revealLine: Withy. It bends, it binds. And split with the grain, it makes two.
-  unrevealedTakeLine: Taken. There's more to it than you can say yet.
-  attendDuration: 1
---- !u!1 &3400001
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 3400002}
-  - component: {fileID: 3400003}
-  - component: {fileID: 3400004}
-  - component: {fileID: 3400005}
-  - component: {fileID: 3400006}
-  - component: {fileID: 3400007}
-  m_Layer: 0
-  m_Name: An Alder Billet
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &3400002
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3400001}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -7, y: 0.5, z: 0}
-  m_LocalScale: {x: 0.6, y: 0.6, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!212 &3400003
-SpriteRenderer:
-  serializedVersion: 2
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3400001}
-  m_Enabled: 1
-  m_CastShadows: 0
-  m_ReceiveShadows: 0
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 0
-  m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
-  m_ForceMeshLod: -1
-  m_MeshLodSelectionBias: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 0
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_MaskInteraction: 0
-  m_Sprite: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_FlipX: 0
-  m_FlipY: 0
-  m_DrawMode: 0
-  m_Size: {x: 1, y: 1}
-  m_AdaptiveModeThreshold: 0.5
-  m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 0
-  m_SpriteSortPoint: 0
---- !u!114 &3400004
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3400001}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: aa0714b824ac415ea7bad38c61b9b7d2, type: 3}
+  m_Script: {fileID: 11500000, guid: fb0d11b40d32e21478f390719bc1049c, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Visuals.TriangleSpriteGenerator
-  _color: {r: 0.5, g: 0.35, b: 0.3, a: 1}
-  _textureSize: 32
---- !u!58 &3400005
-CircleCollider2D:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3400001}
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Density: 1
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_ForceSendLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ForceReceiveLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ContactCaptureLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_CallbackLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_IsTrigger: 1
-  m_UsedByEffector: 0
-  m_CompositeOperation: 0
-  m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0}
-  m_Radius: 0.5
---- !u!114 &3400006
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3400001}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4dbe510cc74b7c149ba35c8678f3aad2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Attention.AttendableZone
---- !u!114 &3400007
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3400001}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 83706b689248c6445a9b1aec4a833902, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Prototype3.PropertyPickupAttendable
-  itemId: p4_alder_billet
-  playerKnowerId: p3_player
-  displayName: An Alder Billet
-  description: Split wood, stacked against a dark wall and half forgotten.
-  propertyIds:
-  - burns_slow
-  autoRevealOnTake: 0
-  revealLine: Alder. It doesn't blaze, it smolders. Smoke you could hang a season's
-    catch in.
-  unrevealedTakeLine: Taken. There's more to it than you can say yet.
+  m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Prototype4.TendableSpotAttendable
+  displayName: The Landing
+  description: "Whatever the work here leaves loose \u2014 driftwood, trimmings,
+    the odd catch set aside \u2014 turns up along the bank if you take the time to
+    look."
+  yieldChance: 0.3
   attendDuration: 1
+  flavorLines:
+  - You turn over driftwood and old trimmings. Nothing today.
+  - The bank gives up mud and old rope-ends. You keep looking.
+  pool:
+  - itemId: p4_withy
+    displayName: A Cut Withy
+    propertyIds:
+    - binds_fast
+    - split_prone
+    takeLine: Taken. There's more to it than you can say yet.
+  - itemId: p4_alder_billet
+    displayName: An Alder Billet
+    propertyIds:
+    - burns_slow
+    takeLine: Taken. There's more to it than you can say yet.
+  - itemId: p4_smoked_eel
+    displayName: A Smoked Eel
+    propertyIds:
+    - keeps_well
+    takeLine: Taken. There's more to it than you can say yet.
+--- !u!114 &3300008
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3300001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ee97101fdb5f7264f8432e54876e78e8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Visuals.EntityFeedback
 --- !u!1 &3500001
 GameObject:
   m_ObjectHideFlags: 0
@@ -2410,7 +2292,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2ea6422d1962ba3409655b2a2dc99dff, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Prototype4.AcquaintableAttendable
   entityId: p4_collier
   unfamiliarShortName: A grey figure
@@ -2423,8 +2305,6 @@ MonoBehaviour:
   seededKnowledgeLead: They speak of
   trueStateNote: burns the hearth ring alone since their partner died; sleeps beside
     lit clamps; counts burns in nights
-  oneQualifyingTickPerDay: 1
-  todaySpentLine: They've said what they'll say today.
   acquaintanceStages:
   - stageId: acquainted
     stageDisplayName: Acquainted
@@ -2438,40 +2318,53 @@ MonoBehaviour:
     attendFlavors:
     - They crouch and listen to the clamp like a doctor at a chest, then shift one
       turf a hand's width.
+    worldStateFlag: 
+    taughtPropertyId: 
+    teachLine: 
+    earlyTeachHintLine: 
   - stageId: known
     stageDisplayName: Known
     minAttends: 1
     ripenChance: 0.34
     shortName: The Collier
     description: The collier, who sleeps beside the clamp when it's lit and counts
-      the burn in nights, not days. There were two of them once. The second bed
-      in the bothy has been cold a year.
+      the burn in nights, not days. There were two of them once. The second bed in
+      the bothy has been cold a year.
     tint: {r: 0.38, g: 0.36, b: 0.45, a: 1}
     interactionLine: Hold E to share the watch
     attendFlavors:
-    - They bank the fire with turves and sit back on their heels. Nothing to do
-      now, and everything to mind.
+    - They bank the fire with turves and sit back on their heels. Nothing to do now,
+      and everything to mind.
     - Once, without a word, they point. A thin blue thread of smoke, running true.
+    worldStateFlag: 
+    taughtPropertyId: 
+    teachLine: 
+    earlyTeachHintLine: 
   - stageId: shares_the_watch
     stageDisplayName: Shares the Watch
     minAttends: 1
     ripenChance: 0.5
     shortName: The Collier
-    description: The collier, and something learned from you now settled into their
-      hands — they heft a knot of char before it's banked, weighing it the way you
-      showed them, instead of waiting on the smoke alone. The second bed in the
-      bothy is still cold. The watch isn't kept alone anymore, not quite.
+    description: "The collier, and something learned from you now settled into their
+      hands \u2014 they heft a knot of char before it's banked, weighing it the way
+      you showed them, instead of waiting on the smoke alone. The second bed in the
+      bothy is still cold. The watch isn't kept alone anymore, not quite."
     tint: {r: 0.5, g: 0.42, b: 0.3, a: 1}
     interactionLine: Hold E to weigh it with them
     attendFlavors:
     - They heft a knot in their palm before they bank it, listening for what you
       taught them.
-    - Once, they hand you a piece first — wait, they mean. Feel that.
+    - "Once, they hand you a piece first \u2014 wait, they mean. Feel that."
+    worldStateFlag: 
     taughtPropertyId: heavy_true
     teachLine: They turn the fused clinker over, weigh it once, then again, and go
       quiet a long moment. "Heavy's true, then. Didn't know that." They don't ask
       who taught you.
     earlyTeachHintLine: They're not ready to hear that from you yet.
+  oneQualifyingTickPerDay: 1
+  todaySpentLine: They've said what they'll say today.
+  playerKnowerId: p3_player
+  teachDuration: 0.6
   attendDuration: 2
   unfamiliarAttendFlavors:
   - You watch the grey figure work. Whatever it tends, it tends it like a vigil.
@@ -2655,7 +2548,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2ea6422d1962ba3409655b2a2dc99dff, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Prototype4.AcquaintableAttendable
   entityId: p4_bothy
   unfamiliarShortName: A squat shelter
@@ -2681,6 +2574,10 @@ MonoBehaviour:
     attendFlavors:
     - The turf roof is patched in years. Darker squares, lighter squares, a calendar
       of mendings.
+    worldStateFlag: 
+    taughtPropertyId: 
+    teachLine: 
+    earlyTeachHintLine: 
   - stageId: known
     stageDisplayName: Known
     minAttends: 2
@@ -2692,8 +2589,15 @@ MonoBehaviour:
     tint: {r: 0.62, g: 0.5, b: 0.35, a: 1}
     interactionLine: Hold E to sit in the doorway
     attendFlavors:
-    - Two cups on the shelf. One is dusty, and has not been moved, and will not
-      be.
+    - Two cups on the shelf. One is dusty, and has not been moved, and will not be.
+    worldStateFlag: 
+    taughtPropertyId: 
+    teachLine: 
+    earlyTeachHintLine: 
+  oneQualifyingTickPerDay: 0
+  todaySpentLine: 
+  playerKnowerId: p3_player
+  teachDuration: 0.6
   attendDuration: 2
   unfamiliarAttendFlavors:
   - You circle the shelter. Built low, built stubborn. It gives nothing away.
@@ -2877,7 +2781,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2ea6422d1962ba3409655b2a2dc99dff, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Prototype4.AcquaintableAttendable
   entityId: p4_hearth_ring
   unfamiliarShortName: A bare circle
@@ -2902,6 +2806,10 @@ MonoBehaviour:
     interactionLine: Hold E to walk the ring
     attendFlavors:
     - After rain the ground gives back a heat-smell, like an old promise.
+    worldStateFlag: 
+    taughtPropertyId: 
+    teachLine: 
+    earlyTeachHintLine: 
   - stageId: known
     stageDisplayName: Known
     minAttends: 2
@@ -2913,9 +2821,17 @@ MonoBehaviour:
     tint: {r: 0.35, g: 0.3, b: 0.3, a: 1}
     interactionLine: Hold E to stand in the circle
     attendFlavors:
-    - From the ring's center the coppice reads in rings of its own. This year's
-      growth, last year's, the years before.
+    - From the ring's center the coppice reads in rings of its own. This year's growth,
+      last year's, the years before.
     - Charcoal glints in the black like something sorted, not spilled.
+    worldStateFlag: 
+    taughtPropertyId: 
+    teachLine: 
+    earlyTeachHintLine: 
+  oneQualifyingTickPerDay: 0
+  todaySpentLine: 
+  playerKnowerId: p3_player
+  teachDuration: 0.6
   attendDuration: 2
   unfamiliarAttendFlavors:
   - You toe the dark ground. It is not mud and it is not shadow.
@@ -3098,7 +3014,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 83706b689248c6445a9b1aec4a833902, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Prototype3.PropertyPickupAttendable
   itemId: p4_char_knot
   playerKnowerId: p3_player
@@ -3108,186 +3024,6 @@ MonoBehaviour:
   - burns_slow
   autoRevealOnTake: 0
   revealLine: Charcoal. Feather-light, bone-black. A fire that agreed to wait.
-  unrevealedTakeLine: Taken. There's more to it than you can say yet.
-  attendDuration: 1
---- !u!1 &3900001
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 3900002}
-  - component: {fileID: 3900003}
-  - component: {fileID: 3900004}
-  - component: {fileID: 3900005}
-  - component: {fileID: 3900006}
-  - component: {fileID: 3900007}
-  m_Layer: 0
-  m_Name: A Smoked Eel
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &3900002
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3900001}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -8, y: 3, z: 0}
-  m_LocalScale: {x: 0.6, y: 0.6, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!212 &3900003
-SpriteRenderer:
-  serializedVersion: 2
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3900001}
-  m_Enabled: 1
-  m_CastShadows: 0
-  m_ReceiveShadows: 0
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 0
-  m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
-  m_ForceMeshLod: -1
-  m_MeshLodSelectionBias: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 0
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_MaskInteraction: 0
-  m_Sprite: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_FlipX: 0
-  m_FlipY: 0
-  m_DrawMode: 0
-  m_Size: {x: 1, y: 1}
-  m_AdaptiveModeThreshold: 0.5
-  m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 0
-  m_SpriteSortPoint: 0
---- !u!114 &3900004
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3900001}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: aa0714b824ac415ea7bad38c61b9b7d2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Visuals.TriangleSpriteGenerator
-  _color: {r: 0.55, g: 0.42, b: 0.28, a: 1}
-  _textureSize: 32
---- !u!58 &3900005
-CircleCollider2D:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3900001}
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Density: 1
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_ForceSendLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ForceReceiveLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ContactCaptureLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_CallbackLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_IsTrigger: 1
-  m_UsedByEffector: 0
-  m_CompositeOperation: 0
-  m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0}
-  m_Radius: 0.5
---- !u!114 &3900006
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3900001}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4dbe510cc74b7c149ba35c8678f3aad2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Attention.AttendableZone
---- !u!114 &3900007
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3900001}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 83706b689248c6445a9b1aec4a833902, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Prototype3.PropertyPickupAttendable
-  itemId: p4_smoked_eel
-  playerKnowerId: p3_player
-  displayName: A Smoked Eel
-  description: An eel, bronze and stiff, hanging forgotten under the eaves since
-    some past firing.
-  propertyIds:
-  - keeps_well
-  autoRevealOnTake: 0
-  revealLine: Smoked eel. A season old and sound as the day it was hung.
   unrevealedTakeLine: Taken. There's more to it than you can say yet.
   attendDuration: 1
 --- !u!1 &4000001
@@ -3458,7 +3194,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a374d87f00a8dd6458dc1b13ce6fade6, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Prototype4.EarnedSurfaceAttendable
   displayName: The Smoking Racks
   playerKnowerId: p3_player
@@ -3536,7 +3272,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 19102, guid: 0000000000000000e000000000000000, type: 0}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.dll::UnityEngine.UIElements.UIDocument
   m_PanelSettings: {fileID: 0}
   m_ParentUI: {fileID: 0}
@@ -3559,7 +3295,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 17ef268ee0143db4baec16b417b47ad2, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Prototype3.TakenLedgerUI
 --- !u!1 &4200001
 GameObject:
@@ -3666,7 +3402,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: aa0714b824ac415ea7bad38c61b9b7d2, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Visuals.TriangleSpriteGenerator
   _color: {r: 0.32, g: 0.3, b: 0.28, a: 1}
   _textureSize: 32
@@ -3716,7 +3452,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4dbe510cc74b7c149ba35c8678f3aad2, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Attention.AttendableZone
 --- !u!114 &4200007
 MonoBehaviour:
@@ -3728,7 +3464,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 83706b689248c6445a9b1aec4a833902, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Prototype3.PropertyPickupAttendable
   itemId: p4_fused_clinker
   playerKnowerId: p3_player
@@ -3737,8 +3473,8 @@ MonoBehaviour:
   propertyIds:
   - heavy_true
   autoRevealOnTake: 0
-  revealLine: Clinker. Slag gone to stone in the heat — heavy, and true. It never
-    lies about its weight.
+  revealLine: "Clinker. Slag gone to stone in the heat \u2014 heavy, and true. It
+    never lies about its weight."
   unrevealedTakeLine: Taken. There's more to it than you can say yet.
   attendDuration: 1
 --- !u!1660057539 &9223372036854775807
@@ -3760,12 +3496,10 @@ SceneRoots:
   - {fileID: 3100002}
   - {fileID: 3200002}
   - {fileID: 3300002}
-  - {fileID: 3400002}
   - {fileID: 3500002}
   - {fileID: 3600002}
   - {fileID: 3700002}
   - {fileID: 3800002}
-  - {fileID: 3900002}
   - {fileID: 4000002}
   - {fileID: 4100002}
   - {fileID: 4200002}
