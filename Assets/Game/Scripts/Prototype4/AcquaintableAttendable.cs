@@ -32,6 +32,22 @@ namespace Mossmark.Prototype4
     // attend per day, tracked against DayCycleManager.DayIndex — P2's Standing shape
     // aimed at trust, per-entity so no WorldSite is needed. Same-day repeats resolve as
     // flavor visits, surfaced descriptively via todaySpentLine, never as an instruction.
+    //
+    // Iteration 4.10 (The Teaching Thread): a stage past the acquaintance ladder's own
+    // end can be gated on being taught, not just attended. TeachPending fires once such
+    // a stage is next, the entity doesn't know its property yet, and the player does
+    // (WorldContext.IsPropertyKnown(playerKnowerId, ...) — the exact check P3's own
+    // teach gate uses, and already populated: EarnedSurfaceAttendable/
+    // PropertyPickupAttendable mark every reveal under this same playerKnowerId, so no
+    // new "does the player know this" infrastructure was needed). Teach() is a short
+    // one-shot knowledge transfer; the stage itself then ripens and crosses through the
+    // ordinary shared resolver, same as every other crossing in this doc. This is a
+    // deliberate, logged exception to 4.2's zero-effect rule, not a loosening of it —
+    // that rule protects attention-only looking; teaching is its own gated spend, the
+    // same distinction P3 already drew. IsFullyAcquainted was redefined accordingly:
+    // it now means "nothing further reachable by pure attention" rather than "no
+    // stages left," so a taught-gated stage sitting past Known doesn't make ordinary
+    // post-Known visits silently attempt to ripen toward content they can't reach yet.
     public class AcquaintableAttendable : DevelopableEntity, IAttendable
     {
         [SerializeField] private string entityId = "p4_netmender";
@@ -80,6 +96,14 @@ namespace Mossmark.Prototype4
             // Set true on the crossing — the quiet consequence hook (Iteration 4.9's
             // earned surface reads it). Empty = the crossing changes nothing elsewhere.
             public string worldStateFlag;
+            // Iteration 4.10: non-empty marks this stage as taught-gated rather than
+            // reached by pure attention (see TaughtPropertyCondition). Empty on every
+            // ladder stage — only a stage sitting past the ladder's own end should ever
+            // set this.
+            public string taughtPropertyId;
+            // Posted the moment the property is taught (Teach()), distinct from
+            // attendFlavors, which only ever fire on ordinary ripening/visit ticks.
+            public string teachLine;
         }
 
         // Iteration 4.8: a wary entity accepts one ripening attend per day; repeats the
@@ -87,6 +111,12 @@ namespace Mossmark.Prototype4
         // descriptively (the condition, never the remedy).
         [SerializeField] private bool oneQualifyingTickPerDay;
         [SerializeField] private string todaySpentLine;
+
+        // Iteration 4.10: reuses P3's exact "does the player generally know this"
+        // convention rather than inventing a p4-specific one — EarnedSurfaceAttendable
+        // and PropertyPickupAttendable already mark every reveal under "p3_player".
+        [SerializeField] private string playerKnowerId = "p3_player";
+        [SerializeField, Min(0.1f)] private float teachDuration = 0.6f;
 
         [SerializeField, Min(0.1f)] private float attendDuration = 2f;
         [SerializeField] private string[] unfamiliarAttendFlavors =
@@ -118,13 +148,35 @@ namespace Mossmark.Prototype4
         private AcquaintanceStage NextStageDef =>
             CurrentStageIndex + 1 < acquaintanceStages.Length ? acquaintanceStages[CurrentStageIndex + 1] : null;
 
-        private bool IsFullyAcquainted => NextStageDef == null;
+        // Iteration 4.10: "fully acquainted" now means "nothing further reachable by
+        // pure attention," not "no stages left" — a taught-gated stage can sit past the
+        // ladder's own end without this flipping false while it's still unreachable.
+        private bool IsFullyAcquainted => NextStageDef == null || !string.IsNullOrEmpty(NextStageDef.taughtPropertyId);
 
         private static int TodayIndex => DayCycleManager.Instance != null ? DayCycleManager.Instance.DayIndex : 0;
 
         private bool SpentToday => oneQualifyingTickPerDay && lastQualifyingDayIndex == TodayIndex;
 
-        public float AttentionDuration => attendDuration;
+        // True the moment a taught-gated stage is next in line, the entity doesn't
+        // already know its property, and the player does — generally, not tied to any
+        // one item. Knowledge is the gate; nothing is carried or consumed, exactly P3's
+        // reasoning for KnowingEntityAttendable.TeachPending.
+        private bool TeachPending
+        {
+            get
+            {
+                var next = NextStageDef;
+                return next != null && !string.IsNullOrEmpty(next.taughtPropertyId)
+                    && !KnowsOfSelf(next.taughtPropertyId)
+                    && WorldContext.IsPropertyKnown(playerKnowerId, next.taughtPropertyId);
+            }
+        }
+
+        // Teaching runs the same short-hold-to-complete timer as every other
+        // attendable rather than firing on the press frame (P3's 3.3 lesson — a
+        // zero-duration teach read as instantaneous next to sustained attention).
+        // teachDuration is deliberately shorter than attendDuration: brief, still felt.
+        public float AttentionDuration => TeachPending ? teachDuration : attendDuration;
 
         // Every completed attention in this scene draws from the day — attention is the
         // day's clock (P2's premise), and finding out what something is costs the same
@@ -143,8 +195,11 @@ namespace Mossmark.Prototype4
             for (int i = 0; i < acquaintanceStages.Length; i++)
             {
                 var stage = acquaintanceStages[i];
-                stages[i] = new DevelopmentStage(stage.stageId, stage.stageDisplayName,
-                    1, new AttentionCountCondition(), new InOrderCondition(i));
+                stages[i] = string.IsNullOrEmpty(stage.taughtPropertyId)
+                    ? new DevelopmentStage(stage.stageId, stage.stageDisplayName,
+                        1, new AttentionCountCondition(), new InOrderCondition(i))
+                    : new DevelopmentStage(stage.stageId, stage.stageDisplayName,
+                        1, new TaughtPropertyCondition(stage.taughtPropertyId), new InOrderCondition(i));
             }
             track = new DevelopmentTrack(stages);
             OnDeveloped += HandleDeveloped;
@@ -266,6 +321,13 @@ namespace Mossmark.Prototype4
 
         public string GetOverlayInteractionLine()
         {
+            if (TeachPending)
+            {
+                var property = PropertyRegistry.GetById(NextStageDef.taughtPropertyId);
+                var phrase = property != null ? property.Phrase : NextStageDef.taughtPropertyId;
+                return $"Hold E to speak of what {phrase}";
+            }
+
             var stage = CurrentStage;
             if (stage != null && !string.IsNullOrEmpty(stage.interactionLine)) return stage.interactionLine;
             return unfamiliarInteractionLine;
@@ -277,7 +339,27 @@ namespace Mossmark.Prototype4
         {
             lastAttentionWasDeepening = false;
 
-            if (IsFullyAcquainted || SpentToday)
+            // Iteration 4.10: teaching takes priority over everything else whenever
+            // it's available — a deliberate choice, not an oversight. Whether a wary
+            // entity's daily gate should also cap teaching (a rare, big moment) or
+            // leave it as a once-available exception is exactly the open question
+            // 4.11's Collier pairing is scoped to answer; the Netmender never exercises
+            // SpentToday at all, so this doesn't bite here either way.
+            if (TeachPending)
+            {
+                Teach();
+                return;
+            }
+
+            // Iteration 4.10: whether this tick should ripen at all now covers two
+            // cases through the same shared logic below — the acquaintance ladder
+            // itself (unchanged), and a taught-gated stage once its property is known
+            // (CanMakeProgress reads the same TryApplyStage dependency check either
+            // way, so a not-yet-taught stage correctly falls through to a flavor visit
+            // rather than silently rolling against content it can't reach).
+            bool ripening = !SpentToday && (!IsFullyAcquainted || CanMakeProgress());
+
+            if (!ripening)
             {
                 PostAttendFlavor();
                 RaiseProgressMade();
@@ -303,6 +385,30 @@ namespace Mossmark.Prototype4
             }
 
             VerifySubjectUnchanged();
+        }
+
+        // The teach tick: knowledge transfer only, same register as P3's Teach().
+        // Re-baselines the zero-effect fingerprint immediately after — this is a
+        // deliberate, logged change to the subject, not a side effect of merely
+        // attending, so it's exactly the kind of change 4.2's rule was never meant to
+        // forbid (see "The Teaching Thread" in PROTOTYPE4_ACQUAINTANCE.md).
+        private void Teach()
+        {
+            var stage = NextStageDef;
+            if (stage == null || string.IsNullOrEmpty(stage.taughtPropertyId)) return;
+
+            PropertyKnowledge.MarkKnown(entityId, stage.taughtPropertyId);
+            subjectFingerprint = ComputeSubjectFingerprint();
+
+            var feedback = GetComponent<Visuals.EntityFeedback>();
+            if (feedback != null) feedback.TriggerPop();
+
+            if (!string.IsNullOrEmpty(stage.teachLine))
+            {
+                Visuals.NotificationManager.Post(stage.teachLine);
+            }
+
+            Debug.Log($"{name}: taught '{stage.taughtPropertyId}'.", this);
         }
 
         // The 4.7 ripening roll: nothing before the floor, then a chance that ramps by
@@ -331,18 +437,43 @@ namespace Mossmark.Prototype4
         public void OnAttentionCancelled() { }
 
         // Editor test driver shortcut (Prototype4Debug): force the next acquaintance
-        // stage across without spending play-mode attends.
+        // stage across without spending play-mode attends. Iteration 4.10: switched
+        // from IsFullyAcquainted to CanMakeProgress so this can still force a taught
+        // stage across once it's unlocked — but, correctly, not before (a not-yet-
+        // taught stage fails its dependency check exactly like a real attend would).
         public void DebugAdvanceAcquaintance()
         {
-            if (IsFullyAcquainted)
+            if (!CanMakeProgress())
             {
-                Debug.Log($"{name}: already fully acquainted.", this);
+                Debug.Log($"{name}: nothing further to advance right now.", this);
                 return;
             }
 
             AddProgress();
             TryApplyStage();
             VerifySubjectUnchanged();
+        }
+
+        // Editor test driver shortcut (Prototype4Debug): force the teach tick without
+        // requiring the player to have actually worked the paired property out first —
+        // isolates "does the taught stage behave correctly" from "does the discovery
+        // path feed it correctly."
+        public void DebugForceTeach()
+        {
+            var next = NextStageDef;
+            if (next == null || string.IsNullOrEmpty(next.taughtPropertyId))
+            {
+                Debug.Log($"{name}: no pending teachable want.", this);
+                return;
+            }
+
+            if (KnowsOfSelf(next.taughtPropertyId))
+            {
+                Debug.Log($"{name}: already knows '{next.taughtPropertyId}'.", this);
+                return;
+            }
+
+            Teach();
         }
 
         private void PostAttendFlavor()

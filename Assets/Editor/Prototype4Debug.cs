@@ -67,6 +67,17 @@ namespace Mossmark.EditorTools
             entity.DebugAdvanceAcquaintance();
         }
 
+        // Iteration 4.10: force the nearest entity's teach tick without requiring the
+        // player to have actually worked the paired property out at the racks first —
+        // no-ops (logged) if there's no pending want or the entity already knows it.
+        [MenuItem("Mossmark/Prototype4/Force Teach On Nearest Entity")]
+        private static void ForceTeach()
+        {
+            var entity = FindNearestAcquaintable();
+            if (entity == null) return;
+            entity.DebugForceTeach();
+        }
+
         [MenuItem("Mossmark/Prototype4/Log Entity State")]
         private static void LogEntityState()
         {

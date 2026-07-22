@@ -1398,6 +1398,26 @@ MonoBehaviour:
     - They glance up and go back to the knots. The silence is an easy one now.
     - "They hold a trap out for you to see — where it wore through, and where
       it was mended."
+  - stageId: smokes_the_catch
+    stageDisplayName: Smokes the Catch
+    minAttends: 1
+    ripenChance: 0.5
+    shortName: The Netmender
+    description: The netmender, and something new alongside the old work — a rack
+      over her own fire now, an eel split and hung. She learned it from you, and
+      hasn't stopped since. Three households will keep a little better this winter
+      for it.
+    tint: {r: 0.68, g: 0.56, b: 0.32, a: 1}
+    interactionLine: Hold E to watch the smoke curl
+    attendFlavors:
+    - She turns the rack a quarter-turn, checks the color, says nothing — but
+      she's watching for it now, same as you taught her.
+    - The smoke sits low over the eaves. Whatever this winter brings, it'll keep
+      a little longer for it.
+    taughtPropertyId: keeps_well
+    teachLine: She goes still, working it over — then, quiet, "Keeps, does it.
+      All this time." She doesn't ask how you know. She just starts building the
+      rack.
   attendDuration: 2
   unfamiliarAttendFlavors:
   - You watch a while. The work goes on; nothing gives itself away.
