@@ -3339,8 +3339,9 @@ MonoBehaviour:
   repairedInteractionLine: Hold E to look it over
   yieldChance: 0.5
   attendDuration: 1
-  leanNudgeOnClaim: 0.2
-  leanNudgeOnLinger: 0.09
+  neutralAttendsPerDay: 3
+  leanPerAttendStep: 0.12
+  leanJitter: 0.02
   salvageThreshold: 0.15
   repairThreshold: 0.85
   ruinedTint: {r: 0.4, g: 0.36, b: 0.34, a: 1}

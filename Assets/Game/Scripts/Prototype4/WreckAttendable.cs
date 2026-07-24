@@ -15,16 +15,23 @@ namespace Mossmark.Prototype4
     // building's multi-stage repair track, since there's exactly one fork here, not
     // a ladder.
     //
-    // The fork reads two things the game already tracks the shape of, not a new
-    // input: whether the SAME hold continues past a tick that had nothing left to
-    // give. Every day allows exactly one roll against the pool. A hold that stops
-    // right after a hit (grab-and-go) never sees a "nothing left" tick that day, so
-    // it only ever nudges toward salvage. A hold that keeps going anyway — past the
-    // day's one roll, hit or miss, or once the pool is fully claimed — nudges toward
-    // repair every further tick. ContinueAttending is unconditionally true (same
-    // reasoning as TendableSpotAttendable: no outcome here needs the hold to break)
-    // specifically so this distinction falls naturally out of whether the player
-    // releases E or keeps holding it, not out of any new mechanic.
+    // Revised 7-24-26 (Sean's playtest): the original build nudged recoveryLean
+    // immediately, per attend — a claim nudged down, and any further same-day attend
+    // nudged up. That conflated two different things: "checking whether there's
+    // anything left" and "deliberately settling in without expecting reward" are not
+    // the same intent, but they produced the identical tick (there was no way to ask
+    // without it counting as an answer), so a plain claim-then-recheck day could net
+    // almost nothing, or even tip the wrong way. It also let the fork resolve
+    // mid-attend, which read as a sudden surprise rather than a returning-to-find-out
+    // moment.
+    //
+    // The fix: recoveryLean now resolves once per day, at rest, off that day's total
+    // attend count alone (HandleDayAdvanced) — hit/miss no longer matters to the
+    // lean at all, only how many times the player showed up. Few attends reads as
+    // grab-and-go (nudges toward salvage); many attends reads as staying with the
+    // place (nudges toward repair), on a continuous formula centered on
+    // neutralAttendsPerDay rather than a hardcoded table, per the Organic value. This
+    // can never be misread mid-visit, because nothing is decided until the day ends.
     //
     // Deliberately NOT legible in advance: recoveryLean drives no tint, no flavor
     // banding, nothing at all before the fork resolves — description and interaction
@@ -61,8 +68,16 @@ namespace Mossmark.Prototype4
         // are deliberately asymmetric distances from the start, not opposite ends of
         // one meter re-centered at 0.5 by convention — see the two thresholds below.
         private float recoveryLean = 0.5f;
-        [SerializeField, Min(0f)] private float leanNudgeOnClaim = 0.2f;
-        [SerializeField, Min(0f)] private float leanNudgeOnLinger = 0.09f;
+
+        // The day-count → nudge formula (revised 7-24-26): fewer attends than
+        // neutralAttendsPerDay nudges down (salvage), more nudges up (repair), scaled
+        // continuously by leanPerAttendStep rather than a hardcoded per-count table.
+        // leanJitter adds a small amount of noise per day so the same attend count
+        // doesn't produce a bit-identical nudge every time (Organic value: use
+        // min/max ranges wherever the variance is felt).
+        [SerializeField, Min(0f)] private float neutralAttendsPerDay = 3f;
+        [SerializeField, Min(0f)] private float leanPerAttendStep = 0.12f;
+        [SerializeField, Min(0f)] private float leanJitter = 0.02f;
         [SerializeField, Range(0f, 1f)] private float salvageThreshold = 0.15f;
         [SerializeField, Range(0f, 1f)] private float repairThreshold = 0.85f;
 
@@ -104,21 +119,21 @@ namespace Mossmark.Prototype4
 
         private WreckState state = WreckState.Ruined;
 
-        // -1 = no roll spent yet. The day's single roll is spent the first time this
-        // is attended that day, hit or miss — every further attend the same day (and
-        // every attend once the pool is fully claimed, any day) is a "nothing left to
-        // give" tick regardless of RNG.
-        private int lastRollDayIndex = -1;
-
-        private static int TodayIndex => DayCycleManager.Instance != null ? DayCycleManager.Instance.DayIndex : 0;
+        // Total attends today, regardless of hit/miss — the day's single pool-roll is
+        // spent the first attend (attendsToday == 0, checked before incrementing);
+        // every further attend the same day is a "nothing left to give" tick for the
+        // pool. Also the sole input to HandleDayAdvanced's lean nudge. Reset to 0
+        // there, not compared against a day index — the counter itself IS the
+        // per-day state.
+        private int attendsToday;
 
         public float AttentionDuration => attendDuration;
         public bool RequiresDaylight => true;
 
         // Unconditionally true, same reasoning as TendableSpotAttendable: nothing
-        // here needs the hold to break for the player to read it. This is also what
-        // makes "ends there" vs. "continues past" a property of whether the player
-        // releases E or keeps holding it, per the class comment above.
+        // here needs the hold to break for the player to read it, and — since the
+        // 7-24-26 revision — the lean no longer cares about within-hold timing at
+        // all, only the day's total attend count, so there's no reason to interrupt.
         public bool ContinueAttending => true;
 
         public bool CanAttend() => true;
@@ -141,7 +156,16 @@ namespace Mossmark.Prototype4
 
         public IReadOnlyList<string> GetAppliedUpgrades() => System.Array.Empty<string>();
 
-        private void Start() => RefreshTint();
+        private void Start()
+        {
+            RefreshTint();
+            if (DayCycleManager.Instance != null) DayCycleManager.Instance.DayAdvanced += HandleDayAdvanced;
+        }
+
+        private void OnDestroy()
+        {
+            if (DayCycleManager.Instance != null) DayCycleManager.Instance.DayAdvanced -= HandleDayAdvanced;
+        }
 
         public void OnAttentionComplete()
         {
@@ -152,40 +176,53 @@ namespace Mossmark.Prototype4
                 return;
             }
 
-            int today = TodayIndex;
-            bool rollAvailable = today != lastRollDayIndex;
+            bool rollAvailable = attendsToday == 0;
             var candidates = GetUnclaimedEntries();
+            attendsToday++;
 
             if (rollAvailable && candidates.Count > 0)
             {
-                lastRollDayIndex = today;
-
                 if (Random.value < yieldChance)
                 {
                     var entry = candidates[Random.Range(0, candidates.Count)];
                     TakenLedger.Register(entry.itemId, entry.displayName, entry.propertyIds);
                     NotificationManager.Post(entry.takeLine);
                     GetComponent<EntityFeedback>()?.TriggerPop();
-                    NudgeLean(-leanNudgeOnClaim);
-                    Debug.Log($"{displayName}: yielded '{entry.displayName}' (recoveryLean={recoveryLean:0.00}).", this);
+                    Debug.Log($"{displayName}: yielded '{entry.displayName}' (attendsToday={attendsToday}).", this);
                 }
                 else
                 {
                     NotificationManager.Post(RandomLine(missFlavorLines));
-                    Debug.Log($"{displayName}: miss (recoveryLean={recoveryLean:0.00}).", this);
+                    Debug.Log($"{displayName}: miss (attendsToday={attendsToday}).", this);
                 }
             }
             else
             {
                 NotificationManager.Post(RandomLine(lingerFlavorLines));
-                NudgeLean(leanNudgeOnLinger);
-                Debug.Log($"{displayName}: lingered with nothing to give (recoveryLean={recoveryLean:0.00}).", this);
+                Debug.Log($"{displayName}: nothing left to give today (attendsToday={attendsToday}).", this);
             }
-
-            CheckResolution();
         }
 
         public void OnAttentionCancelled() { }
+
+        // The day's whole attend count, read once, is the entire input — no message,
+        // no tell, matching the "not legible in advance" rule at the top of this
+        // file. Only a returning player (or a Log Wreck State check) ever sees this
+        // move.
+        private void HandleDayAdvanced()
+        {
+            if (state == WreckState.Ruined && attendsToday > 0)
+            {
+                float dayNudge = (attendsToday - neutralAttendsPerDay) * leanPerAttendStep
+                    + Random.Range(-leanJitter, leanJitter);
+                NudgeLean(dayNudge);
+                Debug.Log($"{displayName}: day closed with {attendsToday} attend(s), " +
+                    $"recoveryLean nudged {dayNudge:0.00} to {recoveryLean:0.00}.", this);
+                CheckResolution();
+            }
+
+            attendsToday = 0;
+        }
 
         private void NudgeLean(float delta) => recoveryLean = Mathf.Clamp01(recoveryLean + delta);
 
@@ -240,8 +277,8 @@ namespace Mossmark.Prototype4
         // Editor test driver (Prototype4Debug): surfaces internal fork state for
         // verification without inferring it from console-log line text alone.
         public string DebugWreckState() =>
-            $"state={state}, recoveryLean={recoveryLean:0.00}, lastRollDayIndex={lastRollDayIndex}, " +
-            $"today={TodayIndex}, unclaimed={GetUnclaimedEntries().Count}";
+            $"state={state}, recoveryLean={recoveryLean:0.00}, attendsToday={attendsToday}, " +
+            $"unclaimed={GetUnclaimedEntries().Count}";
 
         // Editor test driver: forces a lean nudge without waiting on the daily-roll
         // cap or RNG, then re-checks resolution — same shortcut role as
