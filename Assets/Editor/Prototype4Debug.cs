@@ -54,6 +54,10 @@ namespace Mossmark.EditorTools
             TeleportTo(Object.FindAnyObjectByType<BedrollAttendable>());
         }
 
+        // Iteration 4.17: the War Scars pilot's single hand-placed wreck.
+        [MenuItem("Mossmark/Prototype4/Teleport Player To Wreck")]
+        private static void TeleportToWreck() => TeleportToNamed("The Wrecked Cart");
+
         // Iteration 4.2: force the nearest entity's next acquaintance stage across
         // (replaces 4.1's bool flip, which the real track superseded).
         [MenuItem("Mossmark/Prototype4/Advance Acquaintance On Nearest Entity")]
@@ -117,6 +121,37 @@ namespace Mossmark.EditorTools
 
             day.Rest();
             Debug.Log("P4Debug: forced Rest().");
+        }
+
+        // Iteration 4.17: surfaces WreckAttendable's internal fork state (resolved
+        // state, recoveryLean, the daily-roll cap, unclaimed pool count) — the same
+        // "make the invisible-by-design mechanism inspectable in the editor without
+        // leaking it to the player" role Log Tending Spot State plays for 4.13.
+        [MenuItem("Mossmark/Prototype4/Log Wreck State")]
+        private static void LogWreckState()
+        {
+            foreach (var wreck in Object.FindObjectsByType<WreckAttendable>())
+            {
+                Debug.Log($"P4Debug: '{wreck.name}' {wreck.DebugWreckState()}");
+            }
+        }
+
+        // Iteration 4.17: forces recoveryLean toward one pole without waiting on the
+        // daily-roll cap or RNG — same shortcut role Advance Acquaintance plays for
+        // AcquaintableAttendable's ladder. Nudges every WreckAttendable in the scene
+        // (there's only ever one in this pilot).
+        [MenuItem("Mossmark/Prototype4/Debug Nudge Wreck Toward Salvage")]
+        private static void NudgeWreckTowardSalvage() => NudgeWreck(-0.3f);
+
+        [MenuItem("Mossmark/Prototype4/Debug Nudge Wreck Toward Repair")]
+        private static void NudgeWreckTowardRepair() => NudgeWreck(0.3f);
+
+        private static void NudgeWreck(float delta)
+        {
+            foreach (var wreck in Object.FindObjectsByType<WreckAttendable>())
+            {
+                wreck.DebugNudgeLean(delta);
+            }
         }
 
         [MenuItem("Mossmark/Prototype4/Log Daylight")]
