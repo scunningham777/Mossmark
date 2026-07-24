@@ -29,6 +29,12 @@ namespace Mossmark.Prototype4
     // never guaranteed — outcomes stay probabilistic per the Organic value. Nothing
     // about this is shown as a number anywhere the player can see; it's felt only
     // through how often tending pays off.
+    //
+    // Iteration 4.15 (Site Character, single-site pilot): a second, independent axis
+    // alongside ripeness — persistent instead of resetting, never resolving, and never
+    // feeding yield chance. See the `character` field below for the mechanism and
+    // PROTOTYPE4_ACQUAINTANCE.md's Iteration 4.15 section for why it has to stay a
+    // separate outlet (tint + flavor pool) rather than a further modifier on RNG.
     public class TendableSpotAttendable : MonoBehaviour, IAttendable
     {
         [SerializeField] private string displayName = "The Landing";
@@ -54,12 +60,51 @@ namespace Mossmark.Prototype4
 
         [SerializeField, Min(0.1f)] private float attendDuration = 1f;
 
-        // Fires on every miss — tending should never feel like it "failed"; a miss
-        // is just the ordinary texture of the place, not an empty roll.
-        [SerializeField] private string[] flavorLines =
+        // Iteration 4.15 (Site Character, single-site pilot): a persistent, never-
+        // resolved record of how this site has been treated — patient vs. greedy —
+        // independent of yield RNG. Unlike ripeness (resets to a base value it decays
+        // back toward) this never resets and never resolves; it just drifts slowly.
+        // Deliberately not fed into yieldChance/ripeness: a probability nudge riding
+        // on top of ripeness's own probability nudge isn't a legible second axis, it's
+        // noise on the one that already exists (see PROTOTYPE4_ACQUAINTANCE.md's
+        // Iteration 4.15 revision note). Starts neutral; nudged by the same
+        // daysAway/attendsToday state 4.13 already computes, so no new tracking is
+        // needed — only a new read of state that already exists.
+        private float character = 0.5f;
+
+        [SerializeField, Min(0f)] private float characterNudgeUp = 0.03f;
+        [SerializeField, Min(0f)] private float characterNudgeDown = 0.06f;
+
+        private const float CharacterLowBand = 0.3f;
+        private const float CharacterHighBand = 0.7f;
+
+        // Continuous lerp, not banded — the tint is meant to read as a slow, ongoing
+        // drift (Organic value: state that changes gradually should change
+        // continuously), unlike the flavor-line pool below, which necessarily has to
+        // pick one of a fixed set of lines and so is banded instead.
+        [SerializeField] private Color wornTint = new Color(0.55f, 0.55f, 0.6f);
+        [SerializeField] private Color thrivingTint = new Color(1f, 0.97f, 0.85f);
+
+        // Fires on every miss, hit or exhausted-pool alike — tending should never feel
+        // like it "failed"; a miss is just the ordinary texture of the place, not an
+        // empty roll. Which pool fires is biased by character's current band, so the
+        // same miss reads differently depending on how the site's been treated — and,
+        // since this keeps firing after the item pool is fully claimed, it's also what
+        // keeps an exhausted spot from ever going quiet.
+        [SerializeField] private string[] wornFlavorLines =
+        {
+            "The place feels picked over, hurried through.",
+            "Whatever's here goes fast when you don't let it sit.",
+        };
+        [SerializeField] private string[] midFlavorLines =
         {
             "You turn over driftwood and old trimmings. Nothing today.",
             "The bank gives up mud and old rope-ends. You keep looking.",
+        };
+        [SerializeField] private string[] thrivingFlavorLines =
+        {
+            "The place feels well kept, generous with what it has.",
+            "Whatever you're looking for, it feels closer for the patience.",
         };
 
         [SerializeField] private YieldEntry[] pool;
@@ -100,6 +145,8 @@ namespace Mossmark.Prototype4
 
         public IReadOnlyList<string> GetAppliedUpgrades() => System.Array.Empty<string>();
 
+        private void Start() => RefreshTint();
+
         public void OnAttentionComplete()
         {
             int today = TodayIndex;
@@ -110,17 +157,30 @@ namespace Mossmark.Prototype4
                 + ripenBonusPerDayAway * daysAway
                 - depletionPerAttendToday * attendsToday);
 
+            // Character nudge reads the same daysAway/attendsToday state above, before
+            // this attend's own increment — daysAway > 0 means this attend is arriving
+            // after a real absence (ripe); attendsToday > 0 means the spot's already
+            // been worked at least once today (depleted). The two are mutually
+            // exclusive by construction: daysAway > 0 only happens on a new day, which
+            // is exactly when attendsToday was just reset to 0 above. A spot's very
+            // first-ever attend is neither (nothing to have been patient or greedy
+            // about yet), so it nudges nothing.
+            if (daysAway > 0) character = Mathf.Clamp01(character + characterNudgeUp);
+            else if (attendsToday > 0) character = Mathf.Clamp01(character - characterNudgeDown);
+
             attendsToday++;
             lastVisitDayIndex = today;
+            RefreshTint();
 
             var candidates = GetUnclaimedEntries();
             if (candidates.Count == 0 || Random.value >= effectiveChance)
             {
-                if (flavorLines.Length > 0)
+                var flavorPool = CurrentFlavorPool();
+                if (flavorPool.Length > 0)
                 {
-                    NotificationManager.Post(flavorLines[Random.Range(0, flavorLines.Length)]);
+                    NotificationManager.Post(flavorPool[Random.Range(0, flavorPool.Length)]);
                 }
-                Debug.Log($"{displayName}: miss (daysAway={daysAway}, attendsToday={attendsToday}, chance={effectiveChance:0.00}).", this);
+                Debug.Log($"{displayName}: miss (daysAway={daysAway}, attendsToday={attendsToday}, chance={effectiveChance:0.00}, character={character:0.00}).", this);
                 return;
             }
 
@@ -128,10 +188,23 @@ namespace Mossmark.Prototype4
             TakenLedger.Register(entry.itemId, entry.displayName, entry.propertyIds);
             NotificationManager.Post(entry.takeLine);
             GetComponent<EntityFeedback>()?.TriggerPop();
-            Debug.Log($"{displayName}: yielded '{entry.displayName}' (daysAway={daysAway}, attendsToday={attendsToday}, chance={effectiveChance:0.00}).", this);
+            Debug.Log($"{displayName}: yielded '{entry.displayName}' (daysAway={daysAway}, attendsToday={attendsToday}, chance={effectiveChance:0.00}, character={character:0.00}).", this);
         }
 
         public void OnAttentionCancelled() { }
+
+        private void RefreshTint()
+        {
+            var spriteRenderer = GetComponent<SpriteRenderer>();
+            if (spriteRenderer != null) spriteRenderer.color = Color.Lerp(wornTint, thrivingTint, character);
+        }
+
+        private string[] CurrentFlavorPool()
+        {
+            if (character < CharacterLowBand) return wornFlavorLines;
+            if (character > CharacterHighBand) return thrivingFlavorLines;
+            return midFlavorLines;
+        }
 
         // Editor test driver (Prototype4Debug): surfaces the internal ripeness state
         // for verification without relying on parsing per-attend console lines.
@@ -144,6 +217,16 @@ namespace Mossmark.Prototype4
                 - depletionPerAttendToday * attendsTodaySoFar);
             return $"lastVisitDayIndex={lastVisitDayIndex}, today={TodayIndex}, daysAway={daysAway}, " +
                 $"attendsToday={attendsTodaySoFar}, nextEffectiveChance={nextChance:0.00}, unclaimed={GetUnclaimedEntries().Count}";
+        }
+
+        // Iteration 4.15: surfaces character's raw value, its current band, and the
+        // sprite tint that band currently drives — so the pilot's legibility can be
+        // checked directly rather than inferred from console-log line text alone.
+        public string DebugCharacterState()
+        {
+            string band = character < CharacterLowBand ? "worn" : character > CharacterHighBand ? "thriving" : "mid";
+            var spriteRenderer = GetComponent<SpriteRenderer>();
+            return $"character={character:0.00} ({band}), tint={(spriteRenderer != null ? spriteRenderer.color.ToString() : "n/a")}";
         }
 
         private List<YieldEntry> GetUnclaimedEntries()

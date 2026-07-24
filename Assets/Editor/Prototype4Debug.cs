@@ -97,7 +97,7 @@ namespace Mossmark.EditorTools
         {
             foreach (var spot in Object.FindObjectsByType<TendableSpotAttendable>())
             {
-                Debug.Log($"P4Debug: '{spot.name}' {spot.DebugRipenessState()}");
+                Debug.Log($"P4Debug: '{spot.name}' {spot.DebugRipenessState()}, {spot.DebugCharacterState()}");
             }
         }
 

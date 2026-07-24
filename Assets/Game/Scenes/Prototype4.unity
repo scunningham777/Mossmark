@@ -2092,9 +2092,20 @@ MonoBehaviour:
     look."
   yieldChance: 0.3
   attendDuration: 1
-  flavorLines:
+  characterNudgeUp: 0.03
+  characterNudgeDown: 0.06
+  wornTint: {r: 0.55, g: 0.55, b: 0.6, a: 1}
+  thrivingTint: {r: 1, g: 0.97, b: 0.85, a: 1}
+  wornFlavorLines:
+  - The bank looks stripped bare where you've been standing. Give it room.
+  - You've picked this stretch clean for today. It shows.
+  midFlavorLines:
   - You turn over driftwood and old trimmings. Nothing today.
   - The bank gives up mud and old rope-ends. You keep looking.
+  thrivingFlavorLines:
+  - The bank looks fuller than you left it, whatever gathers here has had
+    time to settle.
+  - Driftwood and trimmings pile easy today. The place seems glad of the rest.
   pool:
   - itemId: p4_withy
     displayName: A Cut Withy
@@ -2355,11 +2366,33 @@ MonoBehaviour:
     - They heft a knot in their palm before they bank it, listening for what you
       taught them.
     - "Once, they hand you a piece first \u2014 wait, they mean. Feel that."
-    worldStateFlag: 
+    worldStateFlag:
     taughtPropertyId: heavy_true
     teachLine: They turn the fused clinker over, weigh it once, then again, and go
       quiet a long moment. "Heavy's true, then. Didn't know that." They don't ask
       who taught you.
+    earlyTeachHintLine: They're not ready to hear that from you yet.
+  - stageId: banked_to_keep
+    stageDisplayName: Banked to Keep
+    minAttends: 1
+    ripenChance: 0.5
+    shortName: The Collier
+    description: The collier banks the clamp deep now, packed the way you showed
+      them so it holds through the whole night on its own. They don't sit up watching
+      every hour anymore. Some nights, once it's banked right, they climb down off
+      the slope, same as anyone might. The second bed in the bothy is still cold,
+      but not every night ends beside the ring.
+    tint: {r: 0.62, g: 0.5, b: 0.26, a: 1}
+    interactionLine: Hold E to bank it deep
+    attendFlavors:
+    - They pack the turves in tight, testing with a thumb the way you do at the racks,
+      until no smoke shows at all.
+    - Once, they leave the ring banked and walk down with you a way, like it's nothing.
+    worldStateFlag:
+    taughtPropertyId: keeps_well
+    teachLine: They go still, turning it over. "Keeps well," they say, tasting the
+      word. "Same as banking a fire right. Do it well enough, and it needs no one
+      sitting up." They don't ask who taught you.
     earlyTeachHintLine: They're not ready to hear that from you yet.
   oneQualifyingTickPerDay: 1
   todaySpentLine: They've said what they'll say today.
@@ -3297,7 +3330,7 @@ MonoBehaviour:
   maxDaysAwayBonus: 3
   depletionPerAttendToday: 0.08
   attendDuration: 1
-  flavorLines:
+  midFlavorLines:
   - You turn the ash over. Warm still, in patches. Nothing today.
   - Spent char and cold clinker, same as yesterday's raking. You keep at it.
   pool:

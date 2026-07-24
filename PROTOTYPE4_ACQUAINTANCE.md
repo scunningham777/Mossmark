@@ -422,6 +422,131 @@ Scoped and built 7-21-26, same session as 4.13. Sean's steer: with ripeness land
 
 ---
 
+# Iteration 4.15 — Site Character (Single-Site Pilot)
+
+## The claim under test
+
+Everything that currently repeats indefinitely (exhaustion) only ever penalizes. Everything that rewards (yield, Standing) fires once or drains to empty and stays there. There's no axis where a place carries a permanent, continuously-legible record of how it's been treated — something felt on sight and in tone, every visit, not inferred from a probability nudge buried under RNG and ripeness's own sliding modifier.
+
+**This iteration tests only whether that axis is felt at all.** It's deliberately not attached to a goal, economy, or downstream system yet. Naming what it's *for* before confirming it's *felt* is the same mistake the Druid Framing spine made — reasoning a system into coherence before greybox testing it.
+
+**Revision note:** an earlier pass of this doc proposed feeding `character` into ripeness's `ChanceMultiplier`. Rejected before build: a probability nudge on top of ripeness's own probability nudge on top of base RNG isn't a legible second axis, it's noise on an existing one — the same "designing around architectural reuse" trap the project has flagged before. This version gives `character` its own outlet instead of sharing ripeness's.
+
+## Mechanism
+
+One new float per site, `character` (0–1, starts at 0.5), on `TendableSpotAttendable` (The Landing — pilot site only). Unlike `exhaustion` (resets daily) and unlike Standing (latches once, done), `character` is:
+
+- **Persistent** — never resets, carries across days and sessions.
+- **Never resolved** — no threshold, no stage crossing, no "done." Always still moving.
+- **Slow** — nudged a small amount per attend, not swung by any single visit.
+
+### Input — pattern, not volume
+
+Nudging `character` off raw attendance would be circular (attending more just proves you attended more). Instead it reads the same `daysAway`/`attendsToday` state 4.13's ripeness already tracks — no new tracking required:
+
+- Attending while the spot is **ripe** (returned after time away) nudges `character` up.
+- Attending while the spot is **depleted for the day** (already hammered today) nudges `character` down, by a larger step than the up-nudge.
+
+This makes `character` a record of *how* the site has been treated — patient vs. greedy — not *how much* it's been visited.
+
+### Outlet — visible independent of yield RNG
+
+Two channels, both driven purely by `character`'s current band (low / mid / high), neither touching yield chance:
+
+1. **Ambient tint.** Same lerp pattern already used for `SpotStageDef.Tint`/Standing — the site's sprite shifts slowly toward a "thriving" or "worn" tint as `character` moves. Legible on sight, no UI.
+2. **Flavor line selection.** `character`'s band biases which flavor line fires on attend — and flavor fires on **every** attend, hit or miss, forever, even once the item pool (capped at 3 possible hits total) is fully exhausted. This is the piece that keeps the signal alive long after hits stop being possible, and incidentally fixes the "exhausted spot goes dead" problem as a side effect.
+
+No new UI beyond tint, no change to yield chance, no NPC-facing changes, no second site.
+
+## Explicitly out of scope
+
+- Any feed into yield chance, ripeness, or any other probability — `character` is display/flavor only in this pilot.
+- The Ash Bed — single-site pilot only, per standing discipline.
+- Any tie-in to Standing, dominance, or the parked flow/valve thread — this is a *prerequisite* experiment for that reconnection, not the reconnection itself.
+- Any purpose for the axis (goal, resource, unlock) — deferred until legibility is confirmed.
+- New flavor-line content beyond enough lines to cover the three bands convincingly — full authoring pass waits until the pilot lands.
+
+## Success criterion (playtest, not metric)
+
+Across normal, undirected play at The Landing — including well after its three items are fully claimed — does the site read as "thriving" or "worn" through tint and tone alone, in a way that tracks how it's actually been treated? Does this remain legible once the yield pool is exhausted and RNG is no longer in play at all? If the tint/flavor shift isn't noticed or doesn't track treatment, that's a real negative result on the mechanism itself — cause to drop it, not just re-tune the bands.
+
+## Why this is the right next pilot
+
+It isolates the one open question — *is a persistent-but-still-live axis felt at all* — from every question about what it should mean, and from ripeness's own RNG so the two signals can't be confused for each other. If it lands, the next conversation is what to attach it to, and the flow/dominance thread becomes a much more informed reconnection. If it doesn't land, that's cheap to learn now, before any of that architecture gets built on top of it.
+
+---
+
+## Iteration 4.15 Build Notes (7-22-26)
+
+Built and verified live in Play Mode via MCP; the Greybox + Prototype3 regression gate re-run clean afterward (0 errors, 0 warnings, both scenes loaded and entered Play Mode without issue — Greybox's wandering-thing spawner firing normally). New code confined to `TendableSpotAttendable` (a private runtime `character` float, two nudge-size fields, two tint fields, three banded flavor-line arrays, `RefreshTint()`/`CurrentFlavorPool()`, and a `DebugCharacterState()` accessor) plus one line in `Prototype4Debug.cs`'s `LogTendingSpotState()`. No shared script touched, no `DevelopableEntity`/track involved (matching 4.12's original reasoning: there's no stage to cross here).
+
+**The mechanism, as built:** `character` starts at 0.5 and is nudged inside `OnAttentionComplete()`, reading the exact `daysAway`/`attendsToday` values 4.13's ripeness math already computes that same tick, before either is updated for this attend:
+- `daysAway > 0` (this attend arrives after a real absence — the same condition that grants ripeness's bonus) nudges `character` up by `characterNudgeUp` (0.03).
+- Otherwise, `attendsToday > 0` (the spot's already been worked at least once today) nudges it down by `characterNudgeDown` (0.06) — twice the step, per the doc's "greed should read faster than patience earns it back."
+- The two conditions are mutually exclusive by construction (`daysAway > 0` only happens on a new day, exactly when `attendsToday` was just reset to 0), and a spot's very first-ever attend (both zero) nudges neither — there's nothing yet to have been patient or greedy about.
+
+Two outlets, both reading `character` directly, neither touching `yieldChance`/ripeness:
+- **Tint** (`RefreshTint()`): `Color.Lerp(wornTint, thrivingTint, character)` applied to the `SpriteRenderer` every attend (and once at `Start()` for the cold-load baseline) — continuous, not banded, per the Organic value.
+- **Flavor pool** (`CurrentFlavorPool()`): a three-way band split (`< 0.3` worn, `> 0.7` thriving, else mid) selecting which line array the miss-branch (hit-or-exhausted-pool-or-real-miss, all the same branch already) posts from. Thresholds match the existing `0.3`/`0.7` convention `WildernessYieldAttendable.WithTendednessSuffix` already uses for tendedness banding.
+
+**Verified live (MCP, Play Mode, 7-22-26):**
+- **Cold-load baseline**: both The Landing and The Ash Bed read `character=0.50 (mid)`, tint `RGBA(0.775, 0.760, 0.725, 1)` — the exact `Lerp` midpoint between the authored `wornTint`/`thrivingTint` — confirming the mechanism is live on both sites even though only The Landing has bespoke banded flavor content authored this iteration (Ash Bed's `flavorLines` field was renamed to `midFlavorLines` in the scene YAML to preserve its two existing hearth lines; its worn/thriving arrays fall back to this iteration's generic C# defaults, same precedent 4.13 set before 4.14 explicitly generalized ripeness's content).
+- **Up-nudge, isolated single-tick case**: a single held attend arriving after a day away moved `character` from `0.26` to `0.29` — exactly `+characterNudgeUp` — with tint shifting warmer to match.
+- **Down-nudge and floor-clamp, repeated confirmations**: multiple same-day multi-tick holds produced clean `-0.06`-per-tick sequences (e.g. `0.50→0.44→0.38→0.32→0.26`, and separately `0.11→0.05→0.00→0.00`), the second sequence confirming `Mathf.Clamp01` correctly floors at `0.00` rather than going negative, with tint correctly locking to the exact authored `wornTint` at the floor.
+- **Exhausted-pool persistence, the success criterion's central question**: after all three of The Landing's pool entries were claimed (`unclaimed=0`) during one of the depleting holds, further attends kept firing the miss branch cleanly — `character` kept updating, tint kept updating, no errors — confirming the axis (and the ordinary flavor-on-every-miss behavior it now biases) survives the pool going empty, exactly the "never goes dead" property the mechanism is supposed to guarantee.
+- **A verification-methodology limitation, flagged rather than pushed through**: reaching the numeric `> 0.7` "thriving" band live wasn't achieved this session. MCP's per-call round-trip latency (already noted as a pacing hazard in 4.13's build notes) made single-tick holds unreliable to isolate — attempts to pace a lone ripe tick via an explicit `sleep` between Begin/Release Attend repeatedly let a second, same-day (and therefore depleting) tick slip into the same hold, which nets `-0.03` overall and pins `character` back toward the floor rather than climbing it. Since the up-nudge, down-nudge, clamping, and the continuous `Lerp` were each confirmed independently and exactly against hand-computed expected values at multiple points spanning most of the 0–1 range, and `CurrentFlavorPool()`'s high-band branch is structurally identical to the already-exercised low-band branch (a symmetric threshold comparison, not a separate code path), the mechanism is code-verified across its full range even though the literal "thriving" tint/flavor pairing wasn't independently eyeballed live. Worth an explicit live check next session if MCP pacing is easier to control, or by walking the loop manually in the Editor rather than through debug menu round-trips.
+
+**The go/no-go is therefore only partially exercised**: the "worn" half of the success criterion (does the site legibly read as picked-over, does it stay legible once RNG is out of the picture) has a clean live pass. The "thriving" half rests on code-level confidence rather than an eyeballed live read this session — a real gap, named here rather than folded into "verified," per this doc's own standing discipline (see the 7-18-26 Build Notes for the precedent of flagging a verification gap rather than papering over it). A real playtest — walking the loop by hand across enough in-game days, not via debug-menu round-trips — is the actual test of the success criterion regardless.
+
+---
+
+# Iteration 4.16 — War Scars: Recovery Lean (Single-Site Pilot)
+
+## Where this comes from
+
+Scoped 7-23-26, following a design-direction session (see IDEAS.md, "Protagonist Goal: Roaming Debt, and the Interconnected-Sites / War Scars Threads") that worked out what the protagonist's big-picture goal is and what it's measured against, without mechanizing anything beyond a light reframe of what P4 already does. That session named "war scars" — physical sites bearing visible damage from the war/collapse — as the first concrete build target, ahead of the separate (and explicitly bigger, procedural-generation-adjacent) interconnected-sites thread. This iteration is that pilot, scoped down to the single mechanism actually under test.
+
+**This iteration deliberately carries no debt/roaming-goal framing.** The IDEAS.md session was theme-level and explicitly stopped short of mechanizing the goal itself, per the project's standing rule against building on argued-not-tested reasoning. What's being tested here is narrower and prior to that: whether a site whose fate is shaped by *how* it's attended, without ever presenting the player a choice, is felt as meaningfully different from ordinary tendedness drift. Debt-flavored flavor text and any framing language are explicitly withheld until this bare mechanism has been played.
+
+## The claim under test
+
+4.15 proved a site can carry a continuous, felt record of treatment (`character`) without that record ever resolving into a stage-cross or an outcome. This iteration asks the opposite-shaped question: can manner-of-attention drive a site toward one of two genuinely different *resolved* outcomes — without the player ever being asked to choose, per Tried Not Chosen — and have that resolution read as consequence rather than a coin flip?
+
+**This iteration tests only whether the fork itself is felt and legible.** It is explicitly not testing what either resolved state is *for* (no downstream unlock, no debt payoff, no economy) — naming that before the fork itself lands would repeat the same reasoning-before-testing mistake IDEAS.md's session was careful to avoid mechanizing.
+
+## Mechanism
+
+**Entity:** one hand-placed POI-style wreck (a wrecked cart-and-goods scene, or similar small tableau consistent with the project's material-culture grounding) — not a Building. Chosen over a building specifically because it's structurally closer to existing `WildernessYieldAttendable`/`LandmarkAttendable` precedent than to the heavier `DevelopableEntity` building-repair shape, and finite salvage suits a POI better than a multi-stage repair track suits a first pilot.
+
+**Starting stage:** `Ruined` — seeded already-collapsed, distinct from the ordinary dilapidated-with-latent-specialization starting stage buildings use elsewhere in Greybox. New stage, not a reuse of an existing one, since nothing existing means "already destroyed by the war" specifically.
+
+**The fork — site's-choice, not player's-choice.** No menu prompt. A single new float, `recoveryLean` (0–1, same shape and precedent as 4.15's `character`), nudged inside the same kind of attend-completion hook 4.15 uses, reading manner of attention rather than presenting a decision:
+- An attend that claims yield and ends there (grab-and-go, no lingering once there's something to take) nudges `recoveryLean` down, toward salvage.
+- An attend that continues past the point where the yield pool has nothing left to give for the day (staying with the site once there's no reward left) nudges `recoveryLean` up, toward repair — the same "care read from presence without reward" signal 4.15's up-nudge uses for `character`.
+
+At a threshold (same stage-cross convention every other track in this doc already uses), the site resolves once, into one of two end states:
+- **Salvaged-and-laid-to-rest**: yield pool fully exhausted, entity becomes an inert landmark-class marker, flavor shifts to a closed/grave-marked register.
+- **Repaired**: a minimal restored state — for this pilot, a single visible change (tint/silhouette shift) is enough to register the branch; a full multi-stage rebuild track is out of scope here.
+
+## Explicitly out of scope
+
+- **Any player-facing choice or prompt.** The entire point is that the fork is legible only in hindsight, from how the site responded — not offered as a decision.
+- **Reclamation / a second transition after resolution.** A salvaged-and-laid-to-rest site drifting again later (nature or new settlers reclaiming it) is a real and named idea — but it's a second mechanism layered on one that hasn't been tested once yet. Deferred; see Next Steps.
+- **Debt/roaming-goal flavor language.** Withheld deliberately this iteration — see "Where this comes from" above.
+- **A full building-style repair track.** The repair end-state is a single visible change for this pilot, not a multi-stage rebuild.
+- **Procedural rollout or a second wreck.** Single hand-placed pilot only, per standing single-pilot discipline.
+- **Any feed back into `character`, Standing, ripeness, or the parked flow/valve thread.** `recoveryLean` is its own axis on its own entity, same isolation discipline 4.15 used.
+
+## Success criterion (playtest, not metric)
+
+Across normal, undirected play — attending the wreck a handful of times with no prompt or explanation of the mechanism — does the eventual resolution (salvage vs. repair) feel like a consequence of how the player actually treated the site, or does it read as arbitrary/unexplained? If a player can't retroactively make sense of which way it went, that's a real negative result on the mechanism, not just a tuning problem — the whole premise is that Tried Not Chosen still needs to be legible after the fact, even without being legible in advance.
+
+## Why this is the right next pilot
+
+It isolates the one genuinely new claim — a site's *resolved, branching* fate can be shaped by manner-of-attention alone, no choice presented — from every question about what that fate is *for*. That question (debt, cross-site consequence, reclamation) stays open and undecided in IDEAS.md on purpose. If the fork isn't felt here, in the smallest possible form, attaching thematic weight to it later would just be dressing up a coin flip — the same trap 4.15's own "revision note" flagged and turned away from with `character`.
+
+---
+
 ## Next Steps
 
 Merges what used to be two separate lists ("Where to pick up," "After this") into one. 4.1–4.11 all held across four rounds of playtesting (7-17-26, 7-18-26, 7-21-26): "getting to know an already-alive place" is a real, attention-spending activity distinct from both development-by-tending (Greybox) and teaching (P3); the first result-of-knowing (4.9's Smoking Racks) landed as a genuinely earned consequence; and the teach-loop composition (4.10, 4.11) works mechanically on both a sitting-gated and a wary entity. None of that is repeated below — see each iteration's own Build Notes and Playtest Findings sections above for what's already landed and verified. What follows is only what's still open and unscoped.
@@ -432,6 +557,7 @@ Merges what used to be two separate lists ("Where to pick up," "After this") int
 - **Richer interaction than hold-E** (notes, not scope — needs its own pilot when picked up): hold-to-attend reads as "a placeholder for something more rich and involved" (7-17-26 finding). The design values rule out outcome menus, recipe grids, and QTE-shaped skill checks — all of them make the player pick what happens — but not enriching the channels attention already has: **where you stand** (position relative to the entity as expressive input — the player still only chooses where to stand and how long to stay), **when you come** (time-of-day/rhythm as texture via the existing `IOutcomeModifier` pattern, never a puzzle requirement), **what you bring** (attention flavored by what the player knows or carries — P3's teach shape generalized, already half-built). The wrong fork is a second input verb; the right fork is the world reading more out of the one verb. A one-entity pilot on positional attending is the likeliest next step — most bodily, least puzzle-prone.
 - **A glanceable acquaintance-depth summary**: the item-discovery side of this itch is already answered (`TakenLedgerUI`, reused into P4 on 7-18-26). Still open is the acquaintance-depth side — a dedicated non-modal "who and what have I come to know, and how well" summary, distinct from the overlay's per-entity applied-upgrades list (which already does this one entity at a time but reads as slightly ledger-like). Worth building only if a future playtest names this itch specifically for acquaintance, not assumed here.
 - **Procedural rollout**: multiple sites, randomized count and archetype mix, using `WorldGenerator`'s existing clustering/member-pool machinery (Iterations 47/51). 4.6 confirmed two hand-authored sites read as genuinely different voices — but procedural generalization itself is still untried, and stays parked until one of the threads above makes it worth the machinery.
+- **A salvaged site isn't necessarily a permanent dead end**: 4.16 deliberately defers this, but the idea itself is worth keeping live — a salvaged-and-laid-to-rest wreck drifting again later, reclaimed by nature or by other people (new settlers, a different NPC's use), the same way `character` drifts toward worn rather than sitting still. Structurally this would be a second transition layered on top of 4.16's resolved end state, not a new axis — closest existing precedent is `character`'s continuous drift itself. Not worth building until 4.16's single fork is confirmed felt; named here so it isn't lost.
 - **Stakes / the possibility of loss** (explored 7-21-26): a same-session pilot tested whether attending needs real risk, not just accrual, to stop feeling flat — a wary entity's trust regressing on a same-day attend pushed past its daily gate, tell-then-roll, re-earnable. The mechanism itself worked cleanly (verified live: the warning landed before the roll, releasing during it was safe, a sour regressed and re-earned correctly, the floor held), but it was backed out before playtesting: the current attend/day pacing (2-second ticks, ladders that cross in 2-3 days) doesn't give "going too far" enough room to register as a felt risk rather than a coin flip. Worth revisiting once the loop has more breathing room — the depth-vs-breadth and tending-to-yield threads above are the more likely path to that room than the stakes mechanism needing rework. Not concluded against; concluded *too early for*.
 
 None of the above is mutually exclusive, and none is chosen yet — which to build next is a real decision, not made here.
