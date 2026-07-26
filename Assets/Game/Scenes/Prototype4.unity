@@ -881,7 +881,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 07b5a8e6f14bee9448f07f0052775b36, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Day.DayCycleManager
-  maxDaylight: 6
+  maxDaylight: 7
   ambientTextData: {fileID: 11400000, guid: 1cacecf386b940799f0a966dd5a5f65e, type: 2}
   transitionFadeDuration: 0.6
 --- !u!1 &2000001
@@ -1366,8 +1366,7 @@ MonoBehaviour:
     to the path.
   unfamiliarTint: {r: 0.45, g: 0.45, b: 0.45, a: 1}
   unfamiliarInteractionLine: Hold E to watch a while
-  seededPropertyIds:
-  - binds_fast
+  seededPropertyIds: []
   seededKnowledgeLead: They speak of
   trueStateNote: mends eel traps for three households; hands slowing; teaching no
     one
@@ -1390,8 +1389,8 @@ MonoBehaviour:
     earlyTeachHintLine: 
   - stageId: known
     stageDisplayName: Known
-    minAttends: 2
-    ripenChance: 0.2
+    minAttends: 1
+    ripenChance: 0.5
     shortName: The Netmender
     description: The netmender who was the ferryman here, before the rope went. Three
       households still eat out of these traps. The hands are slowing; nobody is learning
@@ -1402,10 +1401,15 @@ MonoBehaviour:
     - They glance up and go back to the knots. The silence is an easy one now.
     - "They hold a trap out for you to see \u2014 where it wore through, and where
       it was mended."
-    worldStateFlag: 
-    taughtPropertyId: 
-    teachLine: 
-    earlyTeachHintLine: 
+    worldStateFlag:
+    taughtPropertyId: binds_fast
+    teachLine: "She takes the withy from your hand, bends it near double, lets it
+      spring back straight. \"Binds fast, this. You've been to the bed, then.\"
+      Something in how she says it settles \u2014 like you've paid a toll she didn't
+      ask for, but noticed all the same."
+    earlyTeachHintLine: "She works past you without slowing. Whatever you know of
+      binding, you haven't shown her yet \u2014 and she only opens up to someone
+      who has."
   - stageId: smokes_the_catch
     stageDisplayName: Smokes the Catch
     minAttends: 1
@@ -1647,8 +1651,8 @@ MonoBehaviour:
     earlyTeachHintLine: 
   - stageId: known
     stageDisplayName: Known
-    minAttends: 2
-    ripenChance: 0.2
+    minAttends: 1
+    ripenChance: 0.5
     shortName: The Smokehouse
     description: The smokehouse, re-raised on its own old timbers after the river
       took the walls. Fired every autumn run for longer than anyone here remembers,
@@ -1660,9 +1664,13 @@ MonoBehaviour:
     - The light comes through the smoke-hole the way it was built to, thin and exactly
       placed.
     worldStateFlag: p4_smokehouse_known
-    taughtPropertyId: 
-    teachLine: 
-    earlyTeachHintLine: 
+    taughtPropertyId:
+    teachLine:
+    earlyTeachHintLine:
+    requiredWorldStateFlag: p4_osier_bed_known
+    gateHintLine: "It could be fired tomorrow and still wouldn't be right. What
+      it's waiting on isn't you — it's upriver, and it hasn't come into
+      its own yet."
   oneQualifyingTickPerDay: 0
   todaySpentLine: 
   playerKnowerId: p3_player
@@ -2339,7 +2347,7 @@ MonoBehaviour:
   - stageId: known
     stageDisplayName: Known
     minAttends: 1
-    ripenChance: 0.34
+    ripenChance: 0.5
     shortName: The Collier
     description: The collier, who sleeps beside the clamp when it's lit and counts
       the burn in nights, not days. There were two of them once. The second bed in
@@ -2350,10 +2358,13 @@ MonoBehaviour:
     - They bank the fire with turves and sit back on their heels. Nothing to do now,
       and everything to mind.
     - Once, without a word, they point. A thin blue thread of smoke, running true.
-    worldStateFlag: 
-    taughtPropertyId: 
-    teachLine: 
-    earlyTeachHintLine: 
+    worldStateFlag:
+    taughtPropertyId: turns_water
+    teachLine: "They turn the char knot over in the wet grass, watch the water bead
+      and run rather than sink in. \"Turns it, does it. Good char, that — the
+      damp doesn't get past it.\" They don't ask who taught you."
+    earlyTeachHintLine: "Whatever you know of keeping the wet out, they haven't
+      heard it from you — and they're not the kind to ask twice."
   - stageId: shares_the_watch
     stageDisplayName: Shares the Watch
     minAttends: 1
@@ -3066,6 +3077,7 @@ MonoBehaviour:
   - burns_slow
   - keeps_well
   - heavy_true
+  - turns_water
   bonusBiasWorldStateFlag: p4_osier_bed_known
   bonusBiasPropertyIds:
   - binds_fast
@@ -3579,6 +3591,7 @@ MonoBehaviour:
     displayName: A Char Knot
     propertyIds:
     - burns_slow
+    - turns_water
     takeLine: Taken. There's more to it than you can say yet.
   - itemId: p4_fused_clinker
     displayName: A Fused Clinker

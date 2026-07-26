@@ -54,6 +54,34 @@ namespace Mossmark.Prototype4
     // Collier). Confirms the mechanism itself is temperament-agnostic — what needed
     // its own voice was authored data (a distinct pairing, a distinct hint line),
     // never a distinct gate.
+    //
+    // Iteration 4.18: a taught gate authored one slot earlier than every prior case
+    // — on Known itself, rather than on a stage sitting past it — surfaced a real
+    // gap in the 4.10/4.11 hinge: IsFullyAcquainted (NextStageDef taught) and the
+    // early-teach hint's own "not ready yet" window used to be mutually exclusive by
+    // construction, because a taught gate had only ever sat past the ladder's own
+    // end. With Known itself gated, IsFullyAcquainted goes true the moment the gate
+    // becomes live, which used to silently suppress the hint at exactly the moment
+    // it's needed. Fixed by keying the hint off !TeachPending (the true "not ready"
+    // signal) instead of !IsFullyAcquainted, and by generalizing TaughtStageDef into
+    // NextTaughtStageDef (nearest upcoming taught stage, not always the array's last
+    // entry) — see both members below. Purely a hinge correction: no new condition
+    // type, and the Netmender's Known stage now simply carries a taughtPropertyId
+    // like any other taught stage.
+    //
+    // Iteration 4.20: a second gate shape, sitting alongside taughtPropertyId rather
+    // than replacing it — requiredWorldStateFlag makes a stage depend on another
+    // entity's own crossing (WorldStateCondition, Mossmark.Development, reused
+    // unmodified — it's the same mechanism 4.9's Smoking Racks already used to react
+    // to another entity's flag). This is a state chain, not a fact the player
+    // carries: nothing is taught, TeachPending/EarlyTeachAttemptPending never
+    // engage for it. Ripening's gate-check generalizes from "is the next stage
+    // taught" (IsFullyAcquainted) to "is the next stage gated by anything but
+    // attendance" (the new NextStageIsGated) — deliberately two separate members,
+    // not one shared flag, because IsFullyAcquainted also governs the seeded-
+    // knowledge overlay reveal, and a state-gated stage's seeded properties aren't
+    // independently gated the way a taught property is (see IsFullyAcquainted's own
+    // comment for why letting it flip early here would leak that reveal).
     public class AcquaintableAttendable : DevelopableEntity, IAttendable
     {
         [SerializeField] private string entityId = "p4_netmender";
@@ -118,6 +146,17 @@ namespace Mossmark.Prototype4
             // that from you yet," not a new gating mechanism (TeachPending still only
             // ever evaluates once the ladder's done; this is descriptive only).
             public string earlyTeachHintLine;
+            // Iteration 4.20: non-empty marks this stage as gated on a WorldState flag
+            // set by another entity's own crossing (WorldStateCondition, reused
+            // unmodified from Mossmark.Development) rather than by attends or teaching.
+            // A state-chain sibling to taughtPropertyId — same "gate, not outcome" shape
+            // (Design Values: gates can be exact), different source of truth.
+            public string requiredWorldStateFlag;
+            // Iteration 4.20: descriptive-only "not yet" texture for a state-gated
+            // stage, the state-gate analog of earlyTeachHintLine — never names what's
+            // missing, only that something else hasn't happened yet (discoverable by
+            // trying, per 4.16's "no marker" precedent).
+            public string gateHintLine;
         }
 
         // Iteration 4.8: a wary entity accepts one ripening attend per day; repeats the
@@ -165,34 +204,83 @@ namespace Mossmark.Prototype4
         // Iteration 4.10: "fully acquainted" now means "nothing further reachable by
         // pure attention," not "no stages left" — a taught-gated stage can sit past the
         // ladder's own end without this flipping false while it's still unreachable.
+        // Deliberately NOT extended to cover requiredWorldStateFlag (4.20) — this flag
+        // also governs the seeded-knowledge overlay reveal below, and a state-gated
+        // stage's seeded properties aren't independently gated the way a taught
+        // property is (KnowsOfSelf only flips via Teach()). Letting this flip early for
+        // a state gate would leak the reveal before the crossing — see
+        // NextStageIsGated for the (separate) check ripening actually needs.
         private bool IsFullyAcquainted => NextStageDef == null || !string.IsNullOrEmpty(NextStageDef.taughtPropertyId);
+
+        // Iteration 4.20: the general form ripening actually needs — true whenever the
+        // next stage requires something beyond plain attendance to cross, taught (4.10)
+        // or state-gated (4.20), or there's no next stage at all. Kept separate from
+        // IsFullyAcquainted (see above) so the overlay's seeded-reveal timing is
+        // unaffected by this newer gate type.
+        private bool NextStageIsGated =>
+            NextStageDef == null
+                || !string.IsNullOrEmpty(NextStageDef.taughtPropertyId)
+                || !string.IsNullOrEmpty(NextStageDef.requiredWorldStateFlag);
+
+        // Iteration 4.20: the state-gate analog of EarlyTeachAttemptPending —
+        // descriptive-only "not yet" texture for a stage gated on another entity's
+        // crossing. Never names what's missing, only that something else hasn't
+        // happened (discoverable by trying, per 4.16's no-marker precedent).
+        private bool StateGateHintPending
+        {
+            get
+            {
+                var next = NextStageDef;
+                return next != null
+                    && !string.IsNullOrEmpty(next.requiredWorldStateFlag)
+                    && !string.IsNullOrEmpty(next.gateHintLine)
+                    && !WorldState.GetFlag(next.requiredWorldStateFlag);
+            }
+        }
 
         private static int TodayIndex => DayCycleManager.Instance != null ? DayCycleManager.Instance.DayIndex : 0;
 
         private bool SpentToday => oneQualifyingTickPerDay && lastQualifyingDayIndex == TodayIndex;
 
-        // A taught stage is always authored as the array's final entry, sitting past
-        // the ladder's own end (see the class comment above) — true regardless of how
-        // far the ladder has actually progressed, unlike NextStageDef.
-        private AcquaintanceStage TaughtStageDef =>
-            acquaintanceStages.Length > 0 && !string.IsNullOrEmpty(acquaintanceStages[^1].taughtPropertyId)
-                ? acquaintanceStages[^1]
-                : null;
+        // Iteration 4.18: the nearest not-yet-reached taught-gated stage, however far
+        // ahead it sits — generalized from 4.11's "always the array's final entry"
+        // (flagged as a structural quirk in 4.16's build notes once a second taught
+        // stage existed, and now load-bearing: 4.18 puts a taught gate on Known
+        // itself, one slot before the ladder's prior taught-gated stage). Scanning
+        // forward rather than hardcoding the last entry means the hint always speaks
+        // to whichever gate is actually next, not whichever was authored last.
+        private AcquaintanceStage NextTaughtStageDef
+        {
+            get
+            {
+                for (int i = CurrentStageIndex + 1; i < acquaintanceStages.Length; i++)
+                {
+                    if (!string.IsNullOrEmpty(acquaintanceStages[i].taughtPropertyId)) return acquaintanceStages[i];
+                }
+                return null;
+            }
+        }
 
-        // Iteration 4.11: true the moment the player already knows the paired
-        // property but the entity hasn't reached the taught stage yet — the "attempt
-        // it early" case "The Teaching Thread" left open. Descriptive only; it never
-        // changes GetOverlayInteractionLine, which keeps surfacing "Hold E to speak
-        // of..." only once TeachPending itself is true (today's default, unchanged).
+        // Iteration 4.11 (generalized 4.18): true whenever a taught-gated stage is
+        // ahead — immediately next, per the Netmender's post-4.18 Known gate, or
+        // further off, per the Collier's original pre-Known preview — and the entity
+        // hasn't been taught it yet. Covers both "you haven't found this out
+        // anywhere yet" and "you know it, but haven't brought it to her" with one
+        // authored line, same as 4.11 did. Gated on !TeachPending rather than the
+        // old IsFullyAcquainted guard: IsFullyAcquainted can now go true (next stage
+        // taught) before the gate is actually met, so it can no longer stand in for
+        // "not ready yet" — TeachPending itself (the live, ready-to-teach moment) is
+        // the correct thing to suppress this hint against. Descriptive only; it
+        // never changes GetOverlayInteractionLine, which keeps surfacing "Hold E to
+        // speak of..." only once TeachPending itself is true (unchanged).
         private bool EarlyTeachAttemptPending
         {
             get
             {
-                var taught = TaughtStageDef;
+                var taught = NextTaughtStageDef;
                 if (taught == null || string.IsNullOrEmpty(taught.earlyTeachHintLine)) return false;
-                if (IsFullyAcquainted) return false;
                 if (KnowsOfSelf(taught.taughtPropertyId)) return false;
-                return WorldContext.IsPropertyKnown(playerKnowerId, taught.taughtPropertyId);
+                return !TeachPending;
             }
         }
 
@@ -234,11 +322,22 @@ namespace Mossmark.Prototype4
             for (int i = 0; i < acquaintanceStages.Length; i++)
             {
                 var stage = acquaintanceStages[i];
-                stages[i] = string.IsNullOrEmpty(stage.taughtPropertyId)
-                    ? new DevelopmentStage(stage.stageId, stage.stageDisplayName,
-                        1, new AttentionCountCondition(), new InOrderCondition(i))
-                    : new DevelopmentStage(stage.stageId, stage.stageDisplayName,
-                        1, new TaughtPropertyCondition(stage.taughtPropertyId), new InOrderCondition(i));
+                var conditions = new List<IDependencyCondition>
+                {
+                    string.IsNullOrEmpty(stage.taughtPropertyId)
+                        ? new AttentionCountCondition()
+                        : new TaughtPropertyCondition(stage.taughtPropertyId)
+                };
+                // Iteration 4.20: a state-chain gate stacks onto whichever base
+                // condition above applies, same AND-composition DevelopmentStage
+                // already gives every other multi-condition stage in this doc.
+                if (!string.IsNullOrEmpty(stage.requiredWorldStateFlag))
+                {
+                    conditions.Add(new WorldStateCondition(stage.requiredWorldStateFlag, true,
+                        "needs something else settled first"));
+                }
+                conditions.Add(new InOrderCondition(i));
+                stages[i] = new DevelopmentStage(stage.stageId, stage.stageDisplayName, 1, conditions.ToArray());
             }
             track = new DevelopmentTrack(stages);
             OnDeveloped += HandleDeveloped;
@@ -340,23 +439,32 @@ namespace Mossmark.Prototype4
             var stage = CurrentStage;
             var description = stage == null ? unfamiliarDescription : stage.description;
 
-            // What they know of their own craft only becomes sayable at full
-            // acquaintance — partway, you can see the skill but not name it.
-            if (IsFullyAcquainted)
-            {
-                var seeded = GetSeededKnownProperties();
-                if (seeded.Count > 0)
-                {
-                    description = $"{description} {seededKnowledgeLead} {JoinPhrases(seeded)}.";
-                }
-            }
-            else if (SpentToday && !string.IsNullOrEmpty(todaySpentLine))
+            // Iteration 4.18: EarlyTeachAttemptPending now has to be checked ahead of
+            // IsFullyAcquainted, not after — IsFullyAcquainted can go true the moment
+            // a taught gate becomes the very next stage (the Netmender's Known, post-
+            // 4.18), which is exactly the state this hint exists to cover. SpentToday
+            // keeps first priority, same relative order as before 4.18.
+            if (SpentToday && !string.IsNullOrEmpty(todaySpentLine))
             {
                 description = $"{description} {todaySpentLine}";
             }
             else if (EarlyTeachAttemptPending)
             {
-                description = $"{description} {TaughtStageDef.earlyTeachHintLine}";
+                description = $"{description} {NextTaughtStageDef.earlyTeachHintLine}";
+            }
+            else if (StateGateHintPending)
+            {
+                description = $"{description} {NextStageDef.gateHintLine}";
+            }
+            else if (IsFullyAcquainted)
+            {
+                // What they know of their own craft only becomes sayable at full
+                // acquaintance — partway, you can see the skill but not name it.
+                var seeded = GetSeededKnownProperties();
+                if (seeded.Count > 0)
+                {
+                    description = $"{description} {seededKnowledgeLead} {JoinPhrases(seeded)}.";
+                }
             }
 
             return description;
@@ -394,13 +502,14 @@ namespace Mossmark.Prototype4
                 return;
             }
 
-            // Iteration 4.10: whether this tick should ripen at all now covers two
-            // cases through the same shared logic below — the acquaintance ladder
-            // itself (unchanged), and a taught-gated stage once its property is known
-            // (CanMakeProgress reads the same TryApplyStage dependency check either
-            // way, so a not-yet-taught stage correctly falls through to a flavor visit
-            // rather than silently rolling against content it can't reach).
-            bool ripening = !SpentToday && (!IsFullyAcquainted || CanMakeProgress());
+            // Iteration 4.10 (generalized 4.20): whether this tick should ripen at all
+            // now covers three cases through the same shared logic below — the
+            // acquaintance ladder itself (unchanged), a taught-gated stage once its
+            // property is known, and a state-gated stage once the flag it needs is set
+            // (CanMakeProgress reads the same TryApplyStage dependency check in every
+            // case, so a not-yet-unlocked stage correctly falls through to a flavor
+            // visit rather than silently rolling against content it can't reach).
+            bool ripening = !SpentToday && (!NextStageIsGated || CanMakeProgress());
 
             if (!ripening)
             {
