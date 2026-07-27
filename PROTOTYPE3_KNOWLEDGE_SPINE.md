@@ -19,7 +19,7 @@ Prototype 3 is a **new scene** referencing the existing project's shared scripts
 
 **Hard rule:** nothing built for Prototype 3 may modify a shared script's existing behavior, or mutate a ScriptableObject asset instance `Greybox.unity` depends on. New behavior comes from new components, new SO assets, or new conditions/interfaces — never edits to a shared logic path Greybox's `WorldGenerator` or its content assets rely on. If a shared class genuinely needs to change to serve this prototype, prefer a new subclass over modifying the base — the same call `DevelopingWildernessSpotAttendable` made when it couldn't share a base class with `WildernessYieldAttendable`.
 
-**Standing regression gate, every iteration:** before an iteration in this doc is called done, open `Greybox.unity`, confirm it still loads and plays cleanly, 0 console errors. Same weight as the "clean recompile" check used throughout FEATURES.md — this is what makes "reuse aggressively" safe to do quickly instead of cautiously.
+**Standing regression gate, every iteration:** before an iteration in this doc is called done, open `Greybox.unity`, confirm it still loads and plays cleanly, 0 console errors. Same weight as the "clean recompile" check used throughout PROTOTYPE2.md — this is what makes "reuse aggressively" safe to do quickly instead of cautiously.
 
 **Reused directly, unmodified:**
 - `AttentionManager` / `AttendableDetector` / `IAttendable` — the input layer doesn't change
