@@ -197,7 +197,10 @@ namespace Mossmark.Attention
                 : manager.State == AttentionState.Attending ? manager.AttendingTarget
                 : manager.CurrentTarget;
 
-            if (target == null)
+            // Null target, or one that has opted out of being drawn at all (P5's ambient
+            // attend — see IAttendable.ShowOverlay). Both panels go together; there is no
+            // half-shown state.
+            if (target == null || !target.ShowOverlay)
             {
                 overlayRoot.style.display = DisplayStyle.None;
                 detailRoot.style.display = DisplayStyle.None;

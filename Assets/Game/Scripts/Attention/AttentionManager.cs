@@ -24,8 +24,17 @@ namespace Mossmark.Attention
 
         public AttentionState State { get; private set; } = AttentionState.Idle;
         public IAttendable CurrentTarget => detector != null ? detector.CurrentTarget : null;
+
+        // P5's ambient attend. Null unless a scene registers one, so every scene that
+        // doesn't behaves exactly as before: no fallback means ResolveTarget() is just
+        // CurrentTarget, and Idle still means Idle.
+        public IAttendable FallbackTarget => detector != null ? detector.FallbackTarget : null;
         public IAttendable AttendingTarget => attendingTarget;
         public float HoldProgress01 { get; private set; }
+
+        // A specific thing in range always wins over the surroundings — attending the
+        // place you're in is what's left when there's nothing else, not a mode.
+        private IAttendable ResolveTarget() => CurrentTarget ?? FallbackTarget;
 
         private void Awake()
         {
@@ -66,7 +75,7 @@ namespace Mossmark.Attention
             }
             else
             {
-                State = CurrentTarget != null ? AttentionState.InRange : AttentionState.Idle;
+                State = ResolveTarget() != null ? AttentionState.InRange : AttentionState.Idle;
             }
         }
 
@@ -90,7 +99,7 @@ namespace Mossmark.Attention
             // The Horizon panel (HorizonUI) covers the screen while open; same reasoning.
             if (HorizonUI.Instance != null && HorizonUI.Instance.IsOpen) return;
 
-            var target = CurrentTarget;
+            var target = ResolveTarget();
             if (target == null || !target.CanAttend()) return;
 
             // At zero daylight, a daylight-costing attention can't even start - the overlay
@@ -189,7 +198,7 @@ namespace Mossmark.Attention
         {
             attendingTarget = null;
             HoldProgress01 = 0f;
-            State = CurrentTarget != null ? AttentionState.InRange : AttentionState.Idle;
+            State = ResolveTarget() != null ? AttentionState.InRange : AttentionState.Idle;
         }
     }
 }

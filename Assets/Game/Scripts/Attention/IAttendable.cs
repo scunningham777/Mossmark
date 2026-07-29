@@ -20,6 +20,19 @@ namespace Mossmark.Attention
 
         bool CanAttend();
 
+        // Whether AttendableOverlayUI draws anything for this attendable — the name panel
+        // above it, the progress bar, and the bottom-right detail panel all go together.
+        //
+        // Defaulted rather than required so the eighteen existing implementers inherit
+        // "yes" untouched; only something that deliberately wants to be a purely visual
+        // state overrides it. P5's ambient attend is the first: attending your
+        // surroundings is meant to feel like walking and noticing, and a panel pinned over
+        // the player's head while they stand still is the opposite of that. Its progress
+        // bar would also be actively misleading from 5.3 on, since it measures the
+        // daylight tick while the thing the player cares about is per-object dwell — a
+        // different clock, on a different object.
+        bool ShowOverlay => true;
+
         // Short entity name for the world-space tooltip above the entity.
         // Should be a plain name only — no flavor prose, no drift/tendedness suffixes.
         string GetShortName();
