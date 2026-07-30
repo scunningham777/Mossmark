@@ -88,7 +88,7 @@ Hold E anywhere in an empty space. The player rocks, daylight drains at the ambi
 
 ### Iteration 5.2.1 — No Overlay At All For Ambient Attending
 
-Ambient attending shows no UI whatsoever: no name panel above the player, no progress bar, no detail panel. The player rocks, the day clock advances, and that is the entire feedback surface. Reversible from the Inspector without a recompile.
+Ambient attending shows no UI whatsoever: no name panel above the player, no progress bar, no detail panel. The player rocks, the day clock advances, and that is the entire feedback surface. Reversible from the Inspector without a recompile. *(Narrowed at 5.4.1: nothing is drawn for the ambient attend itself, but a thing revealed mid-hold now names itself immediately.)*
 
 Two reasons, and the second is the one that matters past this iteration:
 
@@ -111,6 +111,8 @@ Seed a handful of grey mute objects into the 5.2 space. Ambient attending near o
 
 **Success criterion:** does something resolving out of the ambient attend read as *noticing it* — a thing that was always there — or as a spawn? And does the no-hand-off rule feel right, or does it read as the game withholding? The second half is the one most likely to come back wrong, and the fallback if it does is a *softer* signal at the moment of notice rather than a hand-off.
 
+*Built and verified 7-29-26 — see Build Notes below.*
+
 ---
 
 ### Iteration 5.4 — Some Of Them Are Nothing
@@ -120,6 +122,34 @@ Add grey shapes that never resolve, mixed in among the ones that do, indistingui
 **Explicitly out of scope:** any tell, any hint, any way to know in advance — that is the whole point.
 
 **Success criterion:** does not knowing whether a place holds anything make attending it feel like a real expenditure, or does it just feel like being wasted? If the answer is "wasted," the fix is the ratio and the size of what's found, not the removal of decoys — a world where everything grey pays out isn't a world you can attend to, it's a checklist.
+
+**The one real design question: what does a decoy do when its dwell crosses?** Three answers, and the choice decides whether the iteration lands.
+
+1. *It accrues no dwell at all* — stays flat grey while you stand there. Rejected: 5.3's tint **is** the dwell tell, so a thing that refuses to warm announces itself as nothing within a fraction of a second. That is a tell, and it makes finding out cost nothing, which is the exact opposite of the success criterion.
+2. *It warms, then stalls just short of crossing.* Rejected for the same reason one step later, and worse — a bar that fills to 90% and stops is the game visibly withholding, the failure mode the doc already flags at 5.3.
+3. **It resolves, and what it resolves into is nothing.** Chosen. A decoy is identical in every respect — same grey, same radius, same threshold, same continuous warm-up — and the difference lands *only* at the moment of crossing: it settles to a dull, cooler colour instead of the warm noticed one, does not pop, and never becomes targetable.
+
+Option 3 is the one that isn't a lie. The player did notice it; what they noticed is that it's a stump. Finding that out costs exactly what a find costs, which is what makes the expenditure real, and the negative result is genuine information rather than a withheld reward — consistent with **the world was here before you**, where most of what's in a wood is just wood.
+
+The settle is a short fade *down* from the warm colour it had reached, not a snap, so the felt beat is "it came into focus, and what came into focus was ordinary." And per 5.2.1 it posts no notification: grey → warm + pop means something, grey → dull and quiet means nothing, and both are read in peripheral vision rather than in text. The settled colour has to be distinguishable from unnoticed grey at a glance or the player re-dwells on the same stump forever and the space becomes noise — that legibility is *after* the fact only, and costs nothing beforehand.
+
+Opening ratio is 4 nothing among 5 something. One decoy is deliberately placed ~1.4 units from a real thing so a single hold resolves one of each, which is the mixed outcome the iteration is actually about.
+
+*Built and verified 7-29-26 — see Build Notes below.*
+
+---
+
+### Iteration 5.4.1 — A Revealed Thing Says Its Name Immediately
+
+Introduced at 5.3 but only visible as a problem once decoys landed: a thing noticed *during* an ambient hold showed nothing at all until the hold was released. A thing whose name you cannot see has not really been revealed — the pop said *something happened* without saying what, and with half the crossings now resolving into nothing, "something happened" is precisely the ambiguity the reveal is supposed to settle.
+
+So the moment a thing is noticed, its name and its description panel appear, mid-hold. What does *not* appear is the interaction line: attending it is genuinely blocked, because the player is already attending in another capacity. The overlays are visible as soon as a thing is revealed; the ability to interact is gated by the hold in progress, and the "Hold E to look closer" line arrives on release. No progress bar either, for 5.2.1's reason — the running hold is not that thing's hold, and showing its progress over that thing's name is the mismatched-clock confusion the bar was removed for in the first place.
+
+**Explicitly out of scope:** any change to what attending a noticed thing does, and any change to the direct-attend overlay.
+
+**Success criterion:** does naming the thing at the moment of notice make the crossing legible without making the ambient attend feel like a UI mode again? The risk is the opposite of 5.2.1's: panels appearing mid-hold could re-clutter the thing that was deliberately stripped bare.
+
+*Built and verified 7-29-26 — see Build Notes below.*
 
 ---
 
@@ -208,6 +238,8 @@ The default implementation is the whole reason this is cheap: there are **eighte
 
 **What still shows during an ambient attend:** the player rock, and the day-phase HUD with its ambient text. That is the entire feedback surface now. No notification lines are posted (none ever were).
 
+*Narrowed at 5.4.1:* the ambient attend still draws nothing **of its own**, but a thing revealed during the hold now shows its name and description immediately. The claim as originally written — no UI whatsoever while ambient attending — held only while there was nothing in the world to reveal.
+
 **Verification (MCP, Play Mode), both directions:**
 - *During* an ambient hold — `state=Attending, attending=Here, holdProgress=0.72, namePanel=None, detailPanel=None`. Sampling during the hold rather than after it matters: after release the target is null and the panels would read hidden for the ordinary reason, which would have proved nothing.
 - In `Prototype4`, standing at the Netmender — `currentTarget=Someone, fallback=none, namePanel=Flex, detailPanel=Flex`. `AcquaintableAttendable` does not implement `ShowOverlay` at all, so this also confirms the default interface member genuinely resolves to `true` at runtime under Unity's compiler rather than merely compiling.
@@ -219,6 +251,93 @@ Ambient ticks kept flooding the console window between the readout and the fetch
 **Editor-loop note, for next time:** `Mossmark/Debug/Enter Play Mode` silently no-opped twice in a row immediately after a recompile — returning success without the usual socket drop, with `AttentionManager.Instance` still null. An explicit `Exit Play Mode` followed by `Enter Play Mode` cleared it. Worth trying that first rather than diagnosing, alongside the documented ~15–30s MCP drop around domain reloads.
 
 **Forward constraint this sets for 5.3:** the progress bar was removed partly because it measures the daylight tick, and per-object dwell is a different clock. So if dwell needs a signal at all, it belongs *on the object* — a visual property of the thing coming into focus — not on the player, and not as a bar.
+
+---
+
+## Build Notes — Iteration 5.3 (7-29-26)
+
+Two new components in `Mossmark.Prototype5`, five hand-placed things in `Prototype5.unity`, no shared script touched (5.2/5.2.1's amendments were already in).
+
+**The gate is a separate component from the thing.** `NoticeableThing` holds the dwell logic and the collider; `UnknownThingAttendable` is what the thing *is*. `NoticeableThing` deliberately does **not** implement `IAttendable`, for two reasons: two `IAttendable`s on one GameObject is component-order-fragile (`AttendableZone.Awake` takes the first match — a trap P4's build notes already flag), and keeping them separate means **5.5 swaps the neighbour for P4's `AcquaintableAttendable` without touching the gate at all**. Nothing in `NoticeableThing` knows what it is gating.
+
+**Why unnoticed means "collider off" and not "attendable refuses".** This is the one decision that would have quietly broken the whole prototype. An unnoticed thing that stayed in `zonesInRange` would become `CurrentTarget` — and since `ResolveTarget()` is `CurrentTarget ?? FallbackTarget`, standing near one would have *suppressed the ambient attend entirely*. The player would be unable to attend the place they were in precisely when there was something in it to find: exactly backwards. Disabling the zone collider keeps unnoticed things out of the detector's list completely. Verified directly — standing 0.6 units from an unnoticed thing reports `currentTarget=none, fallback=Here`.
+
+**How a thing knows an ambient attend is running**, with no coupling: `manager.State == Attending && ReferenceEquals(manager.AttendingTarget, manager.FallbackTarget)`. That's it — "the hold currently running is the ambient one", expressed purely in the framework's own vocabulary. No reference to `AmbientSurroundingsAttendable`, no static, no registry. Each thing runs its own `Update`, so multiple things crossing independently needs no coordination and no code.
+
+**The dwell tell is on the object, per 5.2.1's constraint.** A thing warms continuously out of grey toward its noticed color as dwell accrues (`Color.Lerp` on `dwell / dwellToNotice`), and cools again if the player drifts off — decay runs at 2× accrual, so a brief interruption is forgiving but wandering off genuinely resets. This is the whole of what ambient attending gives back *before* anything has crossed: something moving in the corner of your eye while you stand still. Opening numbers: radius 2.5, dwell 1.5s.
+
+**No notification line at the moment of noticing** — the moment is meant to be seen, not read. The text arrives in the overlay when the player looks at the thing, which is what the mechanic spec asked for and what 5.2.1's visual-first steer wants. Crossing fires colour + `EntityFeedback.TriggerPop()` and nothing else.
+
+**Verification (MCP, Play Mode) — every 5.3 claim checked directly:**
+- Cold load: 5/5 grey (`0.45`), colliders off, dwell 0.
+- Standing beside an unnoticed thing: `currentTarget=none` — no block, no overlay.
+- Mid-hold, at the moment of crossing: `state=Attending, currentTarget=Something in the grass, attending=Here, namePanel=None, detailPanel=None`. The thing became targetable **while the ambient hold carried on unbroken** — the no-hand-off rule, observed rather than assumed. A bonus consequence worth noting: because the overlay follows `AttendingTarget` while attending, noticing something mid-hold doesn't pop a panel in the player's face either. The place stays quiet until they choose to stop.
+- On release: `currentTarget=Something in the grass, namePanel=Flex, detailPanel=Flex` — the overlay arrives only when the player lets go.
+- Two things 1.6 units apart both crossed in a single hold, while a third at 5.4 units stayed at `dwell=0.00`, grey, collider off. Independent accrual and the radius gate, both confirmed.
+
+**Not directly observed:** the *intermediate* tint during dwell. MCP roundtrips are slower than the 1.5s threshold, so every sample landed at 0.00 or 1.50. Both endpoints are exact and the interior is a single `Color.Lerp` on values already proven correct (the observed grey confirms the white-baked sprite tints properly), so this is arithmetic rather than an untested path — but it is the main visual payoff of the iteration, so judge it in play first.
+
+**Content:** five things, deliberately vague in the unknown register — *Something upright*, *Something low*, *Something half-buried*, *Something in the grass*, *Something at the treeline*. Two are placed 1.6 units apart specifically so one dwell can catch both; the rest are 5–7 units out from spawn so none is noticeable without walking somewhere and stopping. Attending a noticed thing costs a daylight and says one line about not being able to make more of it yet — placeholder, since what they *do* is 5.5's question.
+
+**Regression gates, all clean:** `Prototype4` (overlay and direct targeting re-verified — `currentTarget=Someone`, `fallback=none`, both panels `Flex`), `Prototype3`, `Greybox` — 0 errors, 0 warnings each. Scene saved through Unity to confirm it accepts the hand-written YAML round-trip.
+
+**Debug drivers added:** Teleport Player To Nearest Unnoticed Thing, Force Notice Nearest Thing, Log Noticeable Things (per-thing dwell, radius, collider state, tint, plus a noticed/total tally). The tally is editor-only for the same reason 5.1's coverage readout was — the ban is on showing the player a count, not on being able to verify the mechanism.
+
+---
+
+## Build Notes — Iteration 5.4 (7-29-26)
+
+One new serialized bool and one new outcome branch on `NoticeableThing`, four hand-placed decoys, no new component and no shared script touched.
+
+**A decoy resolves; what it resolves into is nothing.** `holdsSomething` is the authored truth and the *only* thing that differs between a thing and a decoy — same grey, same radius, same threshold, same continuous warm-up. `Resolve()` (renamed from `Notice()`, since crossing no longer implies finding) arrives at the warm colour for both outcomes and then branches: something enables the zone collider and pops, nothing starts a short fade *down* to a duller, cooler `settledColor` and never becomes targetable. See the iteration section above for why the two alternatives — a decoy that refuses to warm, and one that stalls just short — were rejected: both make finding out cost nothing, and the second is visibly the game withholding.
+
+**The settled colour has to be legible after the fact and invisible before it.** If a resolved stump were indistinguishable from an unresolved one the player would re-dwell on it forever and the space would become noise; the settled tint is darker and cooler than unnoticed grey so it reads as checked in peripheral vision. That legibility is purely retrospective, so it costs nothing beforehand — which is the line 5.4's "no tell, no hint" scope constraint actually draws.
+
+**`IsNoticed` became `IsResolved`, plus `HoldsSomething`.** Crossing and being findable are now different facts and one property could no longer carry both. Only `Prototype5Debug` read the old name.
+
+**A serialized bool has no useful C# default here.** A scene entry written without the key deserializes to `false` regardless of the initializer, so `holdsSomething: 1` was written explicitly onto all five of 5.3's things rather than relying on absence to mean "something". Same for `settledColor`/`settleFadeDuration`, which would otherwise have loaded as transparent black and 0. This is the ordinary hand-authored-YAML tax, and worth flagging for the same reason Iteration 53's `[SerializeReference]` defaults gotcha was: the C# initializer is not the scene's default.
+
+**Verification (MCP, Play Mode):**
+- Cold load, all nine: identical grey (`0.450`), dwell `0.00/1.50`, radius 2.5, colliders off. The only differing field is the one with no observable effect yet — "indistinguishable beforehand", at the state level.
+- A hold at a decoy: `resolved=True, colliderEnabled=False, tint=RGBA(0.300, 0.320, 0.280)` — exactly `settledColor`. Log timing brackets the fade: resolved at `:10.407`, `settling=False` by `:11.041`, i.e. 0.63s for a 0.6s fade.
+- Standing 0.6 units from a *resolved* decoy, mid-hold: `currentTarget=none, fallback=Here, namePanel=None`. It is not attendable before resolution and not after.
+- **The mixed hold** — one hold at (6.2, 4.4), a decoy 0.6 units away and a real thing 1.14 away — split cleanly: *Nothing (a dark shape)* to collider-off + settled `0.300/0.320/0.280`, *Something half-buried* to collider-**on** + noticed `0.720/0.660/0.450`. Same hold, same threshold, two outcomes.
+- Mid-hold during that crossing: `currentTarget=Something half-buried, attending=Here, namePanel=None` — 5.3's no-hand-off rule re-confirmed in the mixed case, and the decoy correctly absent from targeting.
+- On release: `currentTarget=Something half-buried, namePanel=Flex`. The settled decoy is **closer** to the player (0.6 vs 1.14) and still not the target — the cleanest proof it is out of the detector entirely rather than merely losing a proximity tiebreak.
+- 0 errors. Compile clean apart from the two pre-existing third-party `Rigidbody2D.isKinematic` warnings.
+
+**Not directly observed:** the settle fade mid-flight, for the same MCP-roundtrip reason 5.3's intermediate dwell tint went unobserved. Both endpoints are exact and the timing above brackets the interpolation to within a frame or two of its authored duration, but nobody has yet *seen* it fade. It carries the entire felt content of the iteration, so look at it first in play.
+
+**Content:** four decoys, named in the hierarchy as *Nothing (…)* since a `NoticeableThing` name is never player-facing and honest editor names make verification legible — *a fold in the ground* (−4.2, 1), *a dark shape* (5.6, 4.4), *a lump in the moss* (0.5, 3.2), *something pale* (−6.5, −2.5). Ratio 4 nothing : 5 something. *A dark shape* is placed 1.42 units from *Something half-buried* specifically to make the mixed hold reachable. Decoys carry four components only (Transform, `SpriteRenderer`, `TriangleSpriteGenerator`, `NoticeableThing`) — no collider, no `AttendableZone`, no attendable, no `EntityFeedback`, since a decoy needs none of them and dead unreachable data in a pilot scene is how a prototype starts lying about what it tests. Tuning the ratio down is a GameObject delete; tuning it up is one bool flip.
+
+**Debug drivers:** Teleport Player To Nearest Something / Nearest Nothing (added — the two outcomes have to be reachable *separately* to be verified separately, and from the editor there is no other way to choose which one a hold lands on, since the whole point is that they are indistinguishable in the scene), Force Notice → Force Resolve Nearest Thing (renamed), Log Noticeable Things (now reports `holdsSomething`, `settling`, and a something/nothing split in the tally).
+
+*Regression gating with prior scenes was skipped at the user's request — they are handling it.*
+
+---
+
+## Build Notes — Iteration 5.4.1 (7-29-26)
+
+One shared script changed (`AttendableOverlayUI`), no new component, no interface change, no scene change.
+
+**No interface member was needed, and that is the design point.** The obvious move is another opt-out beside `ShowOverlay` — but "you cannot interact with this right now" is not a property of the thing. The revealed thing is perfectly attendable; the player is simply busy. It is a property of the *situation*, so it belongs in the overlay's own state logic and nowhere else. `IAttendable` is untouched.
+
+**The mechanism** is a third target case in `Update()`. The overlay already picked `AttendingTarget` while attending and `CurrentTarget` otherwise; now, when the attending target draws nothing (`!ShowOverlay`) *and* something in range does, it draws that instead, with `passiveReveal` set. `passiveReveal` suppresses exactly two things — the interaction line (hidden outright, not blanked, so the panel shrinks to just the name) and the progress bar branch. The name panel still positions over the revealed thing rather than the player, since positioning follows the target.
+
+**Regression argument, by construction rather than by testing.** The new branch cannot be entered without an attending target whose `ShowOverlay` is false. `ShowOverlay` is a default interface member returning true (5.2.1) and the sole override in the project is `AmbientSurroundingsAttendable`, which is P5-only and needs registering as a detector fallback to ever be attended at all. In Greybox/P3/P4 the condition is unreachable, so `passiveReveal` is permanently false and the remaining new statement — `interactionLabel.style.display = Flex` — writes the value it already had. This is the same shape of argument as 5.2's additive fallback: those scenes are safe because the code cannot run, not because it was tried and seemed fine.
+
+That said, the *shared* half of the path was exercised directly: with `passiveReveal` false, a direct attend still reports `attending=Something in the grass, interactLine=Flex/"[..........]"` — the progress bar behaving exactly as before, on the identical code path every Greybox/P3/P4 attend takes. Scene-level gating is the user's, per their call on 5.4.
+
+**Verification (MCP, Play Mode):**
+- Ambient hold with only a *decoy* in dwell range: `namePanel=None, detailPanel=None`. 5.2.1's silence is intact where nothing is revealed — which is the case 5.4 made common.
+- Ambient hold at the moment of crossing: `currentTarget=Something in the grass, attending=Here, namePanel=Flex, name="Something in the grass", interactLine=None, detailPanel=Flex`. Name and description mid-hold, no interaction line, ambient hold unbroken.
+- On release: `interactLine=Flex/"Hold E to look closer"`.
+- Direct attend, unchanged: progress bar as above.
+- 0 errors, 0 warnings.
+
+**Readout caveat for future verification:** `Log Attention State` now prints label *text* unconditionally, including when the label is hidden. Stale text behind `display=None` is normal and means nothing — read the display value first. The 5.4.1 samples above show `interactLine=None/"Hold E to rest"` in exactly that situation.
+
+**Debug driver:** `DescribeOverlayPanels()` extended with the name label's text and the interaction line's display + text. The old readout could only say whether the panel was visible, and 5.4.1's whole claim is that the panel shows *part* of itself — pass and fail were indistinguishable before.
 
 ---
 

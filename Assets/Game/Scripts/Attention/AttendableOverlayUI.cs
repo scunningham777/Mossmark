@@ -192,10 +192,24 @@ namespace Mossmark.Attention
             }
 
             var manager = AttentionManager.Instance;
+            var inRange = manager == null ? null : manager.CurrentTarget;
+            bool attending = manager != null && manager.State == AttentionState.Attending;
 
-            var target = manager == null ? null
-                : manager.State == AttentionState.Attending ? manager.AttendingTarget
-                : manager.CurrentTarget;
+            var target = attending ? manager.AttendingTarget : inRange;
+
+            // Iteration 5.4.1: the hold currently running draws nothing of its own (P5's
+            // ambient attend), but something in range has been revealed and is worth naming —
+            // a thing whose name you cannot see has not really been revealed. Show it
+            // read-only: no interaction line, because attending it is blocked while another
+            // hold is running, and no progress bar, because the hold that is running is not
+            // its hold.
+            //
+            // Unreachable in any scene without a fallback attendable registered: it needs an
+            // attending target whose ShowOverlay is false, and the default is true.
+            bool passiveReveal = attending
+                && target != null && !target.ShowOverlay
+                && inRange != null && inRange.ShowOverlay;
+            if (passiveReveal) target = inRange;
 
             // Null target, or one that has opted out of being drawn at all (P5's ambient
             // attend — see IAttendable.ShowOverlay). Both panels go together; there is no
@@ -220,9 +234,14 @@ namespace Mossmark.Attention
 
             overlayRoot.style.display = DisplayStyle.Flex;
             descriptionLabel.text = target.GetShortName();
-            interactionLabel.text = manager.State == AttentionState.Attending
-                ? BuildProgressBar(manager.HoldProgress01)
-                : GetInteractionLine(target);
+
+            interactionLabel.style.display = passiveReveal ? DisplayStyle.None : DisplayStyle.Flex;
+            if (!passiveReveal)
+            {
+                interactionLabel.text = attending
+                    ? BuildProgressBar(manager.HoldProgress01)
+                    : GetInteractionLine(target);
+            }
 
             UpdateDetailPanel(target);
         }
