@@ -1,6 +1,7 @@
 using System.Reflection;
 using Mossmark.Attention;
 using Mossmark.Day;
+using Mossmark.Prototype4;
 using Mossmark.Prototype5;
 using UnityEditor;
 using UnityEngine;
@@ -181,6 +182,144 @@ namespace Mossmark.EditorTools
             }
 
             if (nearest == null) Debug.Log("P5Debug: no matching NoticeableThing in scene.");
+            return nearest;
+        }
+
+        // Iteration 5.5: the acquaintance ladder is P4's, so these three mirror
+        // Prototype4Debug's equivalents rather than inventing a P5 vocabulary for it —
+        // the point of the iteration is that nothing about the entity is P5-specific.
+        // Teleporting lands the player *outside* the noticing radius on purpose: the
+        // Fowler is unnoticed at scene load, so dropping in beside her and holding is
+        // how the found-then-known sequence gets exercised end to end.
+        [MenuItem("Mossmark/Prototype5/Teleport Player To Nearest Acquaintable")]
+        private static void TeleportToNearestAcquaintable()
+        {
+            var entity = FindNearestAcquaintable();
+            if (entity == null) return;
+
+            TeleportTo(entity.transform.position + new Vector3(0.6f, 0f, 0f));
+            Debug.Log($"P5Debug: nearest acquaintable is '{entity.name}'.", entity);
+        }
+
+        [MenuItem("Mossmark/Prototype5/Advance Acquaintance On Nearest Entity")]
+        private static void AdvanceAcquaintance()
+        {
+            var entity = FindNearestAcquaintable();
+            if (entity == null) return;
+            entity.DebugAdvanceAcquaintance();
+        }
+
+        // Logs the NoticeableThing gate beside the entity as well: 5.5's whole surface
+        // is the seam between the two, and a stage that won't advance because the thing
+        // was never resolved looks identical to a stage that won't advance for its own
+        // reasons unless both are on the same line.
+        [MenuItem("Mossmark/Prototype5/Log Acquaintance State")]
+        private static void LogAcquaintanceState()
+        {
+            var entities = Object.FindObjectsByType<AcquaintableAttendable>();
+            if (entities.Length == 0)
+            {
+                Debug.Log("P5Debug: no AcquaintableAttendable in scene.");
+                return;
+            }
+
+            foreach (var entity in entities)
+            {
+                var gate = entity.GetComponent<NoticeableThing>();
+                var spriteRenderer = entity.GetComponent<SpriteRenderer>();
+                Debug.Log($"P5Debug: '{entity.name}' acquaintanceStage={entity.CurrentStageIndex}, " +
+                    $"pendingAttends={entity.PendingProgress}, shortName=\"{entity.GetShortName()}\", " +
+                    $"subject=({entity.ComputeSubjectFingerprint()}), " +
+                    $"tint={(spriteRenderer != null ? spriteRenderer.color.ToString() : "n/a")}, " +
+                    $"gate=({(gate != null ? gate.DebugNoticeState() : "none")}), " +
+                    $"overlay=\"{entity.GetOverlayDescription()}\", " +
+                    $"interaction=\"{entity.GetOverlayInteractionLine()}\"", entity);
+            }
+        }
+
+        private static AcquaintableAttendable FindNearestAcquaintable()
+        {
+            var player = GameObject.FindWithTag("Player");
+            if (player == null)
+            {
+                Debug.Log("P5Debug: no Player in scene.");
+                return null;
+            }
+
+            AcquaintableAttendable nearest = null;
+            float nearestSqrDist = float.MaxValue;
+            foreach (var entity in Object.FindObjectsByType<AcquaintableAttendable>())
+            {
+                float sqrDist = (entity.transform.position - player.transform.position).sqrMagnitude;
+                if (sqrDist < nearestSqrDist)
+                {
+                    nearestSqrDist = sqrDist;
+                    nearest = entity;
+                }
+            }
+
+            if (nearest == null) Debug.Log("P5Debug: no AcquaintableAttendable in scene.");
+            return nearest;
+        }
+
+        // Iteration 5.6: the tending shape is P4's too (4.12/4.14), so this mirrors the
+        // 5.5 acquaintable drivers rather than inventing a separate P5 vocabulary —
+        // same reasoning, different component.
+        [MenuItem("Mossmark/Prototype5/Teleport Player To Nearest Tendable Spot")]
+        private static void TeleportToNearestTendableSpot()
+        {
+            var spot = FindNearestTendableSpot();
+            if (spot == null) return;
+
+            TeleportTo(spot.transform.position + new Vector3(0.6f, 0f, 0f));
+            Debug.Log($"P5Debug: nearest tendable spot is '{spot.name}'.", spot);
+        }
+
+        // Logs the NoticeableThing gate on the same line as the spot's own state, same
+        // reasoning as Log Acquaintance State: a spot that never yields because it was
+        // never resolved looks identical to one that never yields on a bad roll unless
+        // both are visible together.
+        [MenuItem("Mossmark/Prototype5/Log Tendable Spot State")]
+        private static void LogTendableSpotState()
+        {
+            var spots = Object.FindObjectsByType<TendableSpotAttendable>();
+            if (spots.Length == 0)
+            {
+                Debug.Log("P5Debug: no TendableSpotAttendable in scene.");
+                return;
+            }
+
+            foreach (var spot in spots)
+            {
+                var gate = spot.GetComponent<NoticeableThing>();
+                Debug.Log($"P5Debug: '{spot.name}' {spot.DebugRipenessState()}, " +
+                    $"{spot.DebugCharacterState()}, " +
+                    $"gate=({(gate != null ? gate.DebugNoticeState() : "none")})", spot);
+            }
+        }
+
+        private static TendableSpotAttendable FindNearestTendableSpot()
+        {
+            var player = GameObject.FindWithTag("Player");
+            if (player == null)
+            {
+                Debug.Log("P5Debug: no Player in scene.");
+                return null;
+            }
+
+            TendableSpotAttendable nearest = null;
+            float nearestSqrDist = float.MaxValue;
+            foreach (var spot in Object.FindObjectsByType<TendableSpotAttendable>())
+            {
+                float sqrDist = (spot.transform.position - player.transform.position).sqrMagnitude;
+                if (sqrDist < nearestSqrDist)
+                {
+                    nearestSqrDist = sqrDist;
+                    nearest = spot;
+                }
+            }
+
+            if (nearest == null) Debug.Log("P5Debug: no TendableSpotAttendable in scene.");
             return nearest;
         }
 

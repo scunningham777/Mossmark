@@ -402,7 +402,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e1be6c8401d64ce782936cbc254ea857, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Player.PlayerController
-  moveSpeed: 4
+  moveSpeed: 2
   smoothing: 0.1
   rockMaxDegrees: 5
   rockFrequency: 0.5
@@ -1235,7 +1235,7 @@ GameObject:
   - component: {fileID: 3000008}
   - component: {fileID: 3000009}
   m_Layer: 0
-  m_Name: Something upright
+  m_Name: The Fowler
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1386,18 +1386,71 @@ MonoBehaviour:
   m_GameObject: {fileID: 3000001}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3c9bfaa2f1cc52e4d9060a99cc9ac2bc, type: 3}
+  m_Script: {fileID: 11500000, guid: 2ea6422d1962ba3409655b2a2dc99dff, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Prototype5.UnknownThingAttendable
-  displayName: Something upright
-  description: Upright, and too regular for the wood to have made it. That is as
-    far as you get.
-  interactionLine: Hold E to look closer
-  lookLines:
-  - You look at it a while. It stays what it was.
-  - Whatever it is, it isn't telling you today.
-  - You take it in. Nothing about it comes clear.
+  m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Prototype4.AcquaintableAttendable
+  entityId: p5_fowler
+  unfamiliarShortName: Someone
+  unfamiliarDescription: Someone standing dead still among the trunks, facing off
+    down the ride. You had them for part of the wood until you didn't.
+  unfamiliarTint: {r: 0.72, g: 0.66, b: 0.45, a: 1}
+  unfamiliarInteractionLine: Hold E to watch a while
+  seededPropertyIds:
+  - draws_the_eye
+  seededKnowledgeLead: She speaks of
+  trueStateNote: works two rides from dawn to mid-morning; her nets are going at
+    the edges; has told no one
+  acquaintanceStages:
+  - stageId: acquainted
+    stageDisplayName: Acquainted
+    minAttends: 1
+    ripenChance: 0.34
+    shortName: A fowler
+    description: A fowler. A net furled between two poles at the edge of the ride,
+      and a bird on a peg that isn't alive. She works by standing still, which is
+      why you walked past her twice.
+    tint: {r: 0.62, g: 0.68, b: 0.44, a: 1}
+    interactionLine: Hold E to stand with her a while
+    attendFlavors:
+    - She tips her chin at the ride without taking her eyes off it. After a while
+      you find you are watching it too.
+    - The decoy turns a little on its peg. She lets it.
+    worldStateFlag: 
+    taughtPropertyId: 
+    teachLine: 
+    earlyTeachHintLine: 
+    requiredWorldStateFlag: 
+    gateHintLine: 
+  - stageId: known
+    stageDisplayName: Known
+    minAttends: 1
+    ripenChance: 0.5
+    shortName: The Fowler
+    description: The fowler who works this ride and the one over the hill, dawn to
+      mid-morning, most days of the year. Half of what flies through here flies through
+      her nets. The nets are older than the arrangement and are going at the edges,
+      and she has not said so to anyone.
+    tint: {r: 0.46, g: 0.72, b: 0.42, a: 1}
+    interactionLine: Hold E to keep the watch with her
+    attendFlavors:
+    - She names the ride's regulars by their flight, not their feathers. You could
+      not tell them apart if you tried.
+    - A long companionable nothing, and then the net goes, and she is already walking.
+    worldStateFlag: 
+    taughtPropertyId: 
+    teachLine: 
+    earlyTeachHintLine: 
+    requiredWorldStateFlag: 
+    gateHintLine: 
+  oneQualifyingTickPerDay: 0
+  todaySpentLine: 
+  playerKnowerId: p3_player
+  teachDuration: 0.6
   attendDuration: 2
+  unfamiliarAttendFlavors:
+  - They don't move and they don't look over. Whatever they are waiting on, it isn't
+    you.
+  - A long while of nothing. Then a shift of weight, and nothing again.
 --- !u!114 &3000008
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1870,7 +1923,7 @@ GameObject:
   - component: {fileID: 3300008}
   - component: {fileID: 3300009}
   m_Layer: 0
-  m_Name: Something in the grass
+  m_Name: The Hollow
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2021,17 +2074,35 @@ MonoBehaviour:
   m_GameObject: {fileID: 3300001}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3c9bfaa2f1cc52e4d9060a99cc9ac2bc, type: 3}
+  m_Script: {fileID: 11500000, guid: fb0d11b40d32e21478f390719bc1049c, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Prototype5.UnknownThingAttendable
-  displayName: Something in the grass
-  description: The grass sits wrong over it. Something is there, and it is not grass.
-  interactionLine: Hold E to look closer
-  lookLines:
-  - You look at it a while. It stays what it was.
-  - Whatever it is, it isn't telling you today.
-  - You take it in. Nothing about it comes clear.
-  attendDuration: 2
+  m_EditorClassIdentifier: Assembly-CSharp::Mossmark.Prototype4.TendableSpotAttendable
+  displayName: The Hollow
+  description: A dip in the ground where the grass grows thick over whatever the
+    wood sheds. It turns up something if you take the time to sift it.
+  yieldChance: 0.3
+  ripenBonusPerDayAway: 0
+  maxDaysAwayBonus: 0
+  depletionPerAttendToday: 0
+  attendDuration: 1
+  characterNudgeUp: 0
+  characterNudgeDown: 0
+  wornTint: {r: 0.72, g: 0.66, b: 0.45, a: 1}
+  thrivingTint: {r: 0.72, g: 0.66, b: 0.45, a: 1}
+  wornFlavorLines: []
+  midFlavorLines:
+  - You sift through what's settled here. Nothing today.
+  - The hollow gives up moss and old leaf-litter. You keep looking.
+  thrivingFlavorLines: []
+  pool:
+  - itemId: p5_sloes
+    displayName: A Handful Of Sloes
+    propertyIds: []
+    takeLine: Taken. Sloes, sharp enough to pucker, low in the thickest of it.
+  - itemId: p5_bark_twist
+    displayName: A Twist Of Bark
+    propertyIds: []
+    takeLine: Taken. Peeled clean off something that came down in a storm.
 --- !u!114 &3300008
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -161,6 +161,8 @@ One of the objects noticed in 5.3 is an NPC running P4's acquaintance `Developme
 
 **Success criterion:** does having found someone this way — stumbled into by standing still and paying attention, rather than walked toward because they were flagged — change how the first acquaintance attend feels? This is the actual bridge claim: ambient attention as backdrop, acquaintance as the thing it is a backdrop *for*.
 
+*Built and verified 7-29-26 — see Build Notes below.*
+
 ---
 
 ### Iteration 5.6 — A Second Kind Of Found Thing
@@ -171,9 +173,13 @@ Add one `TendableSpotAttendable` (P4.12/4.14 shape, flat yield chance, no ripene
 
 **Success criterion:** do two different kinds of found thing (a person to get to know, a place to tend) inside one attended space read as one coherent place, or as two unrelated mechanics dropped into the same clearing?
 
+*Built 7-29-26, playtested live by Sean 7-30-26 — see Build Notes below. The playtest reopened questions the mechanism-level verification couldn't reach; read those before treating 5.6 as settled.*
+
 ---
 
 ### Iteration 5.7 — Familiarity Widens What You Notice (Rate, Not Gate)
+
+**Paused 7-30-26, pending a rewrite.** On rereading this section against the 5.6 playtest findings, Sean doesn't think it's written quite right and wants to sit with it before it's built. Left as originally drafted below for now — treat this as provisional, not a spec to implement against.
 
 Once 5.5/5.6 hold: tie the noticing radius, or the dwell threshold, or both, to how well the player knows what is already around them — you notice more, and sooner, in a place you have spent time in. Continuous, never a threshold unlock, never blocked beforehand. The explicit distinction to hold onto from the P4 postmortem: this is a **rate**, not a **gate**.
 
@@ -338,6 +344,71 @@ That said, the *shared* half of the path was exercised directly: with `passiveRe
 **Readout caveat for future verification:** `Log Attention State` now prints label *text* unconditionally, including when the label is hidden. Stale text behind `display=None` is normal and means nothing — read the display value first. The 5.4.1 samples above show `interactLine=None/"Hold E to rest"` in exactly that situation.
 
 **Debug driver:** `DescribeOverlayPanels()` extended with the name label's text and the interaction line's display + text. The old readout could only say whether the panel was visible, and 5.4.1's whole claim is that the panel shows *part* of itself — pass and fail were indistinguishable before.
+
+---
+
+## Build Notes — Iteration 5.5 (7-29-26)
+
+**Zero new code, and that was the test.** The whole iteration is one component swap in `Prototype5.unity`: *Something upright* at (−6, 3) lost its `UnknownThingAttendable` and gained P4's `AcquaintableAttendable`, unmodified, plus authored content. No new component, no new condition, no shared script touched, no P4 script touched. `NoticeableThing` beside it is byte-identical to what 5.3 shipped — which is precisely the claim 5.3's build notes made when they refused to fold the gate and the attendable into one component ("5.5 swaps the neighbour without touching the gate"). That prediction is now paid off rather than merely asserted.
+
+**The one real design problem was colour, not code.** P5 and P4 both use grey for "you don't know this," but they mean different things by it, and stacking them naively inverts the grammar. 5.3 gives an unnoticed thing `unnoticedColor` 0.45 grey — deliberately P4's own unfamiliar tint, one layer earlier — and warms it to `noticedColor` 0.72/0.66/0.45 on crossing. P4's Netmender then goes *duller* from there (Acquainted is 0.52/0.55/0.45), so noticing someone would have made them warmer than getting acquainted with them does.
+
+The fix is authored data, not a mechanism: the Fowler's `unfamiliarTint` **is** her `noticedColor`, and her ladder steps up from there (Acquainted 0.62/0.68/0.44, Known 0.46/0.72/0.42). That makes one continuous gradient across two systems — 0.45 grey unregistered → warm sand registered-but-unknown → deepening green with acquaintance — instead of two vocabularies colliding at the seam. It also means noticing her looks *identical* to noticing any other thing, which is correct: at the moment of the crossing you have registered that something is there, not that it is a person. Differentiation arrives with acquaintance, which is the whole thesis.
+
+There is a second-order benefit worth recording: because the two colours are equal, the seam has no snap in it. `NoticeableThing` stops touching the renderer the instant it resolves and `AcquaintableAttendable.RefreshTint()` only ever runs on `Start` and on a crossing, so nothing ever repaints between notice and the first stage — verified directly below rather than argued.
+
+**Ordering, checked rather than assumed.** `AcquaintableAttendable.Start()` calls `RefreshTint()` (unfamiliar sand) while `NoticeableThing.Awake()` has already set grey; Unity runs every `Awake`, then every `Start`, then every `Update`, and `NoticeableThing.Update` repaints grey at dwell 0 before the first frame renders. Cold-load tint reads 0.450 grey, so there is no one-frame flash. Component order on the GameObject is `AttendableZone` → `AcquaintableAttendable` → `NoticeableThing` → `EntityFeedback`, which keeps two prior rules intact for free: `AttendableZone.Awake` finds exactly one `IAttendable` (the swap replaced rather than added — two on one object is the component-order trap 5.3 avoided), and the attendable's `OnDeveloped` handler subscribes before `EntityFeedback`'s, so the stage-cross shape swap picks up the post-stage tint.
+
+**No taught stage was authored, deliberately.** The doc's baseline calls for the teach stub "present as a stub only; not extended, not exercised beyond confirming it still composes." P5 has no pickups, no working surface, and no property-discovery path, so `WorldContext.IsPropertyKnown("p3_player", …)` can never go true and a taught-gated stage would be permanently unreachable content sitting in the scene. That is exactly the failure 5.4's notes named — "dead unreachable data in a pilot scene is how a prototype starts lying about what it tests." The machinery is present and inert on the component; `taughtPropertyId` is empty on both stages. Composition is demonstrated by the stub not interfering, which is the only thing 5.5 is entitled to claim about it.
+
+For the same reason the ladder is the plain 4.2/4.3 shape: two stages (Acquainted, Known), `minAttends` 1, `ripenChance` 0.34 then 0.5 — the Netmender's own numbers. No wariness (4.8), no `worldStateFlag`, no state gate (4.20). `seededPropertyIds` carries `draws_the_eye`, so full acquaintance appends *"She speaks of what draws the eye"* — 4.2's seeded-reveal payoff, kept because it is baseline and because it is the one thing that makes the last crossing land as more than a paragraph change.
+
+**Content.** The Fowler: someone who works by standing still and watching a ride for birds, dawn to mid-morning. The resonance is deliberate but unstated — the player finds her by doing what she does, and the game never says so. Her true state (nets rotting at the edges, told no one) is fixed at load and only revealed, per 4.2. Pronouns shift from *they* while she is a silhouette to *she* from Acquainted on; that is authored on purpose, since which person she is turns out to be part of what acquaintance reveals, and it is the one language choice here that isn't lifted straight from P4.
+
+The GameObject is renamed *The Fowler* in the hierarchy, following 5.4's honest-editor-names rule — the name is never player-facing, and `NoticeableThing` logging "noticed 'The Fowler'" is what makes the crossing legible in verification. The other four somethings keep `UnknownThingAttendable`, so that component is still live rather than orphaned.
+
+**Daylight left at 12.** The doc predicted a retune here, on the reasoning that a squeeze only reads as a choice once there's a competing use. There now is one, and the live numbers say 12 is already the right squeeze rather than a leftover: finding her took ~3 ambient daylight, the Acquainted crossing 1 more, and Known landed at 5/12 with the phase clock in Evening. One day buys a find and most of a ladder — tight enough to feel like a spend, not so tight it forecloses. Revisit at 5.6, when a second found thing actually competes for the same pool.
+
+**Verification (MCP, Play Mode) — the seam, in both directions:**
+- Cold load: `acquaintanceStage=-1`, `resolved=False`, `colliderEnabled=False`, `tint=0.450 grey`, `knows=[draws_the_eye]` (Awake's seeding ran). Overlay reads the unfamiliar description with **no** seeded line — `IsFullyAcquainted` is correctly false while an ungated stage is next, so the reveal doesn't leak.
+- One ambient hold beside her resolved *her and a decoy in the same hold* (*Nothing (a fold in the ground)*, 2.33 units away — unplanned, and the exact mixed case 5.4 was built for). Mid-hold: `state=Attending, currentTarget=Someone, attending=Here, namePanel=Flex, name="Someone", interactLine=None`. The ambient hold never handed off (5.3), and 5.4.1 named her mid-hold as **"Someone"** — the veil holds through the reveal, which is the interesting confirmation: 5.4.1 shows the *thing's* name, and for a P4 entity that name is still the silhouette's.
+- On release: `interactLine=Flex/"Hold E to watch a while"` — P4's own unfamiliar interaction line, arriving on release exactly as 5.4.1 specifies.
+- **The no-snap seam, observed directly** (a second Play Mode run, `Force Resolve` with no attends spent): `acquaintanceStage=-1, resolved=True, colliderEnabled=True, tint=RGBA(0.720, 0.660, 0.450)`. Noticed colour and unfamiliar tint are the same pixel, and she is targetable at the unfamiliar read. This is the one state the first run skipped past, and it is the whole join between the two systems.
+- Direct attends: Acquainted crossed on the first tick (`tint→0.620/0.680/0.440`, shortName "A fowler", stage overlay + stage interaction line). A second hold ran a deepening tick and then crossed to Known without releasing — `ContinueAttending` inherited from P4 unchanged. At Known: `tint=0.460/0.720/0.420`, and the overlay appends *"She speaks of what draws the eye."*
+- Zero-effect held throughout: `subject=(trueState="…" knows=[draws_the_eye])` identical at every read, and `VerifySubjectUnchanged()` logged no error on any tick.
+- 0 errors across both runs. Scene saved through Unity to confirm it accepts the hand-written YAML round-trip.
+
+**Debug drivers added:** Teleport Player To Nearest Acquaintable, Advance Acquaintance On Nearest Entity, Log Acquaintance State — the first two mirror `Prototype4Debug`'s equivalents rather than inventing a P5 vocabulary, since the point of the iteration is that nothing about the entity is P5-specific. `Log Acquaintance State` prints the `NoticeableThing` gate on the same line as the entity state on purpose: 5.5's entire surface is the seam between the two, and a stage that won't advance because the thing was never resolved is otherwise indistinguishable from a stage that won't advance for its own reasons.
+
+*Regression gating with prior scenes was skipped at the user's request — they are handling it. The exposure is smaller than 5.4.1's in any case: no shared script was touched, and `AcquaintableAttendable` is used here exactly as `Prototype4.unity` uses it.*
+
+**Open for the playtest, and it is the actual go/no-go:** does finding her by standing still change how the first watch feels, versus P4 where every entity was flagged from the path? The mechanism is confirmed; the bridge claim is not, and cannot be from an editor.
+
+---
+
+## Build Notes — Iteration 5.6 (7-29-26, playtest 7-30-26)
+
+**Zero new code, same move as 5.5.** *Something in the grass* at (−3, −4), renamed **The Hollow** in the hierarchy, lost `UnknownThingAttendable` and gained P4's `TendableSpotAttendable` (4.12/4.14's shape) unmodified. `NoticeableThing` beside it is untouched, same as the Fowler's swap. Content: two unrevealed pool items (A Handful Of Sloes, A Twist Of Bark), `yieldChance` 0.3 flat, no `propertyIds` — same "no property-discovery path in this scene" reasoning as 5.5's missing taught stage.
+
+**"No ripeness" and "no character" both had to be authored, not just left out.** `TendableSpotAttendable` carries the ripeness (4.13) and character (4.15) machinery unconditionally — there's no flag to switch it off — so the doc's "flat yield chance, no ripeness" instruction meant zeroing it in data: `ripenBonusPerDayAway`/`maxDaysAwayBonus`/`depletionPerAttendToday` all 0, so the effective chance is permanently the authored 0.3 regardless of days away or attends already spent. `characterNudgeUp`/`characterNudgeDown` are also 0, so `character` never moves off its neutral 0.5 starting value.
+
+**The colour-continuity fix from 5.5, but total.** Because character can't move, `RefreshTint()`'s `Color.Lerp(wornTint, thrivingTint, 0.5)` is the spot's tint forever — so both fields are authored to the same value, `noticedColor` (0.72/0.66/0.45), rather than two arbitrary endpoints whose lerp happens to land somewhere. Unlike the Fowler, there's no later stage to grow into here; a flat mechanic gets a flat, unchanging tint, which is the honest visual expression of "no ripeness, no character" rather than a side effect of not bothering to differentiate it.
+
+**`wornFlavorLines`/`thrivingFlavorLines` were deliberately left empty**, the 5.6 analog of 5.5's missing taught stage. `CurrentFlavorPool()` bands on `character`, and with `character` pinned at exactly 0.5 it can never fall outside `[0.3, 0.7]` — the worn and thriving bands are structurally unreachable, so authoring lines into them would be exactly the "dead unreachable data" 5.4's notes warned against. Only `midFlavorLines` (two lines) is live.
+
+**Not independently re-verified by me via MCP.** The Unity MCP bridge dropped after the recompile that picked up this iteration's script/scene changes and stayed unresponsive for several minutes — port 8090 kept accepting TCP connections but nothing behind it answered, which matches the documented locked-session failure mode rather than the ordinary ~15–30s domain-reload drop. Sean played the build directly instead and confirmed the mechanism (notice → resolve → tend), the regression gate against Greybox/Prototype3/Prototype4, and 0 console errors from his own session. Unlike 5.4/5.5, this iteration's build notes are reporting a live playtest first-hand rather than an MCP-driven one.
+
+**Live tuning change, made during the same playtest:** Player `moveSpeed` 4 → 2 (`PlayerController` on the Player GameObject). Sean's own call, not scripted here — noted because it changes the felt pace of the whole scene and belongs in the historical record alongside the mechanism notes.
+
+**Playtest findings — the actual payoff of this iteration, and it's a genuine open question, not a pass.** Sean's read: the prototype is moving in the right direction overall, and slowing traversal down helped make attending feel more deliberate and less frantic. But the reveal mechanic is still hard to *feel* — there's no delight of surprise landing yet. He can't yet tell which of three things is responsible:
+
+1. **The content is static.** Five hand-placed things (now including The Hollow and the Fowler) in a small hand-authored scene means that once you've played it once, you know what's where — there's nothing left to discover on a second pass, which may simply be inherent to a pilot at this scale rather than a mechanism failure.
+2. **"Some of them are nothing" (5.4) isn't landing as designed.** The whole point of the decoy ratio was to make *not knowing* a real expenditure, worth something in itself. It's not obvious from play that this reads as intended.
+3. **The flavor-only misses aren't landing either** — neither the tending spot's miss lines (this iteration) nor whatever ambient/notice-adjacent flavor already existed. A miss may be reading as "nothing happened" rather than as texture.
+
+No conclusion reached, and none forced. Sean wants to sit with this before building further — 5.7 is paused for the same reason (see that section above): its current phrasing doesn't sit right against what this playtest surfaced, and it needs a rewrite, not an implementation, next.
+
+**Debug drivers added:** Teleport Player To Nearest Tendable Spot, Log Tendable Spot State (mirrors `DebugRipenessState()`/`DebugCharacterState()` plus the `NoticeableThing` gate on one line, same reasoning as 5.5's Log Acquaintance State — a spot that can't yield because it was never resolved should never look like one that's just rolling badly).
 
 ---
 
